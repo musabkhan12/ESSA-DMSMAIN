@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "essadms-main-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/essadmsMain/EssadmsMainWebPart.js",
+          "manifest": "./src/webparts/essadmsMain/EssadmsMainWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "EssadmsMainWebPartStrings": "lib/webparts/essadmsMain/loc/{locale}.js"
+  }
+}
