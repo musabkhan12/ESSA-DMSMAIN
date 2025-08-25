@@ -32,11 +32,18 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
         setLoading(true);
         setError(null);
         try {
-          const folderPath = file.CurrentFolderPath || "";
-          const fileName = file.FileName;
-          const serverRelativePath = folderPath.endsWith("/")
-            ? `${folderPath}${fileName}`
-            : `${folderPath}/${fileName}`;
+          const folderPath = file.CurrentFolderPath || file.ServerRelativeUrl || "";  //sourish 25/8/25 file.ServerRelativeUrl to handle vesrion from nodes
+          const fileName = file.FileName || file.Name;
+          //sourish 25/8/25 file.ServerRelativeUrl to handle vesrion from nodes
+          let serverRelativePath = "";
+          if (file.ServerRelativeUrl) {
+            serverRelativePath = file.ServerRelativeUrl;
+          } else {
+            serverRelativePath = folderPath.endsWith("/")
+              ? `${folderPath}${fileName}`
+              : `${folderPath}/${fileName}`;
+          }
+
 
           // Build full site URL from context
           const tenantUrl = context.pageContext.web.absoluteUrl.split("/sites/")[0];
@@ -123,14 +130,30 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
   const downloadVersion = async (file: any, version: any) => {
     try {
       const tenantUrl = context.pageContext.web.absoluteUrl.split("/sites/")[0];
-      const parts = file.CurrentFolderPath.split("/").filter(Boolean);
+
+      const folderPath = file.CurrentFolderPath || file.ServerRelativeUrl || "";
+      const fileName = file.FileName || file.Name;
+      //sourish 25/8/25 file.ServerRelativeUrl to handle vesrion from nodes
+      let parts;
+      let serverRelativePath = "";
+      if (file.ServerRelativeUrl) {
+        parts = file.ServerRelativeUrl.split("/").filter(Boolean);
+        serverRelativePath = file.ServerRelativeUrl;
+      } else {
+        parts = file.CurrentFolderPath.split("/").filter(Boolean);
+        serverRelativePath = `${file.CurrentFolderPath}/${file.FileName}`;
+      }
+
+      //  const parts = file.CurrentFolderPath.split("/").filter(Boolean);
       const subsitePath = "/" + parts.slice(0, 3).join("/");
       const subsiteUrl = `${tenantUrl}${subsitePath}`;
 
       const siteSP = spfi(subsiteUrl).using(SPFx(context));
-      const fileItem = siteSP.web.getFileByServerRelativePath(
-        `${file.CurrentFolderPath}/${file.FileName}`
-      );
+      // const fileItem = siteSP.web.getFileByServerRelativePath(
+      //   `${file.CurrentFolderPath}/${file.FileName}`
+      // );
+      //sourish 25/8/25 file.ServerRelativeUrl to handle vesrion from nodes
+      const fileItem = siteSP.web.getFileByServerRelativePath(serverRelativePath);
 
       let blob: Blob;
 
@@ -150,7 +173,8 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = file.FileName; // or `${file.FileName} (v${version.VersionLabel})`
+      //sourish 25/8/25 file.Name to handle vesrion from nodes
+      link.download = file.FileName || file.Name; // or `${file.FileName} (v${version.VersionLabel})`
       document.body.appendChild(link);
       link.click();
       link.remove();

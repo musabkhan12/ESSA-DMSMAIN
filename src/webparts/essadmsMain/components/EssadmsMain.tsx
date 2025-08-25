@@ -1676,6 +1676,30 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                         <span>👁️</span> Preview File
                                       </button>
                                     </li>
+                                    <li>
+                                            <button
+                                              style={{
+                                                width: "100%",
+                                                padding: "8px 12px",
+                                                background: "none",
+                                                border: "none",
+                                                textAlign: "left",
+                                                cursor: "pointer",
+                                                fontSize: "14px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px",
+                                              }}
+                                              onClick={() => {
+                                                setModalFile(file);
+
+                                                setShowVersionModal(true);
+                                                setMenuOpenIdx(null);
+                                              }}
+                                            >
+                                              <span>🕰️</span> Version History
+                                            </button>
+                                          </li>
 
                                     {/* My Request specific actions */}
                                     {activeView === "My request" && (
@@ -2046,6 +2070,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                               <span>⬇️</span> Download
                                             </button>
                                           </li>
+                                          {/* // Sourish 25/8/25 */}
                                           <li>
                                             <button
                                               style={{
