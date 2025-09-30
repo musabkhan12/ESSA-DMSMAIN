@@ -1,0 +1,137 @@
+
+.mt-4 {
+    margin-top: 5.5rem !important;
+    width: 100%;
+}
+.CreateFolderCont{
+    padding-top: 47px;
+    padding-left:0px;padding-right:0px;
+}
+.second{padding:0px;}
+.BackButton{
+    background-color: #6f757c;
+    position: relative;
+    /* right: 30px; */
+    /* top: 13%; */
+    float: right;
+    margin: 0;
+    position: relative;
+    padding: 4px 20px !important;
+    height: 34px; font-size: 14px;
+}
+.marginleftcard{
+    width: 100%;
+    padding:15px;
+   
+}
+.header-title {
+    font-size: 18px !important;
+}
+.subheadernew{
+    margin: 23px 7px 8px 2px;
+    line-height: 1.6;
+}
+.sub-header {
+    font-size: .875rem;
+    margin-bottom: 24px;
+    color: #6b6b6b;
+}
+.multilinetextWidth {
+    width: 100%;
+    /* height: 400px; */
+}
+.fieldmargin{height:36px;}
+.linkpos{    top: 3px;
+    position: absolute;
+    right: 0;
+    z-index: 999;
+}
+input[type=password], input[type=text], input[type=file], input:not([type]), select, textarea, .sp-peoplepicker-topLevel, .sp-peoplepicker-topLevelDisabled, .sp-peoplepicker-autoFillContainer, .ms-inputBox {
+    border: 1px solid #dee2e6; font-size:14px;
+ 
+}
+.form-control{font-size:14px !important;}
+label{font-weight:500;}
+.Permissionsectionstyle{
+    text-align: left;
+    justify-content: left;
+    float: left;
+    margin: initial; width:100%;
+}
+.subheadernew {
+    margin: 0px !important;
+}
+.form-control .fieldmargin .multilinetextWidth{
+    width: 100%;
+}
+.p-3{
+
+border-radius: 8px;
+
+padding: 15px;
+position: relative;
+width: 100%;
+
+}
+.createfileCont{
+margin-top: 11%;
+}
+.bi{
+vertical-align: middle;
+width: 27px;
+padding: 5px;
+}
+.bi-plus{
+width: 50px;
+padding: 6px;
+height: 50px;
+left: -1.1rem;
+position: relative;
+top: -4rem;
+}
+.fa-trash{
+width: 34px;
+}
+.btncolorCreate{
+background-color: #008751;
+color: #fff;
+text-decoration: none;
+height: 38px;border:0px;
+min-width: 104px;
+} 
+.paddb{    padding: 0px 29px 0px 20px;}
+.btncolorcancel{background: #6f757c; color: #fff; height: 38x; border:0px; margin-top:0px;
+min-width: 104px;}
+.btncolorCreate:hover,.btncolorcancel:hover{
+background-color: #008751;
+color: #fff;
+text-decoration: none;
+} 
+.bi-plus{
+width: 42px;
+height: 42px;
+
+right: 0;
+top: -46px;
+}
+.btncolorcancel:hover{
+background-color:#d0d2d4
+}
+@media (max-width: 998px) {
+.row {
+    display: block;
+}
+.approvalheirarchyfield,
+.approvalheirarcystyle {
+    width: 100%;
+}
+}
+@media (min-width: 998px) {
+.row {
+    display: flex;
+}
+.approvalheirarchyfield,
+.approvalheirarcystyle {
+    width: auto;
+}
+}

@@ -11,7 +11,7 @@ import { IReadonlyTheme } from '@microsoft/sp-component-base';
 import * as strings from 'EssadmsMainWebPartStrings';
 import EssadmsMain from './components/EssadmsMain';
 import { IEssadmsMainProps } from './components/IEssadmsMainProps';
-
+import MyPermissions from './components/newtest';
 export interface IEssadmsMainWebPartProps {
   description: string;
 }
@@ -23,7 +23,8 @@ export default class EssadmsMainWebPart extends BaseClientSideWebPart<IEssadmsMa
 
   public render(): void {
     const element: React.ReactElement<IEssadmsMainProps> = React.createElement(
-      EssadmsMain,
+       EssadmsMain,
+      // MyPermissions,
       {
         description: this.properties.description,
         isDarkTheme: this._isDarkTheme,
@@ -33,6 +34,8 @@ export default class EssadmsMainWebPart extends BaseClientSideWebPart<IEssadmsMa
         context: this.context,
         siteUrl: this.context.pageContext.web.absoluteUrl,
         currentUserID: this.context.pageContext.legacyPageContext["userId"],
+        // context:this.context,
+        // userEmail:this.context.pageContext.user.email
       }
     );
 
