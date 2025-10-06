@@ -16,6 +16,14 @@ import "@pnp/sp/folders";
 import "@pnp/sp/files";
 import "@pnp/sp/site-users/web";
 import { useMemo } from "react";
+
+// sourish 30/9/25
+import "../../verticalSideBar/components/VerticalSidebar2.scss";
+import VerticalSideBar from "../../verticalSideBar/components/VerticalSideBar";
+import HorizontalNavbar from "../../horizontalNavBar/components/HorizontalNavBar";
+import UserContext from "../../../GlobalContext/context";
+import Provider from "../../../GlobalContext/provider";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 // let loadfilefromnode = ''
 interface TreeNode {
   key: string;
@@ -95,6 +103,11 @@ const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(n
   // ====== AUDIT HISTORY STATES (added) ======
   const [auditVersions, setAuditVersions] = useState<any>({ Metadata: {}, Versions: [] });
   const [auditLoading, setAuditLoading] = useState<boolean>(false);
+
+  {/* sourish 30/9/25 */}
+  const { useHide }: any = React.useContext(UserContext);
+// sourish 3/10/25
+  const [activeLayout, setActiveLayout] = useState<'grid' | 'list'>('grid');
 // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
@@ -993,11 +1006,11 @@ const toggleNode = async (node: TreeNode) => {
           })
         );
 
-          allData.push(...siteData.flat());
-        } catch (error) {
-          console.error(`Error processing site collection ${siteCollection}:`, error);
-        }
+        allData.push(...siteData.flat());
+      } catch (error) {
+        console.error(`Error processing site collection ${siteCollection}:`, error);
       }
+    }
 
     return allData;
   }
@@ -1195,98 +1208,6 @@ const toggleNode = async (node: TreeNode) => {
       ))}
     </ul>
   );
-
-
-  // sourish 20/8/25
-  const deleteFolder = async (file: any) => {
-    try {
-      if (!file?.FolderPath || !file?.__siteUrl) {
-        console.error("Missing folder path or site URL");
-        return;
-      }
-
-      // Delete Folder
-
-      // Build correct web URL for the subsite
-      const fullWebUrl = `${file.__siteUrl}/${encodeURIComponent(file.SiteTitle)}`;
-      const sp = spfi(fullWebUrl).using(SPFx(context));
-
-      // FolderPath is already server-relative, so just use it directly
-      const finalPath = file.FolderPath;
-
-      console.log("Deleting from:", fullWebUrl);
-      console.log("Final server-relative path:", finalPath);
-
-      await sp.web.getFolderByServerRelativePath(finalPath).delete();
-
-
-      // Delete corresponding item from list in site collection root
-      const spRoot = spfi(file.__siteUrl).using(SPFx(context));
-
-      console.log("Deleting list item from site:", file.__siteUrl, " List: DMSFolderMaster, ID:", file.ID);
-
-      await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(file.ID).delete();
-
-      const refreshed = await loadViewData("MyFolders");
-      setSelectedFiles(refreshed);
-      setActiveView("My Folders");
-      setBreadcrumbs([
-        { key: "my-folders", title: "My Folders", type: "view", siteUrl: "" },
-      ]);
-      setCurrentPage(1);
-
-
-    } catch (err) {
-      console.error("Error deleting folder:", err);
-    }
-  };
-
-  // sourish 21/8/25
-  const renameFolder = async () => {
-    try {
-      if (!modalFile?.FolderPath || !modalFile?.__siteUrl) {
-        console.error("Missing folder path or site URL");
-        return;
-      }
-
-      const fullWebUrl = `${modalFile.__siteUrl}/${encodeURIComponent(modalFile.SiteTitle)}`;
-      const sp = spfi(fullWebUrl).using(SPFx(context));
-
-      const folder = sp.web.getFolderByServerRelativePath(modalFile.FolderPath);
-
-      // Build new path with the renamed folder name
-      const parentPath = modalFile.FolderPath.substring(0, modalFile.FolderPath.lastIndexOf("/"));
-      const newPath = `${parentPath}/${renameValue}`;
-
-      console.log("Renaming folder:", modalFile.FolderPath, " → ", newPath);
-
-      // ✅ Use moveByPath instead of moveTo
-      await folder.moveByPath(newPath);
-
-      // Update item in DMSFolderMaster list
-      const spRoot = spfi(modalFile.__siteUrl).using(SPFx(context));
-      await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(modalFile.ID).update({
-        FolderName: renameValue,
-        FolderPath: newPath,
-      });
-
-      // Refresh view
-      const refreshed = await loadViewData("MyFolders");
-      setSelectedFiles(refreshed);
-      setActiveView("My Folders");
-      setBreadcrumbs([{ key: "my-folders", title: "My Folders", type: "view", siteUrl: "" }]);
-      setCurrentPage(1);
-
-      // Close modal
-      setRenameModalOpen(false);
-      setModalFile(null);
-      setRenameValue("");
-
-    } catch (err) {
-      console.error("Error renaming folder:", err);
-    }
-  };
-
 
   
   /* ----------------- AUDIT HISTORY FUNCTION------------------ */
@@ -1583,6 +1504,19 @@ return (
         marginTop: "10px",
       }}
     >
+      {/* sourish 30/9/25 */}
+    <div
+      className="app-menu"
+      id="myHeader">
+      <VerticalSideBar _context={sp} />
+    </div>
+{/* sourish 30/9/25 */}
+     <div className="content-page">
+      <HorizontalNavbar _context={sp}/>
+      <div className="content" style={{marginLeft: `${!useHide ? '240px' : '80px'}`,marginTop:'0.8rem'}}>
+     {/* <div className="content-page">
+      <HorizontalNavbar _context={sp}/>
+      <div className="content" style={{marginLeft: `${!useHide ? '240px' : '80px'}`,marginTop:'0.8rem'}}> */}
       {/* Left Panel with Quick Views and Folder Hierarchy */}
       <div style={{ width: "30%", display: "flex", flexDirection: "column" }}>
         {/* Quick Views Panel */}
@@ -1708,6 +1642,36 @@ return (
             </div>
           
         )}
+
+{/* sourish 3/10/25 */}
+         <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+    <button
+      onClick={() => setActiveLayout('grid')}
+      style={{
+        background: activeLayout === 'grid' ? '#0078d4' : '#f0f0f0',
+        color: activeLayout === 'grid' ? 'white' : '#333',
+        border: '1px solid #ddd',
+        borderRadius: 4,
+        padding: '6px 15px',
+        fontWeight: 600
+      }}
+    >
+      Grid View
+    </button>
+    <button
+      onClick={() => setActiveLayout('list')}
+      style={{
+        background: activeLayout === 'list' ? '#0078d4' : '#f0f0f0',
+        color: activeLayout === 'list' ? 'white' : '#333',
+        border: '1px solid #ddd',
+        borderRadius: 4,
+        padding: '6px 15px',
+        fontWeight: 600
+      }}
+    >
+      List View
+    </button>
+  </div>
 
         <h2
           style={{
@@ -1932,6 +1896,8 @@ return (
       {
       paginatedFiles.length > 0 ? 
       (
+        <>
+        {activeLayout === "grid" && (
         <div
           style={{
             display: "grid",
@@ -2188,13 +2154,13 @@ return (
   >
     {/* Card Content */}
     {
-      activeView === "My request" ? (
-        <>
-          <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.FileSize}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.DocumentLibraryName}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.Status}</div>
-        </>
+         activeView === "My request" ? (   
+      <>
+        <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+        <div style={{ fontSize: 12, color: "#666" }}>{file.FileSize}</div>
+        <div style={{ fontSize: 12, color: "#666" }}>{file.DocumentLibraryName}</div>
+        <div style={{ fontSize: 12, color: "#666" }}>{file.Status}</div>    
+      </>
       ) : activeView === "My favourite" ? (
         <>
           <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
@@ -2366,6 +2332,88 @@ return (
         )}
     
         </div>
+        )}
+
+ {activeLayout === "list" && (
+        <div>
+           <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
+         <thead>
+  <tr style={{ background: "#f0f0f0" }}>
+    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>S.No</th>
+    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Name</th>
+    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Size</th>
+    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Library</th>
+    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Status</th>
+    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Action</th> {/* New column */}
+  </tr>
+</thead>
+
+        <tbody>
+  {paginatedFiles.map((file, idx) => (
+    <tr key={file.Id || idx}>
+      <td style={{ padding: 8 }}>{file.SNo || idx + 1}</td>
+      <td style={{ padding: 8 }}>{file.FileName}</td>
+      <td style={{ padding: 8 }}>{file.FileSize}</td>
+      <td style={{ padding: 8 }}>{file.DocumentLibraryName}</td>
+      <td style={{ padding: 8 }}>{file.Status}</td>
+      <td style={{ padding: 8, position: "relative" }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            fontSize: "18px",
+            cursor: "pointer",
+          }}
+        >
+          ⋮
+        </button>
+
+        {menuOpenIdx === idx && (
+          <div
+            style={{
+              position: "absolute",
+              right: 0,
+              top: "20px",
+              background: "#fff",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              zIndex: 10,
+              minWidth: "140px",
+            }}
+          >
+            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+              <li>
+                <button onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>
+                  👁️ Preview
+                </button>
+              </li>
+              <li>
+                <button onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>
+                  ⬇️ Download
+                </button>
+              </li>
+              <li>
+                <button onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}>
+                  🗑️ Delete
+                </button>
+              </li>
+            </ul>
+          </div>
+        )}
+      </td>
+    </tr>
+  ))}
+</tbody>
+
+       </table>
+        </div>
+ )}
+        </>
       ) : (
         <div
           style={{
@@ -2669,12 +2717,19 @@ return (
         </Modal.Body>
       </Modal>
     )}
+    {/* sourish 30/9/25 two div added*/}
+    </div>
+    </div>
     </div>
   );
 };
 
 const DMSMain: React.FC<IEssadmsMainProps> = (props) => {
-  return <ArgPoc context={props.context} />;
+  return (
+      <Provider>
+        <ArgPoc context={props.context} />;
+        </Provider>
+  )
 };
 
 export default DMSMain;
