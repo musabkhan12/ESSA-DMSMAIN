@@ -7,6 +7,7 @@ import { faChevronRight, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { SPFI } from '@pnp/sp';
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
+
 import "../../../Assets/Figtree/Figtree-VariableFont_wght.ttf";
 import { Airplay, Calendar, File, Image, Clipboard, Bell, Users, Activity, Sun, Moon, Cpu, Rss, Maximize, Settings, Search, ChevronsDown, ChevronDown, Menu, User, Codepen, Command } from 'react-feather';
 import classNames from 'classnames';

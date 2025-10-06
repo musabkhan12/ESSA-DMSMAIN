@@ -18,12 +18,12 @@ import "@pnp/sp/site-users/web";
 import { useMemo } from "react";
 
 // sourish 30/9/25
-import "../../verticalSideBar/components/VerticalSidebar2.scss";
+import "../../verticalSideBar/components/VerticalSidebar.scss";
 import VerticalSideBar from "../../verticalSideBar/components/VerticalSideBar";
 import HorizontalNavbar from "../../horizontalNavBar/components/HorizontalNavBar";
 import UserContext from "../../../GlobalContext/context";
 import Provider from "../../../GlobalContext/provider";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 // let loadfilefromnode = ''
 interface TreeNode {
   key: string;
