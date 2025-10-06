@@ -15,6 +15,10 @@ import "@pnp/sp/lists";
 import "@pnp/sp/folders";
 import "@pnp/sp/files";
 import "@pnp/sp/site-users/web";
+//aman changes for folder permission manage
+import { PermissionKind } from "@pnp/sp/security";
+import { ISiteUserInfo } from "@pnp/sp/site-users/types";
+//aman changes for folder permission manage
 import { useMemo } from "react";
 
 // sourish 30/9/25
@@ -25,6 +29,11 @@ import UserContext from "../../../GlobalContext/context";
 import Provider from "../../../GlobalContext/provider";
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 // let loadfilefromnode = ''
+declare global {
+  interface Window {
+    managePermission?: (folder: any) => void;
+  }
+}
 interface TreeNode {
   key: string;
   title: string;
@@ -103,6 +112,18 @@ const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(n
   // ====== AUDIT HISTORY STATES (added) ======
   const [auditVersions, setAuditVersions] = useState<any>({ Metadata: {}, Versions: [] });
   const [auditLoading, setAuditLoading] = useState<boolean>(false);
+//  manag folder permission state
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [showManagePermissionModal, setShowManagePermissionModal] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<any | null>(null);
+  const [permissionUsers, setPermissionUsers] = useState<{ principalId: number; principalTitle: string; roles: string[] }[]>([]);
+  const [newUser, setNewUser] = useState<string>("");
+  const [newPermission, setNewPermission] = useState<string>("Read");
+  const [mpHasUnique, setMpHasUnique] = useState<boolean>(false);
+  const [mpCanManage, setMpCanManage] = useState<boolean>(false);
+  const [mpLoading, setMpLoading] = useState<boolean>(false);
+  const [mpError, setMpError] = useState<string>("");
+  const [mpSiteUsers, setMpSiteUsers] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
 
   {/* sourish 30/9/25 */}
   const { useHide }: any = React.useContext(UserContext);
@@ -273,7 +294,17 @@ useEffect(() => {
   }
 }, [pendingPath, treeData]);
 
-
+// aman changes for folder permission manage 
+  useEffect(() => {
+    window.managePermission = (folder: any) => {
+      setSelectedFolder(folder);
+      setShowPermissionModal(true);
+    };
+    return () => {
+      if (window.managePermission) window.managePermission = undefined;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 const loadRootSites = async () => {
   try {
     console.log("[loadRootSites] Fetching master lists...");
@@ -740,68 +771,168 @@ const toggleNode = async (node: TreeNode) => {
   };
 
   const loadViewData = async (viewType: string): Promise<any[]> => {
-       // sourish 20/8/25
-    if (viewType === "MyFolders") {
+    setShowPreviewModal(false)
+       // sourish 20/8/25 previous wworking code 
+    // if (viewType === "MyFolders") {
+    //   try {
+    //     const meEmail =
+    //       (context.pageContext as any)?.user?.email ||
+    //       (context.pageContext as any)?.user?.loginName ||
+    //       "";
+
+    //     const masterSites = await sp.web.lists
+    //       .getByTitle("MasterSiteCollection")
+    //       .items.select("Id", "Title", "SiteURL", "SharewithOtherMeMasterSite")
+    //       .top(5000)();
+
+    //     const allMyFoldersData: any[] = [];
+
+    //     for (const ms of masterSites) {
+    //       try {
+    //         // Always target "DMSFolderMaster" list from SiteURL
+    //         const siteSP = spfi(ms.SiteURL).using(SPFx(context));
+    //         const listItems = await siteSP.web.lists
+    //           .getByTitle("DMSFolderMaster")
+    //           .items.select(
+    //             "Id",
+    //             "Title",
+    //             "FolderPath",
+    //             "SiteTitle",
+    //             "DocumentLibraryName",
+    //             "FolderName",
+    //             "CurrentUser",
+    //             "Modified",
+    //             "Author/Id",
+    //             "Author/Title",
+    //             "Author/EMail"
+    //           )
+    //           .expand("Author") // 🔹 expand ModifiedBy lookup
+    //           .top(5000)();
+
+    //         const normalizedItems = listItems.map((it: any) => ({
+    //           ...it,
+    //           ParentFolder: it.ParentFolder || it.ParentFolderId || "", // normalize
+    //         }));
+
+    //         // 🔹 Filter by CurrentUser column
+    //         const filtered = (listItems || []).filter(
+    //           (it: any) =>
+    //             (it.Author.EMail || "").toLowerCase() === meEmail.toLowerCase()
+    //         );
+
+    //         allMyFoldersData.push(
+    //           ...filtered.map((it: any) => ({
+    //             ...it,
+    //             __source: "MyFolders",
+    //             __siteUrl: ms.SiteURL,
+    //             __listName: "DMSFolderMaster",
+    //             __CreatedBy: it.Author?.Title || it.Author?.EMail || "",
+    //           }))
+    //         );
+    //       } catch (err) {
+    //         console.error(
+    //           `Error fetching list DMSFolderMaster from ${ms.SiteURL}:`,
+    //           err
+    //         );
+    //       }
+    //     }
+
+    //     return allMyFoldersData;
+    //   } catch (e) {
+    //     console.error("Error fetching MasterSiteCollection:", e);
+    //     return [];
+    //   }
+    // }
+    //updated code by aman after manage folder permission
+     if (viewType === "MyFolders") {
       try {
         const meEmail =
           (context.pageContext as any)?.user?.email ||
           (context.pageContext as any)?.user?.loginName ||
           "";
 
+        const rootSiteUrl = "https://officeindia.sharepoint.com/sites/AlRostmaniSpfx2";
+
         const masterSites = await sp.web.lists
           .getByTitle("MasterSiteCollection")
-          .items.select("Id", "Title", "SiteURL", "SharewithOtherMeMasterSite")
+          .items.select("Id", "Title", "SiteURL")
           .top(5000)();
+
+        const scopedSites = (masterSites || []).filter((ms: any) =>
+          (ms.SiteURL || "").toLowerCase().startsWith(rootSiteUrl.toLowerCase())
+        );
 
         const allMyFoldersData: any[] = [];
 
-        for (const ms of masterSites) {
+        for (const ms of scopedSites) {
           try {
-            // Always target "DMSFolderMaster" list from SiteURL
             const siteSP = spfi(ms.SiteURL).using(SPFx(context));
             const listItems = await siteSP.web.lists
               .getByTitle("DMSFolderMaster")
-              .items.select(
-                "Id",
-                "Title",
-                "FolderPath",
-                "SiteTitle",
-                "DocumentLibraryName",
-                "FolderName",
-                "CurrentUser",
-                "Modified",
-                "Author/Id",
-                "Author/Title",
-                "Author/EMail"
-              )
-              .expand("Author") // 🔹 expand ModifiedBy lookup
+              .items.select("*", "Author/Id", "Author/Title", "Author/EMail")
+              .expand("Author")
               .top(5000)();
 
-            const normalizedItems = listItems.map((it: any) => ({
-              ...it,
-              ParentFolder: it.ParentFolder || it.ParentFolderId || "", // normalize
-            }));
+            let __webId = "";
+            try {
+              const webMeta: any = await siteSP.web.select("Id")();
+              __webId = webMeta?.Id || "";
+            } catch {}
 
-            // 🔹 Filter by CurrentUser column
-            const filtered = (listItems || []).filter(
-              (it: any) =>
-                (it.Author.EMail || "").toLowerCase() === meEmail.toLowerCase()
+            const mine = (listItems || []).filter(
+              (it: any) => ((it?.Author?.EMail || "") as string).toLowerCase() === meEmail.toLowerCase()
             );
 
-            allMyFoldersData.push(
-              ...filtered.map((it: any) => ({
+            const readBool = (obj: any, keys: string[]): boolean => {
+              if (!obj) return false;
+              const lowerMap: Record<string, string> = {};
+              Object.keys(obj).forEach((k) => (lowerMap[k.toLowerCase()] = k));
+              for (const k of keys) {
+                const real = lowerMap[k.toLowerCase()];
+                if (real !== undefined) return !!obj[real];
+              }
+              return false;
+            };
+
+            const normalized = mine.map((it: any) => {
+              const isLibrary = readBool(it, ["IsLibrary", "Library", "islibrary", "islib"]);
+              const isFolder = readBool(it, ["IsFolder", "Folder", "isfolder", "issubfolder"]);
+              const isPrivate = readBool(it, ["IsPrivate", "Private", "isprivate"]);
+              const isPublic = readBool(it, ["IsPublic", "Public", "ispublic"]);
+              return {
                 ...it,
                 __source: "MyFolders",
                 __siteUrl: ms.SiteURL,
                 __listName: "DMSFolderMaster",
-                __CreatedBy: it.Author?.Title || it.Author?.EMail || "",
-              }))
-            );
+                __CreatedBy: it?.Author?.Title || it?.Author?.EMail || "",
+                __webId,
+                __flags: { isLibrary, isFolder, isPrivate, isPublic },
+                __scopeLabel: isLibrary ? "Root folder" : isFolder ? "Sub folder" : "",
+                __visibilityLabel: isPrivate ? "Private" : isPublic ? "Public" : "",
+              };
+            });
+
+            // Remove system Forms & dedupe, keep roots and folders
+            const cleaned = normalized.filter((row: any) => {
+              const name = row.FolderName || row.Title || "";
+              const path = row.FolderPath || row.folderpath || row.ServerRelativeUrl || "";
+              const lowerPath = (path || "").toLowerCase().replace(/\/+$/, "");
+              const isForms = /\/forms(\/|$)/i.test(lowerPath);
+              return !!name && !!path && !isForms;
+            });
+
+            const unique: any[] = [];
+            const seen = new Set<string>();
+            for (const r of cleaned) {
+              const key = (r.FolderPath || r.folderpath || r.ServerRelativeUrl || String(r.ID || r.Id || "")).toLowerCase();
+              if (!key || seen.has(key)) continue;
+              seen.add(key);
+              unique.push(r);
+            }
+
+            allMyFoldersData.push(...unique);
           } catch (err) {
-            console.error(
-              `Error fetching list DMSFolderMaster from ${ms.SiteURL}:`,
-              err
-            );
+            console.error(`Error fetching list DMSFolderMaster from ${ms.SiteURL}:`, err);
           }
         }
 
@@ -1420,6 +1551,165 @@ const handleAuditHistory = async (file: any) => {
       }
     };
   
+    // aman code manage folder permission
+    // === Manage Permission helpers ===
+  const deriveFolderContext = (folder: any) => {
+    const rootSite = folder?.__siteUrl || context.pageContext.web.absoluteUrl;
+    const siteTitle = folder?.SiteTitle || folder?.SiteName || "";
+    const webUrl = siteTitle ? `${rootSite}/${encodeURIComponent(siteTitle)}` : rootSite;
+    const serverRel =
+      folder?.ServerRelativeUrl ||
+      folder?.FolderPath ||
+      folder?.folderpath ||
+      "";
+    const deriveLibrary = (sr: string): string => {
+      const parts = (sr || "").split("/").filter(Boolean);
+      const idxSites = parts.indexOf("sites");
+      if (idxSites >= 0 && parts.length > idxSites + 2) return parts[idxSites + 2];
+      return parts[2] || "";
+    };
+    const documentLibraryName =
+      folder?.DocumentLibraryName ||
+      folder?.DocumentLibrary ||
+      folder?.LibraryName ||
+      deriveLibrary(serverRel);
+    return { webUrl, serverRel, documentLibraryName };
+  };
+
+  const getFolderApi = (webUrl: string, serverRel: string) => {
+    const w: any = spfi(webUrl).using(SPFx(context)).web;
+    if ((w as any).getFolderByServerRelativeUrl) {
+      return (w as any).getFolderByServerRelativeUrl(serverRel);
+    }
+    return w.getFolderByServerRelativePath(serverRel);
+  };
+
+  const loadAndOpenManagePermission = async () => {
+    if (!selectedFolder) return;
+    setMpLoading(true);
+    setMpError("");
+    try {
+      const { webUrl, serverRel } = deriveFolderContext(selectedFolder);
+      const web = spfi(webUrl).using(SPFx(context));
+      const folderApi = getFolderApi(webUrl, serverRel);
+      const item = await folderApi.getItem();
+      const itemInfo: any = await item.select("HasUniqueRoleAssignments")();
+      setMpHasUnique(!!itemInfo?.HasUniqueRoleAssignments);
+      let can = false;
+      try {
+        can = await web.web.currentUserHasPermissions(PermissionKind.ManagePermissions);
+      } catch {}
+      setMpCanManage(!!can);
+      let ras: any[] = [];
+      try {
+        ras = await item.roleAssignments.expand("Member", "RoleDefinitionBindings")();
+      } catch (e) {
+        console.warn("[ManagePermission] roleAssignments read failed:", e);
+        ras = [];
+      }
+      const mapped = (ras || []).map((ra: any) => ({
+        principalId: ra?.Member?.Id,
+        principalTitle: ra?.Member?.Title,
+        roles: (ra?.RoleDefinitionBindings || []).map((r: any) => r?.Name).filter(Boolean),
+      }));
+      setPermissionUsers(mapped);
+
+      // People picker users
+      try {
+        const rawUsers: ISiteUserInfo[] = await web.web.siteUsers();
+        const mappedUsers = (rawUsers || [])
+          .map((u) => ({
+            id: u.Id || 0,
+            title: u.Title || u.LoginName || "",
+            email: u.Email || "",
+            loginName: u.LoginName || u.Email || "",
+          }))
+          .filter((u) => !!u.loginName);
+        setMpSiteUsers(mappedUsers);
+      } catch (e) {
+        console.warn("[ManagePermission] siteUsers fetch failed:", e);
+        setMpSiteUsers([]);
+      }
+
+      setShowManagePermissionModal(true);
+    } catch (e: any) {
+      setMpError(e?.message || String(e));
+    } finally {
+      setMpLoading(false);
+    }
+  };
+
+  const addUserToSelectedFolder = async () => {
+    if (!selectedFolder || !newUser || !newPermission) return;
+    setMpLoading(true);
+    setMpError("");
+    try {
+      const { webUrl, serverRel } = deriveFolderContext(selectedFolder);
+      const web = spfi(webUrl).using(SPFx(context));
+      const folderApi = getFolderApi(webUrl, serverRel);
+      const item = await folderApi.getItem();
+
+      if (!mpHasUnique) {
+        try {
+          await item.breakRoleInheritance(true, false);
+          setMpHasUnique(true);
+        } catch (e) {
+          console.warn("[ManagePermission] breakRoleInheritance failed:", e);
+        }
+      }
+
+      let userId: number | null = null;
+      try {
+        const ensured = await web.web.ensureUser(newUser.trim());
+        userId = ensured?.data?.Id;
+      } catch (e) {
+        console.error("[ManagePermission] ensureUser failed:", e);
+        throw e;
+      }
+      if (!userId) throw new Error("Could not resolve user/group.");
+
+      const roleDef = await web.web.roleDefinitions.getByName(newPermission)();
+      await item.roleAssignments.add(userId, roleDef.Id);
+
+      const picked = mpSiteUsers.find((u) => u.loginName === newUser.trim());
+      const displayTitle = picked?.title || newUser.trim();
+
+      setPermissionUsers((prev) => {
+        const idx = prev.findIndex((p) => p.principalId === userId);
+        if (idx >= 0) {
+          const setRoles = new Set([...(prev[idx].roles || []), newPermission]);
+          const updated = [...prev];
+          updated[idx] = { ...prev[idx], roles: Array.from(setRoles) };
+          return updated;
+        }
+        return [...prev, { principalId: userId, principalTitle: displayTitle, roles: [newPermission] }];
+      });
+
+      setNewUser("");
+      setNewPermission("Read");
+    } catch (e: any) {
+      setMpError(e?.message || String(e));
+    } finally {
+      setMpLoading(false);
+    }
+  };
+
+  const removeUserFromSelectedFolder = async (principalId: number) => {
+    if (!selectedFolder || !principalId) return;
+    setMpLoading(true);
+    setMpError("");
+    try {
+      const { webUrl, serverRel } = deriveFolderContext(selectedFolder);
+      const item = await getFolderApi(webUrl, serverRel).getItem();
+      await item.roleAssignments.getById(principalId).delete();
+      setPermissionUsers((prev) => prev.filter((p) => p.principalId !== principalId));
+    } catch (e: any) {
+      setMpError(e?.message || String(e));
+    } finally {
+      setMpLoading(false);
+    }
+  };
+
     //abhay delete file from folder
     const deleteFileFolder = async (file: any, siteUrl: string, context: any) => {
     try {
@@ -1890,6 +2180,18 @@ return (
           : "Please select a folder from the hierarchy to view files"}
       </div>
     )
+     ) : null
+)}
+ 
+ 
+        {/* --- CONDITIONAL RENDERING FOR PREVIEW --- */}
+  {showPreviewModal ? (
+    <PreviewModal
+      show={true}
+        fileUrl={previewFile}
+        onClose={() => setShowPreviewModal(false)}
+    />
+    
   ) :
 
   (
@@ -2308,6 +2610,16 @@ return (
                                                 setRenameModalOpen(true);
                                                 setMenuOpenIdx(null);
                                               }}>✏️ Rename Folder</button></li>
+                                                 <li>
+                                    <button onClick={() => {
+                                      const pageBefore = currentPage;
+                                      setMenuOpenIdx(null);
+                                      window.managePermission?.(file);
+                                      setCurrentPage(pageBefore);
+                                    }}>
+                                      🔒 Manage Permission
+                                    </button>
+                                  </li>
               </>
             )}
 
@@ -2669,6 +2981,173 @@ return (
                 context={context}
                 onClose={() => setShowVersionModal(false)}
               />
+
+              {/* aman code manage folder permission */}
+    {/* === Step 1 Popup === */}
+{showPermissionModal && (
+  <Modal show={showPermissionModal} onHide={() => setShowPermissionModal(false)}>
+    <Modal.Header closeButton>
+      <Modal.Title>Set Permission</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      <div style={{ marginBottom: 10 }}>
+        Set permissions for:{" "}
+        <strong>{selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || "Selected Folder"}</strong>
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+        <button
+          onClick={() => setShowPermissionModal(false)}
+          style={{ padding: "6px 10px", border: "1px solid #ccc", borderRadius: 4, background: "#fff" }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            const pageBefore = currentPage;
+            setShowPermissionModal(false);
+            await loadAndOpenManagePermission();
+            setCurrentPage(pageBefore);
+          }}
+          style={{ padding: "6px 10px", border: "1px solid #0b66c3", borderRadius: 4, background: "#0b66c3", color: "#fff" }}
+        >
+          Set Permission
+        </button>
+      </div>
+    </Modal.Body>
+  </Modal>
+)}
+
+{/* === Step 2 Popup (with People Picker) === */}
+{showManagePermissionModal && (
+  <Modal show={showManagePermissionModal} onHide={() => setShowManagePermissionModal(false)} size="lg">
+    <Modal.Header closeButton>
+      <Modal.Title>Manage Permission</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      {(() => {
+        const ctx = selectedFolder ? deriveFolderContext(selectedFolder) : { webUrl: "", serverRel: "", documentLibraryName: "" };
+        return (
+          <>
+            <div style={{ marginBottom: 10, fontSize: 13, color: "#555" }}>
+              <div><strong>Folder:</strong> {selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || ctx.serverRel}</div>
+              <div><strong>Library:</strong> {ctx.documentLibraryName}</div>
+              <div><strong>Web:</strong> {ctx.webUrl}</div>
+            </div>
+
+            {mpLoading ? (
+              <div>Loading permissions...</div>
+            ) : (
+              <>
+                {mpError && (
+                  <div style={{ color: "#b00020", marginBottom: 10, whiteSpace: "pre-wrap" }}>{mpError}</div>
+                )}
+
+                <div style={{ marginBottom: 10 }}>
+                  <strong>Inheritance:</strong>{" "}
+                  {mpHasUnique ? (
+                    <span style={{ color: "#b26a00" }}>This folder has unique permissions</span>
+                  ) : (
+                    <span style={{ color: "#2e7d32" }}>Inheriting from parent</span>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: 10 }}>
+                  <strong>Your ability:</strong>{" "}
+                  {mpCanManage ? (
+                    <span style={{ color: "#2e7d32" }}>You can manage permissions</span>
+                  ) : (
+                    <span style={{ color: "#b00020" }}>You cannot manage permissions on this folder</span>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    borderTop: "1px solid #eee",
+                    paddingTop: 10,
+                    marginTop: 10,
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <select
+                    value={newUser}
+                    onChange={(e) => setNewUser(e.target.value)}
+                    style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
+                    disabled={!mpCanManage}
+                  >
+                    <option value="" disabled>
+                      Select a user…
+                    </option>
+                    {mpSiteUsers.map((u) => (
+                      <option key={u.id} value={u.loginName}>
+                        {u.title} {u.email ? `(${u.email})` : ""}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={newPermission}
+                    onChange={(e) => setNewPermission(e.target.value)}
+                    style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4 }}
+                    disabled={!mpCanManage}
+                  >
+                    <option value="Read">Read</option>
+                    <option value="Edit">Edit</option>
+                    <option value="Full Control">Full Control</option>
+                  </select>
+                  <button
+                    onClick={addUserToSelectedFolder}
+                    style={{ padding: "6px 10px", border: "1px solid #107c10", borderRadius: 4, background: "#107c10", color: "#fff" }}
+                    disabled={!mpCanManage || !newUser.trim()}
+                  >
+                    + Add User
+                  </button>
+                </div>
+
+                <div style={{ margin: "10px 0" }}>
+                  <strong>Current access:</strong>
+                  {permissionUsers?.length ? (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", background: "#f6f7f8", border: "1px solid #e1e4e8", borderRadius: 6, fontWeight: 600 }}>
+                        <div>S.No.</div>
+                        <div>User/Groups</div>
+                        <div>Permission</div>
+                        <div>Action</div>
+                      </div>
+                      {permissionUsers.map((a: any, i: number) => (
+                        <div key={a.principalId} style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", border: "1px solid #e1e4e8", borderTop: "none" }}>
+                          <div>{i + 1}</div>
+                          <div title={a.principalTitle}>{a.principalTitle}</div>
+                          <div>{a.roles && a.roles.length ? a.roles.join(", ") : "—"}</div>
+                          <div>
+                            <button
+                              style={{ padding: "4px 8px", border: "1px solid #ccc", borderRadius: 4, background: "#fff", cursor: "pointer" }}
+                              onClick={() => removeUserFromSelectedFolder(a.principalId)}
+                              disabled={!mpCanManage}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: "#666" }}>No direct role assignments found.</div>
+                  )}
+                </div>
+              </>
+            )}
+          </>
+        );
+      })()}
+    </Modal.Body>
+  </Modal>
+)}
+              {/* aman code manage folder permission */}
+
+
       {/* Pagination controls */}
       {selectedFiles.length > 0 && (
         <div
@@ -2724,8 +3203,9 @@ return (
       )}
     </>
   )
+}
+     
 
-)}
 
       </div>
        {/* ---------------------------Audit History Modal ---------------------*/}
