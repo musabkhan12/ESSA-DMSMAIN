@@ -487,6 +487,11 @@ const navigateToPath = async (pathTitles: string[]) => {
   //   }
   // };
 const handleNodeClick = async (node: TreeNode) => {
+
+  // this below lines will close preview modal  (addhyan work on this )
+   setShowPreviewModal(false); // <-- Close preview modal
+  setPreviewFile(null);       // <-- Clear preview file
+  // this below lines will close preview modal (addhyan work on this )
   console.log("[handleNodeClick] node clicked:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
   location = node.siteUrl;
   updateUrl(node);
@@ -2226,20 +2231,31 @@ return (
             {activeView === "My request" && (
               <>
                 <li><button  onClick={() => {
+                  // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
                 <li><button  onClick={() => {
+                                  // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
                                 handleAuditHistory(file); setMenuOpenIdx(null);
                               }}>📝 Audit History</button></li>
                 <li><button>↗️ Share</button></li>
                 <li><button onClick={() => {
                                            
- 
+   // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
                                             setDirectDownloadFile(file); // new state for direct downloader
                                             setMenuOpenIdx(null);
                                           }}>⬇️ Download</button></li>
                 <li><button onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
                                  setModalFile(file);
                                         setShowVersionModal(true);
                                         setMenuOpenIdx(null);
@@ -2251,11 +2267,17 @@ return (
             {activeView === "My favourite" && (
               <>
                 <li><button  onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
                 <li><button>↗️ Share</button></li>
                 <li><button onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
                                           // handleUnmarkFavourite(file);
                                           // eslint-disable-next-line @typescript-eslint/no-floating-promises
                                           toggleFavourite(file);
@@ -2269,12 +2291,18 @@ return (
             {activeView === "My Folders" && (
               <>
                 <li><button onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
                                                 setModalFile(file);
                                                 setMenuOpenIdx(null);
                                                 deleteFolder(file);  // sourish 20/8/25
                                               }}
 											  >🗑️ Delete Folder</button></li>
                 <li><button onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
                                                 setModalFile(file);
                                                 setRenameValue(file?.FolderName || ""); // prefill with old name
                                                 setRenameModalOpen(true);
@@ -2287,11 +2315,16 @@ return (
             {activeView === "Share with me" && (
               <>
                 <li><button  onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
                 <li><button onClick={() => {
-                                           
+                                             // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
  
                                             setDirectDownloadFile(file); // new state for direct downloader
                                             setMenuOpenIdx(null);
@@ -2303,6 +2336,9 @@ return (
             {activeView === "Share with other" && (
               <>
                 <li><button  onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
@@ -2314,10 +2350,18 @@ return (
             {activeView === "Recycle bin" && (
               <>
                 <li><button  onClick={() => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
-                <li><button onClick={async () => { await handleUndoDelete(file); setMenuOpenIdx(null); }}>↩️ Undo (Restore)</button></li>
+                <li><button onClick={async () => {
+                    // this is to hide li options in every tab (addhyan)
+                  setMenuOpenIdx(null);
+                  // this is to hide li options in every tab (addhyan)
+                  await handleUndoDelete(file); setMenuOpenIdx(null); }}
+                  >↩️ Undo (Restore)</button></li>
               </>
             )}
           </ul>
