@@ -1301,25 +1301,14 @@ const toggleNode = async (node: TreeNode) => {
 
   /** --------------------------------------- render ------------------------------------------- */
   const renderTree = (nodes: TreeNode[]) => (
-    <ul style={{ listStyleType: "none", paddingLeft: "20px" }}>
+    <ul style={{ listStyleType: "none", paddingLeft: "5px" }}>
       {nodes.map((node) => (
         <li key={node.key}>
           <div style={{ display: "flex", alignItems: "center" }}>
             {node.hasChildren && (
-              <button
+              <button type="button"
                 onClick={() => toggleNode(node)}
-                style={{
-                  marginRight: "5px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                  width: "20px",
-                  height: "20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+               className="arrowdesign"
               >
                 {node.isExpanded ? "−" : "+"}
               </button>
@@ -1813,27 +1802,19 @@ return (
       <HorizontalNavbar _context={sp}/>
       <div className="content" style={{marginLeft: `${!useHide ? '240px' : '80px'}`,marginTop:'0.8rem'}}> */}
       {/* Left Panel with Quick Views and Folder Hierarchy */}
-      <div style={{ width: "30%", display: "flex", flexDirection: "column" }}>
+      <div style={{display:'flex'}}>
+      <div className="inbox-leftbar">
         {/* Quick Views Panel */}
         <div
           id="buttonpanel"
           style={{
-            padding: "15px",
-            backgroundColor: "#f0f0f0",
-            borderBottom: "1px solid #ddd",
+            padding: "0px 15px",
+         
+          
             flexShrink: 0,
           }}
         >
-          <h2
-            style={{
-              fontSize: "16px",
-              fontWeight: "600",
-              marginBottom: "15px",
-              color: "#333",
-            }}
-          >
-            Quick Views
-          </h2>
+          <h2 className="page-title fw-bold mb-3 pt-5 mt-0 font-20"> Quick Views</h2>
           {[
             "My request",
             "My favourite",
@@ -1842,7 +1823,7 @@ return (
             "Share with other",
             "Recycle bin",
           ].map((view) => (
-            <button
+            <button type="button"
               key={view}
               onClick={() => handleViewButtonClick(view)}
               style={{
@@ -1851,12 +1832,12 @@ return (
                 padding: "8px 10px",
                 marginBottom: "8px",
                 textAlign: "left",
-                backgroundColor: activeView === view ? "#0078d4" : "#f0f0f0",
-                color: activeView === view ? "white" : "#333",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
+                backgroundColor: activeView === view ? "#0078d4" : "#f7fbfc ",
+                color: activeView === view ? "white" : "#6c757d",
+                border:"0px solid #ccc",
+                borderRadius: "30px",
                 cursor: "pointer",
-                fontSize: "14px",
+                fontSize: "14px", 
                 transition: "all 0.2s",
               }}
             >
@@ -1872,7 +1853,7 @@ return (
             flexGrow: 1,
             padding: "15px",
             overflow: "auto",
-            backgroundColor: "#f9f9f9",
+           
           }}
         >
           <h2
@@ -1898,74 +1879,61 @@ return (
       {/* File List Panel */}
       <div
         id="filelistcontainer"
-        style={{
-          width: "70%",
-          padding: "15px",
-          overflow: "auto",
-          backgroundColor: "#fff",
-          position: "relative",
-        }}
-      >
+        className="inbox-rightbar">
         {/* Upload File Button - Only shown when in a folder/library */}
-        {
+       
+
+{/* sourish 3/10/25 */}
+         <div className="newalignbutton">
+         {
         breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1].type !== "view" && (
             <div>
- <button
-            className="mybutton2 mt-0"
+               <button type="button"
+            className="mybutton2 mt-0 me-1"
             id="CreateFolder"
             onClick={() => setActiveComponent(true)}
           >
             + Create Folder
           </button>
-          <button
+          <button type="button"   className="mybutton2 mt-0"
             onClick={() => setShowUploadPanel(!showUploadPanel)}
-            style={{
-              position: "absolute",
-              top: "15px",
-              right: "15px",
-              padding: "8px 15px",
-              backgroundColor: "#0078d4",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
+           >
             Upload File
           </button>
+ 
             </div>
           
         )}
-
-{/* sourish 3/10/25 */}
-         <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
-    <button
+        
+    <button type="button"
       onClick={() => setActiveLayout('grid')}
       style={{
-        background: activeLayout === 'grid' ? '#0078d4' : '#f0f0f0',
-        color: activeLayout === 'grid' ? 'white' : '#333',
-        border: '1px solid #ddd',
+        background: activeLayout === 'grid' ? '#0078d4' : '#ffffff',
+        color: activeLayout === 'grid' ? 'white' : '#6c757d',
+        border: '0px solid #ddd',
         borderRadius: 4,
         padding: '6px 15px',
-        fontWeight: 600
+        fontWeight: 500,
+        fontSize: "14px",
       }}
     >
       Grid View
     </button>
-    <button
+    <button type="button"
       onClick={() => setActiveLayout('list')}
       style={{
-        background: activeLayout === 'list' ? '#0078d4' : '#f0f0f0',
+        background: activeLayout === 'list' ? '#0078d4' : '#ffffff',
         color: activeLayout === 'list' ? 'white' : '#333',
-        border: '1px solid #ddd',
+        border: '0px solid #ddd',
         borderRadius: 4,
         padding: '6px 15px',
-        fontWeight: 600
+        fontWeight: 500,
+        fontSize: "14px",
       }}
     >
       List View
     </button>
+    
   </div>
 
         <h2
@@ -2001,7 +1969,7 @@ return (
                     </span>
                   )}
                   <span
-                    className="breadcrumb-item"
+                    className="breadcrumb-item mb-0 font-18 fw-bold text-dark header-title"
                     onClick={() => handleBreadcrumbClick(item)}
                     style={{
                       cursor: "pointer",
@@ -2035,7 +2003,7 @@ return (
           >
             <h3 style={{ fontSize: "14px", marginBottom: "10px" }}>Upload Files</h3>
             <input type="file" ref={fileInputRef} onChange={handleFileSelect} multiple style={{ display: "none" }} />
-            <button
+            <button type="button"
               onClick={triggerFileInput}
               style={{
                 padding: "8px 15px",
@@ -2085,7 +2053,7 @@ return (
                     </li>
                   ))}
                 </ul>
-                <button
+                <button type="button"
                   onClick={uploadFiles}
                   style={{
                     padding: "8px 15px",
@@ -2217,36 +2185,26 @@ return (
             paginatedFiles.map((file, idx) => (
               <div
               key={file.Id || file.FileUID || idx}
-              style={{
-                background: "#f8f8f8",
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px",
-                padding: "16px",
-                minHeight: "120px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                position: "relative",
-              }}
+             className="carddesign"
             >
               {/* File Content */}
               <div style={{ fontWeight: 600, fontSize: "15px" }}>
                 {`${file.Name}/{name}`  || "Unnamed File"}
               </div>
-              <div style={{ fontSize: "12px", color: "#666" }}>
+              <div  className="text-muted font-12">
                 {file.Length
                   ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
                   : ""}
               </div>
-              <div style={{ fontSize: "12px", color: "#666" }}>
+              <div  className="text-muted font-12">
                 {file.TimeCreated
                   ? new Date(file.TimeCreated).toLocaleDateString()
                   : ""}
               </div>
 
               {/* Three-dot menu button */}
-              <div style={{ position: "absolute", top: 10, right: 10 }}>
-                <button
+              <div className="dotbutton">
+                <button type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
@@ -2276,22 +2234,11 @@ return (
                       minWidth: "160px",
                     }}
                   >
-                    <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                     <ul className="internalbutton">
                       {/* Common actions for all views */}
                       <li>
-                        <button
-                          style={{
-                            width: "100%",
-                            padding: "8px 12px",
-                            background: "none",
-                            border: "none",
-                            textAlign: "left",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
+                        <button type="button" className="newbuttontext"
+                        
                         onClick={() => {
               setPreviewFile(file);
               setShowPreviewModal(true);
@@ -2301,19 +2248,8 @@ return (
                         </button>
                       </li>
                        <li>
-                            <button
-                              style={{
-                                width: "100%",
-                                padding: "8px 12px",
-                                background: "none",
-                                border: "none",
-                                textAlign: "left",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
+                            <button type="button"
+                             className="newbuttontext"
                               onClick={() => {
                                 handleAuditHistory(file); setMenuOpenIdx(null);
                               }}
@@ -2322,19 +2258,8 @@ return (
                             </button>
                           </li>
                           <li>
-                            <button
-                              style={{
-                                width: "100%",
-                                padding: "8px 12px",
-                                background: "none",
-                                border: "none",
-                                textAlign: "left",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
+                            <button type="button"
+                             className="newbuttontext"
                               onClick={() => {
                                  setModalFile(file);
                                  
@@ -2346,19 +2271,8 @@ return (
                             </button>
                           </li>
                           <li>
-                            <button
-                              style={{
-                                width: "100%",
-                                padding: "8px 12px",
-                                background: "none",
-                                border: "none",
-                                textAlign: "left",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
+                            <button type="button"
+                             className="newbuttontext"
                             onClick={() => {
                                            
  
@@ -2370,19 +2284,8 @@ return (
                             </button>
                           </li>
                           <li>
-                            <button
-                              style={{
-                                width: "100%",
-                                padding: "8px 12px",
-                                background: "none",
-                                border: "none",
-                                textAlign: "left",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
+                            <button type="button"
+                             className="newbuttontext"
                              onClick={async () => {
                                         await deleteFileFolder(
                                           file,
@@ -2397,19 +2300,8 @@ return (
                             </button>
                           </li>
                           <li>
-                                    <button
-                                      style={{
-                                        width: "100%",
-                                        padding: "8px 12px",
-                                        background: "none",
-                                        border: "none",
-                                        textAlign: "left",
-                                        cursor: "pointer",
-                                        fontSize: "14px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "8px",
-                                      }}
+                                    <button type="button"
+                                      className="newbuttontext"
                                       onClick={async () => {
                                         const newFav = await toggleFavouriteDoc(
                                           file,
@@ -2447,58 +2339,49 @@ return (
                paginatedFiles.map((file, idx) => (
   <div
     key={file.Id || file.FileUID || idx}
-    style={{
-      background: "#f8f8f8",
-      border: "1px solid #e0e0e0",
-      borderRadius: "8px",
-      padding: "16px",
-      minHeight: "120px",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "space-between",
-      position: "relative",
-    }}
+    className="carddesign"
+   
   >
     {/* Card Content */}
     {
          activeView === "My request" ? (   
       <>
         <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-        <div style={{ fontSize: 12, color: "#666" }}>{file.FileSize}</div>
-        <div style={{ fontSize: 12, color: "#666" }}>{file.DocumentLibraryName}</div>
-        <div style={{ fontSize: 12, color: "#666" }}>{file.Status}</div>    
+        <div  className="text-muted font-12">{file.FileSize}</div>
+        <div  className="text-muted font-12">{file.DocumentLibraryName}</div>
+        <div  className="text-muted font-12">{file.Status}</div>    
       </>
       ) : activeView === "My favourite" ? (
         <>
           <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.FileSize}</div>
+          <div  className="text-muted font-12">{file.FileSize}</div>
         </>
       ) : activeView === "My Folders" ? (
         <>
           <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FolderName}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.SiteTitle}</div>
+          <div  className="text-muted font-12">{file.SiteTitle}</div>
         </>
       ) : activeView === "Share with me" ? (
         <>
           <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.FileSize}</div>
+          <div  className="text-muted font-12">{file.FileSize}</div>
         </>
       ) : activeView === "Share with other" ? (
         <>
           <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.FileSize}</div>
+          <div  className="text-muted font-12">{file.FileSize}</div>
         </>
       ) : activeView === "Recycle bin" ? (
         <>
           <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>{file.FileSize}</div>
+          <div  className="text-muted font-12">{file.FileSize}</div>
         </>
       ) : null
     }
 
     {/* Three-dot Menu */}
-    <div style={{ position: "absolute", top: 10, right: 10 }}>
-      <button
+    <div className="dotbutton">
+      <button type="button"
         onClick={(e) => {
           e.stopPropagation();
           setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
@@ -2527,12 +2410,12 @@ return (
             minWidth: "160px",
           }}
         >
-          <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+          <ul className="internalbutton">
             
             {/* Menu for My Request */}
             {activeView === "My request" && (
               <>
-                <li><button  onClick={() => {
+                <li><button type="button"  onClick={() => {
                   // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
@@ -2545,8 +2428,8 @@ return (
                   // this is to hide li options in every tab (addhyan)
                                 handleAuditHistory(file); setMenuOpenIdx(null);
                               }}>📝 Audit History</button></li>
-                <li><button>↗️ Share</button></li>
-                <li><button onClick={() => {
+                <li><button type="button">↗️ Share</button></li>
+                <li><button type="button" onClick={() => {
                                            
    // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
@@ -2554,7 +2437,7 @@ return (
                                             setDirectDownloadFile(file); // new state for direct downloader
                                             setMenuOpenIdx(null);
                                           }}>⬇️ Download</button></li>
-                <li><button onClick={() => {
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
@@ -2568,15 +2451,15 @@ return (
             {/* Menu for My Favourite */}
             {activeView === "My favourite" && (
               <>
-                <li><button  onClick={() => {
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
-                <li><button>↗️ Share</button></li>
-                <li><button onClick={() => {
+                <li><button type="button">↗️ Share</button></li>
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
@@ -2592,7 +2475,7 @@ return (
             {/* Menu for My Folders */}
             {activeView === "My Folders" && (
               <>
-                <li><button onClick={() => {
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
@@ -2601,7 +2484,7 @@ return (
                                                 deleteFolder(file);  // sourish 20/8/25
                                               }}
 											  >🗑️ Delete Folder</button></li>
-                <li><button onClick={() => {
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
@@ -2611,7 +2494,7 @@ return (
                                                 setMenuOpenIdx(null);
                                               }}>✏️ Rename Folder</button></li>
                                                  <li>
-                                    <button onClick={() => {
+                                    <button type="button" onClick={() => {
                                       const pageBefore = currentPage;
                                       setMenuOpenIdx(null);
                                       window.managePermission?.(file);
@@ -2626,14 +2509,14 @@ return (
             {/* Menu for Share with me */}
             {activeView === "Share with me" && (
               <>
-                <li><button  onClick={() => {
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
-                <li><button onClick={() => {
+                <li><button type="button" onClick={() => {
                                              // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
@@ -2647,28 +2530,28 @@ return (
             {/* Menu for Share with other */}
             {activeView === "Share with other" && (
               <>
-                <li><button  onClick={() => {
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
-                <li><button>❌ Revoke Access</button></li>
+                <li><button type="button">❌ Revoke Access</button></li>
               </>
             )}
 
             {/* Menu for Recycle Bin */}
             {activeView === "Recycle bin" && (
               <>
-                <li><button  onClick={() => {
+                <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
-                <li><button onClick={async () => {
+                <li><button type="button" onClick={async () => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
                   // this is to hide li options in every tab (addhyan)
@@ -2692,38 +2575,33 @@ return (
 
  {activeLayout === "list" && (
         <div>
-           <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
+           <table className="mtablenew">
          <thead>
-  <tr style={{ background: "#f0f0f0" }}>
-    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>S.No</th>
-    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Name</th>
-    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Size</th>
-    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Library</th>
-    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Status</th>
-    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Action</th> {/* New column */}
+  <tr >
+    <th style={{minWidth:'50px',maxWidth:'50px',}}>S.No</th>
+    <th style={{minWidth:'250px',maxWidth:'250px',}}>Name</th>
+    <th >Size</th>
+    <th>Library</th>
+    <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th>
+    <th style={{textAlign:"center"}}>Action</th> {/* New column */}
   </tr>
 </thead>
 
         <tbody>
   {paginatedFiles.map((file, idx) => (
     <tr key={file.Id || idx}>
-      <td style={{ padding: 8 }}>{file.SNo || idx + 1}</td>
-      <td style={{ padding: 8 }}>{file.FileName}</td>
-      <td style={{ padding: 8 }}>{file.FileSize}</td>
-      <td style={{ padding: 8 }}>{file.DocumentLibraryName}</td>
-      <td style={{ padding: 8 }}>{file.Status}</td>
-      <td style={{ padding: 8, position: "relative" }}>
-        <button
+      <td style={{minWidth:'50px',maxWidth:'50px',}}>{file.SNo || idx + 1}</td>
+      <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td>
+      <td >{file.FileSize}</td>
+      <td >{file.DocumentLibraryName}</td>
+      <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td>
+      <td style={{textAlign:"center"}}>
+        <button type="button" className="dotbutton2"
           onClick={(e) => {
             e.stopPropagation();
             setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
           }}
-          style={{
-            background: "none",
-            border: "none",
-            fontSize: "18px",
-            cursor: "pointer",
-          }}
+          
         >
           ⋮
         </button>
@@ -2742,19 +2620,19 @@ return (
               minWidth: "140px",
             }}
           >
-            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+            <ul  className="internalbutton">
               <li>
-                <button onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>
+                <button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>
                   👁️ Preview
                 </button>
               </li>
               <li>
-                <button onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>
+                <button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>
                   ⬇️ Download
                 </button>
               </li>
               <li>
-                <button onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}>
+                <button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}>
                   🗑️ Delete
                 </button>
               </li>
@@ -3176,11 +3054,17 @@ return (
             Page {currentPage} of {Math.ceil(selectedFiles.length / pageSize)}
           </span>
           <button
-            onClick={() =>
-              setCurrentPage((p) =>
-                p < Math.ceil(selectedFiles.length / pageSize) ? p + 1 : p
-              )
-            }
+           onClick={(e) => {
+            e.preventDefault(); // Add this line
+            setCurrentPage((p) =>
+              p < Math.ceil(selectedFiles.length / pageSize) ? p + 1 : p
+            );
+          }}
+            // onClick={() =>
+            //   setCurrentPage((p) =>
+            //     p < Math.ceil(selectedFiles.length / pageSize) ? p + 1 : p
+            //   )
+            // }
             disabled={currentPage === Math.ceil(selectedFiles.length / pageSize)}
             style={{
               marginLeft: "10px",
@@ -3207,7 +3091,7 @@ return (
      
 
 
-      </div>
+      </div></div>
        {/* ---------------------------Audit History Modal ---------------------*/}
     {showAuditModal && (
       <Modal show={showAuditModal} onHide={() => setShowAuditModal(false)} size="lg">
