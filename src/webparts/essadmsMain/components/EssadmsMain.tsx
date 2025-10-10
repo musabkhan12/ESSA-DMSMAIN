@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { spfi, SPFI, SPFx } from "@pnp/sp";
@@ -8,8 +7,9 @@ import PreviewModal from "./previewfile"; // import your modal\
 import DirectDownloader from "./DownloadFile";
 import VersionHistoryModal from "./versionhistory"; // import version history modal
 import Swal from 'sweetalert2'
-import { Modal } from 'react-bootstrap';   
+import {  Button, Modal } from 'react-bootstrap';   
 import CreateFolder from "./CreateFolder";
+import Revoke from "./revoke";
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/folders";
@@ -27,6 +27,7 @@ import VerticalSideBar from "../../verticalSideBar/components/VerticalSideBar";
 import HorizontalNavbar from "../../horizontalNavBar/components/HorizontalNavBar";
 import UserContext from "../../../GlobalContext/context";
 import Provider from "../../../GlobalContext/provider";
+
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 // let loadfilefromnode = ''
 declare global {
@@ -46,6 +47,11 @@ interface TreeNode {
   libraryTitle?: string;
   folderPath?: string;
   parentKey?: string;
+}
+// this was by om revoke user permission
+interface SharedUser {
+  userId: string;
+  permission: string;
 }
 
 interface BreadcrumbItem {
@@ -91,7 +97,14 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [selectedCurrentNode, setSelectedCurrentNode] = useState<TreeNode | null>(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
    const [showShareModal, setShowShareModal] = useState(false);
-  // version history modal state
+  // this was by om revoke user permission
+   //revoke state
+   const [showRevokeModal, setShowRevokeModal] = useState(false);
+   const [selectedFolderForRevoke, setSelectedFolderForRevoke] = useState<any>(null);
+  const [revoke, setAcessFile] = useState<any>(null);
+   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
+  
+   // version history modal state
   const [showVersionModal, setShowVersionModal] = useState(false);
   // modal file state
   const [modalFile, setModalFile] = useState<any>(null);
@@ -125,19 +138,45 @@ const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(n
   const [mpError, setMpError] = useState<string>("");
   const [mpSiteUsers, setMpSiteUsers] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
 
+  //Aman Manage Permission Folder 
+  // simple typeahead states for Manage Permission user picker (no external libs)
+  const [mpUserSuggestions, setMpUserSuggestions] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
+  const [showUserSuggestions, setShowUserSuggestions] = useState<boolean>(false);
+  const [newUserDisplay, setNewUserDisplay] = useState<string>("");
+  const userSuggestRef = useRef<HTMLDivElement | null>(null);
+
+  // hide suggestions on outside click
+  useEffect(() => {
+    const handler = (ev: any) => {
+      if (userSuggestRef && userSuggestRef.current && !userSuggestRef.current.contains(ev.target)) {
+        setShowUserSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   {/* sourish 30/9/25 */}
   const { useHide }: any = React.useContext(UserContext);
 // sourish 3/10/25
   const [activeLayout, setActiveLayout] = useState<'grid' | 'list'>('grid');
 // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
-  let location: string = "";
-  const paginatedFiles = useMemo(() => {
-  const start = (currentPage - 1) * pageSize;
-  const end = start + pageSize;
-  return selectedFiles.slice(start, end);
-}, [selectedFiles, currentPage]);
+  // const pageSize = 12;
+
+  // abhay change for seach in all tabs
+    useEffect(() => {
+  setCurrentPage(1); // reset to page 1 whenever selectedFiles changes
+}, [selectedFiles, activeView, activeLayout, currentFolderPath]);
+
+
+//previous working code before add search on all tabs 
+//   let location: string = "";
+//   const paginatedFiles = useMemo(() => {
+//   const start = (currentPage - 1) * pageSize;
+//   const end = start + pageSize;
+//   return selectedFiles.slice(start, end);
+// }, [selectedFiles, currentPage]);
 
 //--------------undodelete function starts---------------
 const handleUndoDelete = async (file: any) => {
@@ -305,6 +344,34 @@ useEffect(() => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+   //addhyan chanes on three dot should hide on click anywhere outside oif screen
+  // three dot menu 
+
+    useEffect(() => {
+    if (menuOpenIdx !== null) {
+      const handleClickOutside = (event: MouseEvent) => {
+        // Only close if the click is outside any menu
+        const menus = document.querySelectorAll('.three-dot-menu');
+        let clickedInside = false;
+        menus.forEach(menu => {
+          if (menu.contains(event.target as Node)) {
+            clickedInside = true;
+          }
+        });
+        if (!clickedInside) {
+          setMenuOpenIdx(null);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [menuOpenIdx]);
+
+
+
 const loadRootSites = async () => {
   try {
     console.log("[loadRootSites] Fetching master lists...");
@@ -610,6 +677,8 @@ const toggleNode = async (node: TreeNode) => {
       console.log("[toggleNode] Fetching node type:", node.type, "for node:", node.title);
       
       if (node.type === "subsite") {
+        // i am adding this here set currrent site url because when we click on subsite it will set current site url for upload file / or create fodler it pass as props
+      setCurrentSiteUrl(node.siteUrl);
         console.log("[toggleNode] Loading libraries for subsite:", node.title);
         const libs = await siteSP.web.lists.filter("BaseTemplate eq 101 and Hidden eq false").select("Title")();
         node.children = libs.map((lib: any) => ({
@@ -851,20 +920,23 @@ const toggleNode = async (node: TreeNode) => {
           (context.pageContext as any)?.user?.loginName ||
           "";
 
-        const rootSiteUrl = "https://officeindia.sharepoint.com/sites/AlRostmaniSpfx2";
-
+        
         const masterSites = await sp.web.lists
           .getByTitle("MasterSiteCollection")
           .items.select("Id", "Title", "SiteURL")
           .top(5000)();
 
-        const scopedSites = (masterSites || []).filter((ms: any) =>
-          (ms.SiteURL || "").toLowerCase().startsWith(rootSiteUrl.toLowerCase())
-        );
+            // i commented this because it was fetching only records from spfx2site Dmsfodlermaster list
+          // const rootSiteUrl = "https://officeindia.sharepoint.com/sites/AlRostmaniSpfx2";
+
+        // const scopedSites = (masterSites || []).filter((ms: any) =>
+        //   (ms.SiteURL || "").toLowerCase().startsWith(rootSiteUrl.toLowerCase())
+        // );
 
         const allMyFoldersData: any[] = [];
 
-        for (const ms of scopedSites) {
+        // for (const ms of scopedSites) {
+        for (const ms of masterSites) {
           try {
             const siteSP = spfi(ms.SiteURL).using(SPFx(context));
             const listItems = await siteSP.web.lists
@@ -1779,6 +1851,102 @@ const handleAuditHistory = async (file: any) => {
     }
   };
 
+  // abhay change for seach in all tabs
+ // #region SEARCH TAB 
+  // Abhay 10/10/25 merger 
+
+const [searchTerm, setSearchTerm] = useState("");
+
+const filteredFiles = !searchTerm.trim()
+  ? selectedFiles
+  : selectedFiles.filter((file: any) => {
+      const term = searchTerm.toLowerCase();
+
+      if (activeView === "My Folders") {
+        return (
+          (file.FolderName || "").toLowerCase().includes(term) ||
+          (file.SiteTitle || "").toLowerCase().includes(term) ||
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+
+        );
+      } 
+      else if (activeView === "SharedWithMe") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.ShareWithMe || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      } 
+      else if (activeView === "SharedWithOthers") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.ShareWithOther || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      } 
+      else if (activeView === "MyRequest") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.RequestStatus || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      } 
+      else if (activeView === "MyFavourite") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      } 
+      else if (activeView === "RecycleBin") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DeletedBy || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      } 
+      else {
+        // Default case
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term) ||
+          (file.Status || "").toLowerCase().includes(term)
+        );
+      }
+    });
+
+  const pageSize = 12;
+  let location: string = "";
+  const paginatedFiles = useMemo(() => {
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+  return filteredFiles.slice(start, end);
+  }, [filteredFiles, currentPage]);
+  
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchTerm]);
+
+// 🧩 ✅ Clear search when section changes
+useEffect(() => {
+  setSearchTerm("");
+  setCurrentPage(1);
+}, [activeView]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 return (
     <div
       id="maincontainer"
@@ -2171,7 +2339,31 @@ return (
       {
       paginatedFiles.length > 0 ? 
       (
-        <>
+                        <>
+                          
+
+
+  {/* abhay change for seach in all tabs */}
+
+ <input
+  type="text"
+  placeholder="Search..."
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  style={{
+    padding: "8px 12px",
+    marginBottom: "10px",
+    width: "100%",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+  }}
+/>
+
+
+
+
+
+
         {activeLayout === "grid" && (
         <div
           style={{
@@ -2398,6 +2590,8 @@ return (
 
       {menuOpenIdx === idx && (
         <div
+
+         className="three-dot-menu"
           style={{
             position: "absolute",
             right: 0,
@@ -2483,7 +2677,7 @@ return (
                                                 setMenuOpenIdx(null);
                                                 deleteFolder(file);  // sourish 20/8/25
                                               }}
-											  >🗑️ Delete Folder</button></li>
+                        >🗑️ Delete Folder</button></li>
                 <li><button type="button" onClick={() => {
                     // this is to hide li options in every tab (addhyan)
                   setMenuOpenIdx(null);
@@ -2537,7 +2731,15 @@ return (
               setPreviewFile(file);
               setShowPreviewModal(true);
             }}>👁️ Preview File</button></li>
-                <li><button type="button">❌ Revoke Access</button></li>
+                <li><Button
+  variant="warning"
+  onClick={() => {
+    setShowRevokeModal(true);
+    setAcessFile(file); // file = your folder/file object
+  }}
+>
+  Revoke Access
+</Button></li>
               </>
             )}
 
@@ -2580,32 +2782,59 @@ return (
   <tr >
     <th style={{minWidth:'50px',maxWidth:'50px',}}>S.No</th>
     <th style={{minWidth:'250px',maxWidth:'250px',}}>Name</th>
-    <th >Size</th>
-    <th>Library</th>
-    <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th>
+    {/* <th >Size</th> */}
+    <th>Size</th>
+    {/* <th>Library</th> */}
+    <th>
+            {paginatedFiles.some((f) => f.DocumentLibraryName)
+              ? "Library"
+              : "Created Date"}
+          </th>
+      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+            <th style={{ minWidth:'80px',maxWidth:'80px',}}>Status</th>
+          )}
+    {/* <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th> */}
     <th style={{textAlign:"center"}}>Action</th> {/* New column */}
   </tr>
 </thead>
-
+ 
         <tbody>
   {paginatedFiles.map((file, idx) => (
     <tr key={file.Id || idx}>
       <td style={{minWidth:'50px',maxWidth:'50px',}}>{file.SNo || idx + 1}</td>
-      <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td>
-      <td >{file.FileSize}</td>
-      <td >{file.DocumentLibraryName}</td>
-      <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td>
+      {/* <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td> */}
+      <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName || file.Name || file.FolderName}</td>
+      {/* <td >{file.FileSize}</td> */}
+        <td>
+  {file.FileSize
+    ? file.FileSize
+    : file.Length
+    ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
+    : "-"}
+</td>
+      {/* <td >{file.DocumentLibraryName}</td> */}
+         <td>
+  {file.DocumentLibraryName
+    ? file.DocumentLibraryName
+    : file.TimeCreated
+    ? new Date(file.TimeCreated).toLocaleDateString()
+    : "-"}
+</td>
+      {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
+      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+      <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status || ""}</td>
+       )}
       <td style={{textAlign:"center"}}>
         <button type="button" className="dotbutton2"
           onClick={(e) => {
             e.stopPropagation();
             setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
           }}
-          
+         
         >
           ⋮
         </button>
-
+ 
         {menuOpenIdx === idx && (
           <div
             style={{
@@ -2643,7 +2872,7 @@ return (
     </tr>
   ))}
 </tbody>
-
+ 
        </table>
         </div>
  )}
@@ -2852,6 +3081,19 @@ return (
     fileUrl={previewFile}
     onClose={() => setShowPreviewModal(false)}
   />
+
+{/*revoke modal*/ }
+ <Revoke
+  show={showRevokeModal}
+  selectedFolder={revoke}
+  context={context}
+  onClose={() => setShowRevokeModal(false)}
+  onRevoke={(userId: string) => {
+    console.log("Revoked user ID:", userId);
+    alert(`Access revoked for user ID: ${userId}`);
+  }}
+/>
+
      {/* version history  */}
    <VersionHistoryModal
                 show={showVersionModal}
@@ -2949,7 +3191,7 @@ return (
                     flexWrap: "wrap",
                   }}
                 >
-                  <select
+                  {/* <select
                     value={newUser}
                     onChange={(e) => setNewUser(e.target.value)}
                     style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
@@ -2963,7 +3205,57 @@ return (
                         {u.title} {u.email ? `(${u.email})` : ""}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
+
+                       {/* Typeahead user picker (replaces static dropdown) */}
+                  <div ref={userSuggestRef} style={{ position: "relative", minWidth: 320 }}>
+                    <input
+                      type="text"
+                      placeholder="Type user name or email..."
+                      value={newUserDisplay || (mpSiteUsers.find(u => u.loginName === newUser)?.title || "")}
+                      onChange={(e) => {
+                        const val = e.target.value || "";
+                        setNewUserDisplay(val);
+                        setShowUserSuggestions(true);
+                        const q = val.trim().toLowerCase();
+                        const filtered = (mpSiteUsers || []).filter((u) => {
+                          return (
+                            (u.title || "").toLowerCase().includes(q) ||
+                            (u.email || "").toLowerCase().includes(q) ||
+                            (u.loginName || "").toLowerCase().includes(q)
+                          );
+                        }).slice(0, 50);
+                        setMpUserSuggestions(filtered);
+                        // Clear previously selected loginName (we'll set login on selection)
+                        setNewUser("");
+                      }}
+                      onFocus={() => {
+                        setShowUserSuggestions(true);
+                        setMpUserSuggestions((mpSiteUsers || []).slice(0,50));
+                      }}
+                      disabled={!mpCanManage}
+                      style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
+                    />
+                    {showUserSuggestions && mpUserSuggestions && mpUserSuggestions.length > 0 && (
+                      <ul style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9999, background: "#fff", border: "1px solid #ccc", borderRadius: 4, maxHeight: 200, overflowY: "auto", listStyle: "none", margin: 0, padding: 0 }}>
+                        {mpUserSuggestions.map((u) => (
+                          <li
+                            key={u.id}
+                            onMouseDown={(e) => { e.preventDefault(); }}
+                            onClick={() => {
+                              setNewUser(u.loginName);
+                              setNewUserDisplay(`${u.title}${u.email ? ` (${u.email})` : ""}`);
+                              setShowUserSuggestions(false);
+                            }}
+                            style={{ padding: "8px", cursor: "pointer", borderBottom: "1px solid #eee" }}
+                          >
+                            <div style={{ fontSize: 13 }}>{u.title}</div>
+                            <div style={{ fontSize: 12, opacity: 0.7 }}>{u.email || u.loginName}</div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
 
                   <select
                     value={newPermission}
@@ -3027,7 +3319,14 @@ return (
 
 
       {/* Pagination controls */}
-      {selectedFiles.length > 0 && (
+                  {
+                    
+                    // selectedFiles
+                    
+                    
+                       filteredFiles
+                    
+                    .length > 0 && (
         <div
           style={{
             margin: "10px 0",
@@ -3051,7 +3350,9 @@ return (
             Prev
           </button>
           <span style={{ margin: "0 10px" }}>
-            Page {currentPage} of {Math.ceil(selectedFiles.length / pageSize)}
+                          {/* Page {currentPage} of {Math.ceil(selectedFiles.length / pageSize)} */}
+                            Page {currentPage} of {Math.ceil(filteredFiles.length / pageSize) || 1}
+
           </span>
           <button
            onClick={(e) => {
