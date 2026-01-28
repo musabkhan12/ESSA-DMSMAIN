@@ -7,7 +7,7 @@ import PreviewModal from "./previewfile"; // import your modal\
 import DirectDownloader from "./DownloadFile";
 import VersionHistoryModal from "./versionhistory"; // import version history modal
 import Swal from 'sweetalert2'
-import {  Button, Modal } from 'react-bootstrap';   
+import { Button, Modal } from 'react-bootstrap';
 import CreateFolder from "./CreateFolder";
 import Revoke from "./revoke";
 import "@pnp/sp/webs";
@@ -39,7 +39,7 @@ interface TreeNode {
   key: string;
   title: string;
   // type: "site" | "subsite" | "library" | "folder";
-  type: "site" | "function" | "subsite" | "library" | "folder"; 
+  type: "site" | "function" | "subsite" | "library" | "folder";
   children?: TreeNode[];
   hasChildren?: boolean;
   isExpanded?: boolean;
@@ -96,15 +96,15 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   // state for selected node
   const [selectedCurrentNode, setSelectedCurrentNode] = useState<TreeNode | null>(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
-   const [showShareModal, setShowShareModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   // this was by om revoke user permission
-   //revoke state
-   const [showRevokeModal, setShowRevokeModal] = useState(false);
-   const [selectedFolderForRevoke, setSelectedFolderForRevoke] = useState<any>(null);
+  //revoke state
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [selectedFolderForRevoke, setSelectedFolderForRevoke] = useState<any>(null);
   const [revoke, setAcessFile] = useState<any>(null);
-   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
-  
-   // version history modal state
+  const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
+
+  // version history modal state
   const [showVersionModal, setShowVersionModal] = useState(false);
   // modal file state
   const [modalFile, setModalFile] = useState<any>(null);
@@ -114,18 +114,18 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [previewFile, setPreviewFile] = useState<any>(null);
   // preview modal state
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  
-    //sourish 21/8/25
+
+  //sourish 21/8/25
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
-//  setting direct file download state
-const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(null);
+  //  setting direct file download state
+  const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(null);
 
   // ====== AUDIT HISTORY STATES (added) ======
   const [auditVersions, setAuditVersions] = useState<any>({ Metadata: {}, Versions: [] });
   const [auditLoading, setAuditLoading] = useState<boolean>(false);
-//  manag folder permission state
+  //  manag folder permission state
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [showManagePermissionModal, setShowManagePermissionModal] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<any | null>(null);
@@ -156,84 +156,151 @@ const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(n
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  {/* sourish 30/9/25 */}
+  {/* sourish 30/9/25 */ }
   const { useHide }: any = React.useContext(UserContext);
-// sourish 3/10/25
+  // sourish 3/10/25
   const [activeLayout, setActiveLayout] = useState<'grid' | 'list'>('grid');
-// Pagination state
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   // const pageSize = 12;
 
   // abhay change for seach in all tabs
-    useEffect(() => {
-  setCurrentPage(1); // reset to page 1 whenever selectedFiles changes
-}, [selectedFiles, activeView, activeLayout, currentFolderPath]);
+  useEffect(() => {
+    setCurrentPage(1); // reset to page 1 whenever selectedFiles changes
+  }, [selectedFiles, activeView, activeLayout, currentFolderPath]);
 
 
-//previous working code before add search on all tabs 
-//   let location: string = "";
-//   const paginatedFiles = useMemo(() => {
-//   const start = (currentPage - 1) * pageSize;
-//   const end = start + pageSize;
-//   return selectedFiles.slice(start, end);
-// }, [selectedFiles, currentPage]);
+  //previous working code before add search on all tabs 
+  //   let location: string = "";
+  //   const paginatedFiles = useMemo(() => {
+  //   const start = (currentPage - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   return selectedFiles.slice(start, end);
+  // }, [selectedFiles, currentPage]);
 
-//--------------undodelete function starts---------------
-const handleUndoDelete = async (file: any) => {
+  //--------------undodelete function starts---------------
+  // const handleUndoDelete = async (file: any) => {
+  //   let undoFailed = false;
+  //     try {
+  //       const siteUrl: string = `${file.__siteUrl}/${file.SiteName}`; // here we are trying to get our subsite context
+  //       const listTitle: string = file.__fileMasterList || "FileMaster";
+  //       const id: number = file.Id || file.ID;
+  //       console.log("FILE TO DELETE:", file);
+  //       console.log("Undo Restore Triggered for");
+  //       console.log("Site URL ", siteUrl);
+  //       console.log("list title", listTitle);
+  //       console.log("item id", id);
+  //       debugger;
+  //       try {
+  //     const spnew = spfi(siteUrl).using(SPFx(context));
+  //     console.log("file.CurrentFolderPath", file.CurrentFolderPath);
+  //       const fileItem = await spnew.web.getFileByServerRelativePath(`${file.CurrentFolderPath}/${file.FileName}`).getItem();
+  //     let payload:any={
+  //       IsDeleted:null
+  //     }
+  //       const itemData = await fileItem.update(payload)
+  //     console.log("column updated successfully",itemData);
+  //      } catch (err) {
+  //     console.error("Error updating file in document library:", err);
+  //     Swal.fire({
+  //   title: 'Error!',
+  //   text: 'File restore failed. Please try again.' + err,
+  //   icon: 'error',
+  //   confirmButtonText: 'Cool'
+  //    })
+  //       }
+
+  //       try {
+  //         const siteurl = `${file.__siteUrl}`  // here we are trying to get our site collection context
+  //       const siteSP = spfi(siteurl).using(SPFx(context));
+  //       await siteSP.web.lists.getByTitle(listTitle).items.getById(id).update({ IsDeleted: null });
+
+  //         const refreshed = await loadViewData("RecycleBin");
+  //       if (refreshed) {
+  //         setSelectedFiles([...refreshed]); // spread → force re-render
+  //       }
+
+  //       } catch (err) {
+  //   console.error("Error updating file metadata:", err);
+  //     Swal.fire({
+  //   title: 'Error!',
+  //   text: 'File restore failed. Please try again.' + err,
+  //   icon: 'error',
+  //   confirmButtonText: 'Cool'
+  //    })
+  //       }
+
+
+  //     } catch (e) {
+  //       console.error("Undo (restore) failed:", e);
+  //     }
+  //   }
+
+  // Undo delete function revised by Aman 
+  const handleUndoDelete = async (file: any) => {
+    let undoFailed = false;
+
     try {
-      const siteUrl: string = `${file.__siteUrl}/${file.SiteName}`; // here we are trying to get our subsite context
+      const siteUrl: string = `${file.__siteUrl}/${file.SiteName}`;
       const listTitle: string = file.__fileMasterList || "FileMaster";
       const id: number = file.Id || file.ID;
-      console.log("FILE TO DELETE:", file);
-      console.log("Undo Restore Triggered for");
-      console.log("Site URL ", siteUrl);
-      console.log("list title", listTitle);
-      console.log("item id", id);
-      debugger;
+
+      console.log("Undo Restore Triggered for:", file);
+
+      //  Restore in Document Library
       try {
-    const spnew = spfi(siteUrl).using(SPFx(context));
-    console.log("file.CurrentFolderPath", file.CurrentFolderPath);
-      const fileItem = await spnew.web.getFileByServerRelativePath(`${file.CurrentFolderPath}/${file.FileName}`).getItem();
-    let payload:any={
-      IsDeleted:null
-    }
-      const itemData = await fileItem.update(payload)
-    console.log("column updated successfully",itemData);
-     } catch (err) {
-    console.error("Error updating file in document library:", err);
-    Swal.fire({
-  title: 'Error!',
-  text: 'File restore failed. Please try again.' + err,
-  icon: 'error',
-  confirmButtonText: 'Cool'
-   })
+        const spnew = spfi(siteUrl).using(SPFx(context));
+        const fileItem = await spnew.web
+          .getFileByServerRelativePath(`${file.CurrentFolderPath}/${file.FileName}`)
+          .getItem();
+
+        await fileItem.update({ IsDeleted: null });
+        console.log("Document library restored");
+      } catch (err) {
+        console.error("Error restoring file in document library:", err);
+        undoFailed = true;
       }
-      
+
+      //  Restore in FileMaster list
       try {
-        const siteurl = `${file.__siteUrl}`  // here we are trying to get our site collection context
-      const siteSP = spfi(siteurl).using(SPFx(context));
-      await siteSP.web.lists.getByTitle(listTitle).items.getById(id).update({ IsDeleted: null });
+        const siteSP = spfi(file.__siteUrl).using(SPFx(context));
+        await siteSP.web.lists
+          .getByTitle(listTitle)
+          .items.getById(id)
+          .update({ IsDeleted: null });
 
         const refreshed = await loadViewData("RecycleBin");
-      if (refreshed) {
-        setSelectedFiles([...refreshed]); // spread → force re-render
-      }
-    
+        if (refreshed) {
+          setSelectedFiles([...refreshed]);
+        }
+
+        console.log("FileMaster restored");
       } catch (err) {
-  console.error("Error updating file metadata:", err);
-    Swal.fire({
-  title: 'Error!',
-  text: 'File restore failed. Please try again.' + err,
-  icon: 'error',
-  confirmButtonText: 'Cool'
-   })
+        console.error("Error restoring file metadata:", err);
+        undoFailed = true;
       }
-    
+
+      // Show error ONLY if undo actually failed
+      if (undoFailed) {
+        Swal.fire({
+          title: "Error!",
+          text: "File restore failed. Please try again.",
+          icon: "error",
+          confirmButtonText: "OK"
+        });
+      }
 
     } catch (e) {
       console.error("Undo (restore) failed:", e);
+      Swal.fire({
+        title: "Error!",
+        text: "File restore failed. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
     }
-  }
+  };
+
 
   //-----------------Audit History function -----------------
 
@@ -284,56 +351,56 @@ const handleUndoDelete = async (file: any) => {
   };
 
   /** ---------------------------------- effect: initial load ---------------------------------- */
-const [pendingPath, setPendingPath] = useState<string[] | null>(null);
- 
+  const [pendingPath, setPendingPath] = useState<string[] | null>(null);
 
 
-useEffect(() => {
-  const initialize = async () => {
-    console.log("[initialize] Start");
-    await loadRootSites();
 
-    // Check URL hash on initial load
-    const rawHash = window.location.hash.substring(1);
-    const hash = decodeURIComponent(rawHash || "");
-    console.log("[initialize] Hash:", rawHash, "decoded:", hash);
+  useEffect(() => {
+    const initialize = async () => {
+      console.log("[initialize] Start");
+      await loadRootSites();
 
-    if (hash) {
-      setPendingPath(hash.split("/"));
-    } else {
-      handleViewButtonClick("My request");
+      // Check URL hash on initial load
+      const rawHash = window.location.hash.substring(1);
+      const hash = decodeURIComponent(rawHash || "");
+      console.log("[initialize] Hash:", rawHash, "decoded:", hash);
+
+      if (hash) {
+        setPendingPath(hash.split("/"));
+      } else {
+        handleViewButtonClick("My request");
+      }
+      setIsInitialLoad(false);
+      console.log("[initialize] Complete");
+    };
+
+    initialize();
+
+    // Listen for browser hash changes
+    const handleHashChange = () => {
+      const rawHash = window.location.hash.substring(1);
+      const hash = decodeURIComponent(rawHash || "");
+      console.log("[hashchange] New hash:", rawHash, "decoded:", hash);
+      if (hash) {
+        setPendingPath(hash.split("/"));
+      } else {
+        handleViewButtonClick("My request");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    if (pendingPath && treeData.length) {
+      console.log("[pendingPath effect] Navigating to:", pendingPath);
+      navigateToPath(pendingPath);
+      setPendingPath(null); // prevent repeat
     }
-    setIsInitialLoad(false);
-    console.log("[initialize] Complete");
-  };
+  }, [pendingPath, treeData]);
 
-  initialize();
-
-  // Listen for browser hash changes
-  const handleHashChange = () => {
-    const rawHash = window.location.hash.substring(1);
-    const hash = decodeURIComponent(rawHash || "");
-    console.log("[hashchange] New hash:", rawHash, "decoded:", hash);
-    if (hash) {
-      setPendingPath(hash.split("/"));
-    } else {
-      handleViewButtonClick("My request");
-    }
-  };
-
-  window.addEventListener("hashchange", handleHashChange);
-  return () => window.removeEventListener("hashchange", handleHashChange);
-}, []);
-
-useEffect(() => {
-  if (pendingPath && treeData.length) {
-    console.log("[pendingPath effect] Navigating to:", pendingPath);
-    navigateToPath(pendingPath);
-    setPendingPath(null); // prevent repeat
-  }
-}, [pendingPath, treeData]);
-
-// aman changes for folder permission manage 
+  // aman changes for folder permission manage 
   useEffect(() => {
     window.managePermission = (folder: any) => {
       setSelectedFolder(folder);
@@ -345,108 +412,108 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-   //addhyan chanes on three dot should hide on click anywhere outside oif screen
+  //addhyan chanes on three dot should hide on click anywhere outside oif screen
   // three dot menu 
 
-    useEffect(() => {
-    if (menuOpenIdx !== null) {
-      const handleClickOutside = (event: MouseEvent) => {
-        // Only close if the click is outside any menu
-        const menus = document.querySelectorAll('.three-dot-menu');
-        let clickedInside = false;
-        menus.forEach(menu => {
-          if (menu.contains(event.target as Node)) {
-            clickedInside = true;
-          }
+  //   useEffect(() => {
+  //   if (menuOpenIdx !== null) {
+  //     const handleClickOutside = (event: MouseEvent) => {
+  //       // Only close if the click is outside any menu
+  //       const menus = document.querySelectorAll('.three-dot-menu');
+  //       let clickedInside = false;
+  //       menus.forEach(menu => {
+  //         if (menu.contains(event.target as Node)) {
+  //           clickedInside = true;
+  //         }
+  //       });
+  //       if (!clickedInside) {
+  //         setMenuOpenIdx(null);
+  //       }
+  //     };
+  //     document.addEventListener('mousedown', handleClickOutside);
+  //     return () => {
+  //       document.removeEventListener('mousedown', handleClickOutside);
+  //     };
+  //   }
+  // }, [menuOpenIdx]);
+
+
+
+  const loadRootSites = async () => {
+    try {
+      console.log("[loadRootSites] Fetching master lists...");
+      const [siteList, subsiteList] = await Promise.all([
+        sp.web.lists.getByTitle("MasterSiteCollection").items.select("Id", "Title", "SiteURL").top(5000)(),
+        sp.web.lists.getByTitle("MasterSiteURL").items.select("Id", "Description", "Title", "SiteURL", "Active", "SiteID", "FileMasterList", "Function").top(5000)(),
+      ]);
+
+      const nodes: TreeNode[] = siteList.map((site: any) => {
+        const siteUrl = site.SiteURL?.trim();
+        const siteSubs = subsiteList.filter((s: any) => {
+          const subUrl = s.SiteURL?.trim().toLowerCase();
+          const parentUrl = siteUrl?.toLowerCase();
+          if (!subUrl || !parentUrl) return false;
+          return subUrl === parentUrl || subUrl.startsWith(parentUrl + "/");
         });
-        if (!clickedInside) {
-          setMenuOpenIdx(null);
-        }
-      };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [menuOpenIdx]);
 
+        // Group subsites by function, but only include subsites that have a function
+        const subsitesWithFunctions = siteSubs.filter(sub => sub.Function);
+        const subsitesWithoutFunctions = siteSubs.filter(sub => !sub.Function);
 
+        const groupedByFunction = subsitesWithFunctions.reduce((acc: any, sub: any) => {
+          const func = sub.Function;
+          if (!acc[func]) acc[func] = [];
+          acc[func].push(sub);
+          return acc;
+        }, {});
 
-const loadRootSites = async () => {
-  try {
-    console.log("[loadRootSites] Fetching master lists...");
-    const [siteList, subsiteList] = await Promise.all([
-      sp.web.lists.getByTitle("MasterSiteCollection").items.select("Id", "Title", "SiteURL").top(5000)(),
-      sp.web.lists.getByTitle("MasterSiteURL").items.select("Id", "Description", "Title", "SiteURL", "Active", "SiteID", "FileMasterList", "Function").top(5000)(),
-    ]);
+        const functionNodes: TreeNode[] = Object.entries(groupedByFunction).map(([funcName, subs]: [string, any[]]) => ({
+          key: `func-${site.Id}-${funcName}`,
+          title: funcName,
+          type: "function",
+          siteUrl: siteUrl,
+          hasChildren: true,
+          parentKey: `site-${site.Id}`,
+          children: (subs as any[]).map((sub: any) => ({
+            key: `subsite-${sub.Id}`,
+            title: sub.Title,
+            type: "subsite",
+            siteUrl: sub.SiteURL?.trim(),
+            hasChildren: true,
+            parentKey: `func-${site.Id}-${funcName}`,
+          })),
+        }));
 
-    const nodes: TreeNode[] = siteList.map((site: any) => {
-      const siteUrl = site.SiteURL?.trim();
-      const siteSubs = subsiteList.filter((s: any) => {
-        const subUrl = s.SiteURL?.trim().toLowerCase();
-        const parentUrl = siteUrl?.toLowerCase();
-        if (!subUrl || !parentUrl) return false;
-        return subUrl === parentUrl || subUrl.startsWith(parentUrl + "/");
+        // Create the site node with both function nodes and direct subsites
+        const siteNode: TreeNode = {
+          key: `site-${site.Id}`,
+          title: site.Title,
+          type: "site",
+          siteUrl: siteUrl,
+          hasChildren: functionNodes.length > 0 || subsitesWithoutFunctions.length > 0,
+          children: [
+            ...functionNodes,
+            ...subsitesWithoutFunctions.map((sub: any) => ({
+              key: `subsite-${sub.Id}`,
+              title: sub.Title,
+              type: "subsite" as TreeNode["type"], // Add type guard here
+              siteUrl: sub.SiteURL?.trim(),
+              hasChildren: true,
+              parentKey: `site-${site.Id}`,
+            }))
+          ],
+        };
+
+        return siteNode;
       });
 
-      // Group subsites by function, but only include subsites that have a function
-      const subsitesWithFunctions = siteSubs.filter(sub => sub.Function);
-      const subsitesWithoutFunctions = siteSubs.filter(sub => !sub.Function);
-
-      const groupedByFunction = subsitesWithFunctions.reduce((acc: any, sub: any) => {
-        const func = sub.Function;
-        if (!acc[func]) acc[func] = [];
-        acc[func].push(sub);
-        return acc;
-      }, {});
-
-      const functionNodes: TreeNode[] = Object.entries(groupedByFunction).map(([funcName, subs]: [string, any[]]) => ({
-        key: `func-${site.Id}-${funcName}`,
-        title: funcName,
-        type: "function",
-        siteUrl: siteUrl,
-        hasChildren: true,
-        parentKey: `site-${site.Id}`,
-        children: (subs as any[]).map((sub: any) => ({
-          key: `subsite-${sub.Id}`,
-          title: sub.Title,
-          type: "subsite",
-          siteUrl: sub.SiteURL?.trim(),
-          hasChildren: true,
-          parentKey: `func-${site.Id}-${funcName}`,
-        })),
-      }));
-
-      // Create the site node with both function nodes and direct subsites
-      const siteNode: TreeNode = {
-        key: `site-${site.Id}`,
-        title: site.Title,
-        type: "site",
-        siteUrl: siteUrl,
-        hasChildren: functionNodes.length > 0 || subsitesWithoutFunctions.length > 0,
-       children: [
-  ...functionNodes,
-  ...subsitesWithoutFunctions.map((sub: any) => ({
-    key: `subsite-${sub.Id}`,
-    title: sub.Title,
-    type: "subsite" as TreeNode["type"], // Add type guard here
-    siteUrl: sub.SiteURL?.trim(),
-    hasChildren: true,
-    parentKey: `site-${site.Id}`,
-  }))
-],
-      };
-
-      return siteNode;
-    });
-
-    console.log("[loadRootSites] Root sites loaded:", nodes);
-    setTreeData(nodes);
-    buildNodeMap(nodes);
-  } catch (error) {
-    console.error("[loadRootSites] Error:", error);
-  }
-};
+      console.log("[loadRootSites] Root sites loaded:", nodes);
+      setTreeData(nodes);
+      buildNodeMap(nodes);
+    } catch (error) {
+      console.error("[loadRootSites] Error:", error);
+    }
+  };
   /** -------------------------------- build node map (same) ----------------------------------- */
   const buildNodeMap = (nodes: TreeNode[], map: Record<string, TreeNode> = {}) => {
     nodes.forEach((node) => {
@@ -489,73 +556,73 @@ const loadRootSites = async () => {
     console.log("[updateUrl] ->", `#${path}`);
     window.history.pushState(null, "", `#${path}`);
   };
-const navigateToPath = async (pathTitles: string[]) => {
-  console.log("[navigateToPath] raw segments:", pathTitles);
-  if (pathTitles.length === 0 || !treeData.length) return;
-  
-  const decodedTitles = pathTitles.map((t) => decodeURIComponent(t)).filter((t) => t.trim() !== "");
-  let currentNode = treeData.find((n) => (n.title || "").toLowerCase() === decodedTitles[0].toLowerCase()) || undefined;
-  
-  if (!currentNode) return;
-  
-  await ensureExpanded(currentNode);
-  const pathNodes: TreeNode[] = [currentNode];
-  
-  for (let i = 1; i < decodedTitles.length; i++) {
-    const seg = decodedTitles[i];
+  const navigateToPath = async (pathTitles: string[]) => {
+    console.log("[navigateToPath] raw segments:", pathTitles);
+    if (pathTitles.length === 0 || !treeData.length) return;
+
+    const decodedTitles = pathTitles.map((t) => decodeURIComponent(t)).filter((t) => t.trim() !== "");
+    let currentNode = treeData.find((n) => (n.title || "").toLowerCase() === decodedTitles[0].toLowerCase()) || undefined;
+
+    if (!currentNode) return;
+
     await ensureExpanded(currentNode);
-    
-    let nextNode = findChildByTitleCI(currentNode, seg);
-    
-    // If we can't find the next node, check if we're at a site/subsite and look for "Documents"
-    if (!nextNode && (currentNode.type === "site" || currentNode.type === "subsite")) {
-      const docsNode = findChildByTitleCI(currentNode, "Documents");
-      if (docsNode) {
-        await ensureExpanded(docsNode);
-        nextNode = findChildByTitleCI(docsNode, seg);
-        if (nextNode) {
-          currentNode = nextNode;
-          pathNodes.push(currentNode);
-          continue;
-        } else {
-          currentNode = docsNode;
-          pathNodes.push(currentNode);
-          i--; // Retry the same segment with the documents node as current
-          continue;
+    const pathNodes: TreeNode[] = [currentNode];
+
+    for (let i = 1; i < decodedTitles.length; i++) {
+      const seg = decodedTitles[i];
+      await ensureExpanded(currentNode);
+
+      let nextNode = findChildByTitleCI(currentNode, seg);
+
+      // If we can't find the next node, check if we're at a site/subsite and look for "Documents"
+      if (!nextNode && (currentNode.type === "site" || currentNode.type === "subsite")) {
+        const docsNode = findChildByTitleCI(currentNode, "Documents");
+        if (docsNode) {
+          await ensureExpanded(docsNode);
+          nextNode = findChildByTitleCI(docsNode, seg);
+          if (nextNode) {
+            currentNode = nextNode;
+            pathNodes.push(currentNode);
+            continue;
+          } else {
+            currentNode = docsNode;
+            pathNodes.push(currentNode);
+            i--; // Retry the same segment with the documents node as current
+            continue;
+          }
         }
       }
+
+      if (!nextNode && currentNode.type === "library") {
+        await ensureExpanded(currentNode);
+        nextNode = findChildByTitleCI(currentNode, seg);
+      }
+
+      if (!nextNode) break;
+
+      currentNode = nextNode;
+      pathNodes.push(currentNode);
     }
-    
-    if (!nextNode && currentNode.type === "library") {
-      await ensureExpanded(currentNode);
-      nextNode = findChildByTitleCI(currentNode, seg);
+
+    console.log("[navigateToPath] Final path:", pathNodes.map(n => n.title));
+
+    // Update breadcrumbs based on the full path we navigated
+    const breadcrumbPath = pathNodes.map(node => ({
+      key: node.key,
+      title: node.title,
+      type: node.type,
+      siteUrl: node.siteUrl,
+      libraryTitle: node.libraryTitle,
+      folderPath: node.folderPath
+    }));
+
+    setBreadcrumbs(breadcrumbPath);
+
+    // If we ended on a library or folder, load its files
+    if (currentNode.type === "library" || currentNode.type === "folder") {
+      await loadFilesForNode(currentNode);
     }
-    
-    if (!nextNode) break;
-    
-    currentNode = nextNode;
-    pathNodes.push(currentNode);
-  }
-  
-  console.log("[navigateToPath] Final path:", pathNodes.map(n => n.title));
-  
-  // Update breadcrumbs based on the full path we navigated
-  const breadcrumbPath = pathNodes.map(node => ({
-    key: node.key,
-    title: node.title,
-    type: node.type,
-    siteUrl: node.siteUrl,
-    libraryTitle: node.libraryTitle,
-    folderPath: node.folderPath
-  }));
-  
-  setBreadcrumbs(breadcrumbPath);
-  
-  // If we ended on a library or folder, load its files
-  if (currentNode.type === "library" || currentNode.type === "folder") {
-    await loadFilesForNode(currentNode);
-  }
-};
+  };
   /** --------------------------------------- clicking ----------------------------------------- */
   // const handleNodeClick = async (node: TreeNode) => {
   //   console.log("[handleNodeClick] node clicked:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
@@ -584,46 +651,48 @@ const navigateToPath = async (pathTitles: string[]) => {
   //     }
   //   }
   // };
-const handleNodeClick = async (node: TreeNode) => {
+  const handleNodeClick = async (node: TreeNode) => {
+    setShowUploadPanel(false);    // Upload File Button Hide From Site collection and Subsites click by Aman
 
-  // this below lines will close preview modal  (addhyan work on this )
-   setShowPreviewModal(false); // <-- Close preview modal
-  setPreviewFile(null);       // <-- Clear preview file
-  // this below lines will close preview modal (addhyan work on this )
-  console.log("[handleNodeClick] node clicked:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
-  location = node.siteUrl;
-  updateUrl(node);
-  setActiveView("");
-  setSelectedCurrentNode(node);
-  // Always update breadcrumbs first
-  const breadcrumbPath = getNodePath(node.key);
-  setBreadcrumbs(breadcrumbPath);
-  
-  if (node.type === "library" || node.type === "folder") {
-    await loadFilesForNode(node);
-    return;
-  }
+    // this below lines will close preview modal  (addhyan work on this )
+    setShowPreviewModal(false); // <-- Close preview modal
+    setPreviewFile(null);       // <-- Clear preview file
+    // this below lines will close preview modal (addhyan work on this )
+    console.log("[handleNodeClick] node clicked:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
+    location = node.siteUrl;
+    updateUrl(node);
+    setActiveView("");
+    setSelectedCurrentNode(node);
+    // Always update breadcrumbs first
+    const breadcrumbPath = getNodePath(node.key);
+    setBreadcrumbs(breadcrumbPath);
 
-  if (node.type === "site" || node.type === "subsite") {
-    await ensureExpanded(node);
-    // i have commented this below code it was previous working code but it was auto selecting document library 
-    // console.log("[handleNodeClick] Site/Subsite: ensuring libraries are expanded");
-    // await ensureExpanded(node);
-    // const documentsNode = findChildByTitleCI(node, "Documents") || (node.children && node.children[0]);
-    // if (documentsNode) {
-    //   console.log("[handleNodeClick] Will load files for library:", documentsNode.title);
-    //   await loadFilesForNode(documentsNode);
-    // } else {
-    //   console.log("[handleNodeClick] No libraries found under this site/subsite.");
-    // }
+    if (node.type === "library" || node.type === "folder") {
+      await loadFilesForNode(node);
+      return;
+    }
 
-  }
-};
+    if (node.type === "site" || node.type === "subsite") {
+      await ensureExpanded(node);
+      setSelectedFiles([]);    //Addhyan 14/01/2026 Clear files when clicking on site/subsite - show only tree structure
+      // i have commented this below code it was previous working code but it was auto selecting document library 
+      // console.log("[handleNodeClick] Site/Subsite: ensuring libraries are expanded");
+      // await ensureExpanded(node);
+      // const documentsNode = findChildByTitleCI(node, "Documents") || (node.children && node.children[0]);
+      // if (documentsNode) {
+      //   console.log("[handleNodeClick] Will load files for library:", documentsNode.title);
+      //   await loadFilesForNode(documentsNode);
+      // } else {
+      //   console.log("[handleNodeClick] No libraries found under this site/subsite.");
+      // }
+
+    }
+  };
   /** ------------------------------------ load files (same) ----------------------------------- */
   const loadFilesForNode = async (node: TreeNode) => {
     try {
       setFilesLoadedloadedfromnode(true);
-   
+
       console.log("[loadFilesForNode] Start:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
       const siteSP = spfi(node.siteUrl).using(SPFx(context));
       let folderPath = "";
@@ -644,13 +713,36 @@ const handleNodeClick = async (node: TreeNode) => {
         const files = await siteSP.web.getFolderByServerRelativePath(serverRel).files();
         console.log("[loadFilesForNode] Files fetched:", files);
         console.log("[loadFilesForNode] Files loaded:", files?.length || 0);
-        setSelectedFiles(files);
-        
+        // setSelectedFiles(files);
+
+        const baseSiteUrl = node.siteUrl.split("/sites/")[0] + "/sites/";
+        const siteCollection = node.siteUrl.split("/sites/")[1].split("/")[0];
+        const entityName = node.siteUrl.split("/").pop();
+
+        const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
+
+        const fmItems = await spRoot.web.lists
+          .getByTitle(`DMS${entityName}FileMaster`)
+          .items.select("FileName", "IsDeleted")
+          .top(5000)();
+
+        const deletedSet = new Set(
+          fmItems
+            .filter(i => i.IsDeleted !== null && i.IsDeleted !== undefined)
+            .map(i => i.FileName)
+        );
+
+        const visibleFiles = (files || []).filter(
+          (f: any) => !deletedSet.has(f.Name)
+        );
+
+        setSelectedFiles(visibleFiles);
+
         console.log("[loadFilesForNode] Selected files set:", selectedFiles);
         setBreadcrumbs(getNodePath(node.key));
 
         console.log("Breadcrumbs updated:", breadcrumbs);
-        console.log("Breadcrumbs updated 2:" +JSON.stringify(getNodePath(node.key)) )
+        console.log("Breadcrumbs updated 2:" + JSON.stringify(getNodePath(node.key)))
       } else {
         console.log("[loadFilesForNode] No folderPath computed for node; skipping files fetch.");
       }
@@ -660,92 +752,93 @@ const handleNodeClick = async (node: TreeNode) => {
     }
   };
 
-const toggleNode = async (node: TreeNode) => {
-  if (node.type === "function") {
-    console.log("[toggleNode] Expanding function:", node.title);
-    node.isExpanded = !node.isExpanded;
-    setTreeData([...treeData]);
-    buildNodeMap(treeData);
-    return;
-  }
-
-  if (!node.isExpanded && node.hasChildren) {
-    const siteSP = spfi(node.siteUrl).using(SPFx(context));
-    console.log("[toggleNode] Expanding:", { title: node.title, type: node.type, site: node.siteUrl });
-    try {
-      console.log("[toggleNode] Fetching node type:", node.type);
-      console.log("[toggleNode] Fetching node type:", node.type, "for node:", node.title);
-      
-      if (node.type === "subsite") {
-        // i am adding this here set currrent site url because when we click on subsite it will set current site url for upload file / or create fodler it pass as props
-      setCurrentSiteUrl(node.siteUrl);
-        console.log("[toggleNode] Loading libraries for subsite:", node.title);
-        const libs = await siteSP.web.lists.filter("BaseTemplate eq 101 and Hidden eq false").select("Title")();
-        node.children = libs.map((lib: any) => ({
-          key: `lib-${node.key}-${lib.Title}`,
-          title: lib.Title,
-          type: "library",
-          siteUrl: node.siteUrl,
-          libraryTitle: lib.Title,
-          hasChildren: true,
-          parentKey: node.key,
-        }));
-        console.log("[toggleNode] Libraries loaded:", node.children?.map((c) => c.title));
-      }
-
-      if (node.type === "library") {
-
-        const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${node.libraryTitle}`;
-        console.log("[toggleNode] Loading folders for library:", node.title, "path:", serverRel);
-        const folders = await siteSP.web.getFolderByServerRelativePath(serverRel).folders();
-        node.children = folders
-          .filter((f: any) => !f.Name.startsWith("Forms"))
-          .map((f: any) => ({
-            key: `folder-${node.key}-${f.Name}`,
-            title: f.Name,
-            type: "folder",
-            siteUrl: node.siteUrl,
-            libraryTitle: node.libraryTitle,
-            folderPath: `${node.libraryTitle}/${f.Name}`,
-            hasChildren: true,
-            parentKey: node.key,
-          }));
-        console.log("[toggleNode] Folders loaded:", node.children?.map((c) => c.title));
-      }
-
-      if (node.type === "folder") {
-        const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${node.folderPath}`;
-        console.log("[toggleNode] Loading subfolders for folder:", node.title, "path:", serverRel);
-        const subFolders = await siteSP.web.getFolderByServerRelativePath(serverRel).folders();
-        node.children = subFolders
-          .filter((f: any) => !f.Name.startsWith("Forms"))
-          .map((f: any) => ({
-            key: `subfolder-${node.key}-${f.Name}`,
-            title: f.Name,
-            type: "folder",
-            siteUrl: node.siteUrl,
-            libraryTitle: node.libraryTitle,
-            folderPath: `${node.folderPath}/${f.Name}`,
-            hasChildren: true,
-            parentKey: node.key,
-          }));
-        console.log("[toggleNode] Subfolders loaded:", node.children?.map((c) => c.title));
-      }
-
-      node.isExpanded = true;
+  const toggleNode = async (node: TreeNode) => {
+    if (node.type === "function") {
+      console.log("[toggleNode] Expanding function:", node.title);
+      node.isExpanded = !node.isExpanded;
       setTreeData([...treeData]);
       buildNodeMap(treeData);
-    } catch (error) {
-      console.error("[toggleNode] Error expanding node:", error);
+      return;
     }
-  } else {
-    node.isExpanded = !node.isExpanded;
-    console.log("[toggleNode] Toggled to", node.isExpanded ? "expanded" : "collapsed", "for:", node.title);
-    setTreeData([...treeData]);
-  }
-};
+
+    if (!node.isExpanded && node.hasChildren) {
+      const siteSP = spfi(node.siteUrl).using(SPFx(context));
+      console.log("[toggleNode] Expanding:", { title: node.title, type: node.type, site: node.siteUrl });
+      try {
+        console.log("[toggleNode] Fetching node type:", node.type);
+        console.log("[toggleNode] Fetching node type:", node.type, "for node:", node.title);
+
+        if (node.type === "subsite") {
+          // i am adding this here set currrent site url because when we click on subsite it will set current site url for upload file / or create fodler it pass as props
+          setCurrentSiteUrl(node.siteUrl);
+          console.log("[toggleNode] Loading libraries for subsite:", node.title);
+          const libs = await siteSP.web.lists.filter("BaseTemplate eq 101 and Hidden eq false").select("Title")();
+          node.children = libs.map((lib: any) => ({
+            key: `lib-${node.key}-${lib.Title}`,
+            title: lib.Title,
+            type: "library",
+            siteUrl: node.siteUrl,
+            libraryTitle: lib.Title,
+            hasChildren: true,
+            parentKey: node.key,
+          }));
+          console.log("[toggleNode] Libraries loaded:", node.children?.map((c) => c.title));
+        }
+
+        if (node.type === "library") {
+
+          const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${node.libraryTitle}`;
+          console.log("[toggleNode] Loading folders for library:", node.title, "path:", serverRel);
+          const folders = await siteSP.web.getFolderByServerRelativePath(serverRel).folders();
+          node.children = folders
+            .filter((f: any) => !f.Name.startsWith("Forms"))
+            .map((f: any) => ({
+              key: `folder-${node.key}-${f.Name}`,
+              title: f.Name,
+              type: "folder",
+              siteUrl: node.siteUrl,
+              libraryTitle: node.libraryTitle,
+              folderPath: `${node.libraryTitle}/${f.Name}`,
+              hasChildren: true,
+              parentKey: node.key,
+            }));
+          console.log("[toggleNode] Folders loaded:", node.children?.map((c) => c.title));
+        }
+
+        if (node.type === "folder") {
+          const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${node.folderPath}`;
+          console.log("[toggleNode] Loading subfolders for folder:", node.title, "path:", serverRel);
+          const subFolders = await siteSP.web.getFolderByServerRelativePath(serverRel).folders();
+          node.children = subFolders
+            .filter((f: any) => !f.Name.startsWith("Forms"))
+            .map((f: any) => ({
+              key: `subfolder-${node.key}-${f.Name}`,
+              title: f.Name,
+              type: "folder",
+              siteUrl: node.siteUrl,
+              libraryTitle: node.libraryTitle,
+              folderPath: `${node.folderPath}/${f.Name}`,
+              hasChildren: true,
+              parentKey: node.key,
+            }));
+          console.log("[toggleNode] Subfolders loaded:", node.children?.map((c) => c.title));
+        }
+
+        node.isExpanded = true;
+        setTreeData([...treeData]);
+        buildNodeMap(treeData);
+      } catch (error) {
+        console.error("[toggleNode] Error expanding node:", error);
+      }
+    } else {
+      node.isExpanded = !node.isExpanded;
+      console.log("[toggleNode] Toggled to", node.isExpanded ? "expanded" : "collapsed", "for:", node.title);
+      setTreeData([...treeData]);
+    }
+  };
   /** -------------------------------- breadcrumb click (same) --------------------------------- */
   const handleBreadcrumbClick = async (item: BreadcrumbItem) => {
+    setShowUploadPanel(false);                  // Upload File Button Hide From Site collection and Subsites click by Aman
     console.log("[breadcrumb] Clicked:", item);
     if (item.type === "view") {
       handleViewButtonClick(item.title);
@@ -815,7 +908,7 @@ const toggleNode = async (node: TreeNode) => {
         case "My favourite":
           files = await loadViewData("MyFavourite");
           break;
-          case "My Folders":
+        case "My Folders":
           files = await loadViewData("MyFolders");
           break;
         case "Share with me":
@@ -830,7 +923,7 @@ const toggleNode = async (node: TreeNode) => {
       }
       console.log(`[view] Loaded ${viewName} data:`, files);
       setSelectedFiles(files);
-          console.log("[loadFilesForNode] Selected files set:", selectedFiles);
+      console.log("[loadFilesForNode] Selected files set:", selectedFiles);
       setCurrentFolderPath("");
       setCurrentSiteUrl("");
     } catch (error) {
@@ -841,7 +934,7 @@ const toggleNode = async (node: TreeNode) => {
 
   const loadViewData = async (viewType: string): Promise<any[]> => {
     setShowPreviewModal(false)
-       // sourish 20/8/25 previous wworking code 
+    // sourish 20/8/25 previous wworking code 
     // if (viewType === "MyFolders") {
     //   try {
     //     const meEmail =
@@ -913,21 +1006,21 @@ const toggleNode = async (node: TreeNode) => {
     //   }
     // }
     //updated code by aman after manage folder permission
-     if (viewType === "MyFolders") {
+    if (viewType === "MyFolders") {
       try {
         const meEmail =
           (context.pageContext as any)?.user?.email ||
           (context.pageContext as any)?.user?.loginName ||
           "";
 
-        
+
         const masterSites = await sp.web.lists
           .getByTitle("MasterSiteCollection")
           .items.select("Id", "Title", "SiteURL")
           .top(5000)();
 
-            // i commented this because it was fetching only records from spfx2site Dmsfodlermaster list
-          // const rootSiteUrl = "https://officeindia.sharepoint.com/sites/AlRostmaniSpfx2";
+        // i commented this because it was fetching only records from spfx2site Dmsfodlermaster list
+        // const rootSiteUrl = "https://officeindia.sharepoint.com/sites/AlRostmaniSpfx2";
 
         // const scopedSites = (masterSites || []).filter((ms: any) =>
         //   (ms.SiteURL || "").toLowerCase().startsWith(rootSiteUrl.toLowerCase())
@@ -949,7 +1042,7 @@ const toggleNode = async (node: TreeNode) => {
             try {
               const webMeta: any = await siteSP.web.select("Id")();
               __webId = webMeta?.Id || "";
-            } catch {}
+            } catch { }
 
             const mine = (listItems || []).filter(
               (it: any) => ((it?.Author?.EMail || "") as string).toLowerCase() === meEmail.toLowerCase()
@@ -1141,119 +1234,253 @@ const toggleNode = async (node: TreeNode) => {
         return [];
       }
     }
-     if (viewType === "MyRequest" || viewType === "MyFavourite" || viewType === "RecycleBin") {
-    
-    // 🔹 Step 1: Get all site + list mappings from master config
-    const configItems = await sp.web.lists
-      .getByTitle("Allsitesfilemaster")
-      .items.select("FileMaster", "sitecollection")
-      .top(5000)();
+    if (viewType === "MyRequest" || viewType === "MyFavourite" || viewType === "RecycleBin") {
 
-    const groupedBySite = configItems.reduce((acc, config) => {
-      (acc[config.sitecollection] ||= []).push(config);
-      return acc;
-    }, {} as Record<string, any[]>);
+      // 🔹 Step 1: Get all site + list mappings from master config
+      const configItems = await sp.web.lists
+        .getByTitle("Allsitesfilemaster")
+        .items.select("FileMaster", "sitecollection")
+        .top(5000)();
 
-    const allData: any[] = [];
-    const currentUrl = new URL(context.pageContext.web.absoluteUrl);
+      const groupedBySite = configItems.reduce((acc, config) => {
+        (acc[config.sitecollection] ||= []).push(config);
+        return acc;
+      }, {} as Record<string, any[]>);
 
-    // Current user info (for filtering RecycleBin items)
-    const meName = context.pageContext.user.displayName || "";
-    const meEmail =
-      (context.pageContext as any)?.user?.email ||
-      (context.pageContext as any)?.user?.loginName ||
-      "";
+      const allData: any[] = [];
+      const currentUrl = new URL(context.pageContext.web.absoluteUrl);
 
-    // 🔹 Step 2: Process each site collection
-    for (const [siteCollection, siteConfigs] of Object.entries(groupedBySite)) {
-      try {
-        const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${siteCollection}`;
-        const siteSP = spfi(siteUrl).using(SPFx(context));
+      // Current user info (for filtering RecycleBin items)
+      const meName = context.pageContext.user.displayName || "";
+      const meEmail =
+        (context.pageContext as any)?.user?.email ||
+        (context.pageContext as any)?.user?.loginName ||
+        "";
 
-        // Process each FileMaster list inside this site collection
-        const siteData = await Promise.all(
-          (siteConfigs as any[]).map(async (config: any) => {
-            try {
-              console.log(`Fetching from ${config.FileMaster} in ${siteCollection}`);
-              const items = await siteSP.web.lists
-                .getByTitle(config.FileMaster)
-                .items.top(1000)();
+      // 🔹 Step 2: Process each site collection
+      for (const [siteCollection, siteConfigs] of Object.entries(groupedBySite)) {
+        try {
+          const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${siteCollection}`;
+          const siteSP = spfi(siteUrl).using(SPFx(context));
 
-              if (viewType === "MyFavourite") {
-                // 🔹 Filter favourites
-                return items.filter((item: any) => item.IsFavourite === true);
+          // Process each FileMaster list inside this site collection
+          const siteData = await Promise.all(
+            (siteConfigs as any[]).map(async (config: any) => {
+              try {
+                console.log(`Fetching from ${config.FileMaster} in ${siteCollection}`);
+                const items = await siteSP.web.lists
+                  .getByTitle(config.FileMaster)
+                  .items.top(1000)();
+
+                if (viewType === "MyFavourite") {
+                  // 🔹 Filter favourites
+                  return items.filter((item: any) => item.IsFavourite === true);
+                }
+
+                if (viewType === "RecycleBin") {
+                  // 🔹 Only items deleted by current user
+                  return (items || [])
+                    .filter((it: any) => {
+                      const cu = it?.CurrentUser || "";
+                      const isDel = it?.IsDeleted;
+                      return isDel !== null && isDel !== undefined && (cu === meName || cu === meEmail);
+                    })
+                    .map((it: any) => ({
+                      ...it,
+                      __siteUrl: siteUrl,
+                      __fileMasterList: config.FileMaster,
+                      __libraryTitle: (it as any).DocumentLibraryName || (it as any).LibraryName || (it as any).DocumentLibrary || (it as any).DocLibName || "",
+                      __folderPath: (it as any).FolderPath || (it as any).FilePath || (it as any).RelativeFolderPath || "",
+                    }));
+                }
+
+                // 🔹 Default: MyRequest (no filter, just tag for traceability)
+                return (items || []).map((it: any) => ({
+                  ...it,
+                  __siteUrl: siteUrl,
+                  __fileMasterList: config.FileMaster,
+                }));
+              } catch (error) {
+                console.error(`Error fetching from ${config.FileMaster} in ${siteCollection}:`, error);
+                return [];
               }
+            })
+          );
 
-              if (viewType === "RecycleBin") {
-                // 🔹 Only items deleted by current user
-                return (items || [])
-                  .filter((it: any) => {
-                    const cu = it?.CurrentUser || "";
-                    const isDel = it?.IsDeleted;
-                    return isDel !== null && isDel !== undefined && (cu === meName || cu === meEmail);
-                  })
-                  .map((it: any) => ({
-                    ...it,
-                    __siteUrl: siteUrl,
-                    __fileMasterList: config.FileMaster,
-                    __libraryTitle: (it as any).DocumentLibraryName || (it as any).LibraryName || (it as any).DocumentLibrary || (it as any).DocLibName || "",
-                    __folderPath: (it as any).FolderPath || (it as any).FilePath || (it as any).RelativeFolderPath || "",
-                  }));
-              }
-
-              // 🔹 Default: MyRequest (no filter, just tag for traceability)
-              return (items || []).map((it: any) => ({
-                ...it,
-                __siteUrl: siteUrl,
-                __fileMasterList: config.FileMaster,
-              }));
-            } catch (error) {
-              console.error(`Error fetching from ${config.FileMaster} in ${siteCollection}:`, error);
-              return [];
-            }
-          })
-        );
-
-        allData.push(...siteData.flat());
-      } catch (error) {
-        console.error(`Error processing site collection ${siteCollection}:`, error);
+          allData.push(...siteData.flat());
+        } catch (error) {
+          console.error(`Error processing site collection ${siteCollection}:`, error);
+        }
       }
-    }
 
-    return allData;
-  }
+      return allData;
+    }
     return [];
   };
- // #region Toggle IsFav List
-  const toggleFavourite = async (file: any) => {
+  // #region Toggle IsFav List
+  // const toggleFavourite = async (file: any) => {
+  //   try {
+  //     // Build site URL dynamically
+  //     const currentUrl = new URL(context.pageContext.web.absoluteUrl);
+  //     const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${file.SiteCollection}`;
+  //     const siteSP = spfi(siteUrl).using(SPFx(context));
+
+  //     // Update SharePoint item
+  //     await siteSP.web.lists
+  //       .getByTitle(file.ListName)
+  //       .items.getById(file.Id)
+  //       .update({
+  //         IsFavourite: !file.IsFavourite, // flip value
+  //       });
+
+  //     console.log(
+  //       `Updated favourite for ${
+  //         file.Title || file.FileName
+  //       } → ${!file.IsFavourite}`
+  //     );
+
+  //     // Refresh current view (example: MyFavourite)
+  //     await loadViewData("MyFavourite");
+  //     alert("Done!");
+  //     // Close modal if you want
+  //     // setIsModalOpen(null);
+  //   } catch (error) {
+  //     console.error("Error toggling favourite:", error);
+  //   }
+  // };
+
+  const toggleFavourite = async (file: any
+  ) => {
+
+
+    let isFav = false;
+
     try {
-      // Build site URL dynamically
-      const currentUrl = new URL(context.pageContext.web.absoluteUrl);
-      const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${file.SiteCollection}`;
-      const siteSP = spfi(siteUrl).using(SPFx(context));
- 
-      // Update SharePoint item
-      await siteSP.web.lists
-        .getByTitle(file.ListName)
-        .items.getById(file.Id)
-        .update({
-          IsFavourite: !file.IsFavourite, // flip value
-        });
- 
-      console.log(
-        `Updated favourite for ${
-          file.Title || file.FileName
-        } → ${!file.IsFavourite}`
+
+      console.log("Toggling favourite for file:", file);
+      const siteurl = file.FilePreviewURL;
+      console.log("siteurl", siteurl)
+
+      const fileUniqueId = file.FileUID;
+      console.log("File UniqueId:", fileUniqueId);
+
+
+      const meName = context.pageContext.user.displayName || "";
+      const meEmail =
+        (context.pageContext as any)?.user?.email ||
+        (context.pageContext as any)?.user?.loginName ||
+        "";
+
+
+
+
+
+      const baseSiteUrl = siteurl.split("/sites/")[0] + "/sites/";
+      const siteCollectionName = siteurl.split("/sites/")[1].split("/")[0];
+
+
+      // const subSiteName = siteurl.split("/").pop(); // TestHub1
+      const subSiteName = siteurl.split("/sites/")[1].split("/")[1];
+
+
+      const siteSP = spfi(`${baseSiteUrl}${siteCollectionName}`).using(
+        SPFx(context)
       );
- 
-      // Refresh current view (example: MyFavourite)
-      await loadViewData("MyFavourite");
-      alert("Done!");
-      // Close modal if you want
-      // setIsModalOpen(null);
-    } catch (error) {
-      console.error("Error toggling favourite:", error);
+
+      const listName = `DMS${subSiteName}FileMaster`;
+
+
+
+
+
+      console.log("BaseSiteUrl:", baseSiteUrl);
+      console.log("Site Collection:", siteCollectionName);
+      console.log("Sub Site:", subSiteName);
+
+
+
+
+      const items = await siteSP.web.lists
+        .getByTitle(listName)
+        .items
+        .select("Id", "FileUID", "IsFavourite", "CurrentUser")
+        .filter(
+          `FileUID eq '${fileUniqueId}'`
+        ).top(1)();
+
+      console.log("items Name:", items);
+
+      console.log("Matched Items:", items);
+      if (items.length === 0) {
+        console.log("❌ No matching record found for this user & file");
+        return;
+      }
+      const item = items[0];
+      const newFavouriteValue = !item.IsFavourite;
+
+      console.log("Old IsFavourite:", item.IsFavourite);
+      console.log("New IsFavourite:", newFavouriteValue);
+
+      await siteSP.web.lists
+        .getByTitle(listName)
+        .items
+        .getById(item.Id)
+        .update({
+          IsFavourite: newFavouriteValue
+        });
+
+      console.log("✅ Favourite status updated successfully");
+      const refreshed = await loadViewData("MyFavourite");
+      if (refreshed) {
+        setSelectedFiles([...refreshed]);
+      }
+      console.log("remove favorate marke  for:", file);
+      return newFavouriteValue;
+
+
+    } catch (e) {
+
     }
+    // try {
+
+
+
+
+
+    //   // // Build site URL dynamically
+    //   // const currentUrl = new URL(context.pageContext.web.absoluteUrl);
+    //   // const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${file.SiteCollection}`;
+    //   // const siteSP = spfi(siteUrl).using(SPFx(context));
+
+    //   // console.log("Addhyan  kumar ->>>[toggleFavourite] siteUrl:", siteUrl);
+
+
+    //   // // Update SharePoint item
+    //   // await siteSP.web.lists
+    //   //   .getByTitle(file.ListName)
+    //   //   .items.getById(file.Id)
+    //   //   .update({
+    //   //     IsFavourite: !file.IsFavourite, // flip value
+    //   //   });
+
+    //   //   console.log("Addhyan   ->>>[toggleFavourite] siteUrl:", siteUrl);
+
+    //   // console.log(
+    //   //   `Updated favourite for ${
+    //   //     file.Title || file.FileName
+    //   //   } → ${!file.IsFavourite}`
+    //   // );
+
+    //   // // Refresh current view (example: MyFavourite)
+    //   // await loadViewData("MyFavourite");
+    //   // alert("Done!");
+
+    // } catch (error) {
+
+
+
+    //   console.error("Error toggling favourite:", error);
+    // }
   };
   /** ----------------------------------- uploads (same) --------------------------------------- */
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1262,10 +1489,10 @@ const toggleNode = async (node: TreeNode) => {
       setSelectedUploadFiles(files);
 
       try {
-              const getSiteCollectionUrl = (fullUrl: any): any => {
-        const pattern = /^(https?:\/\/[^\/]+\/sites\/[^\/]+)/i;
-        const match = fullUrl.match(pattern);
-        return match ? match[1] : fullUrl;
+        const getSiteCollectionUrl = (fullUrl: any): any => {
+          const pattern = /^(https?:\/\/[^\/]+\/sites\/[^\/]+)/i;
+          const match = fullUrl.match(pattern);
+          return match ? match[1] : fullUrl;
         }
         console.log(
           "[upload] getSiteCollectionUrl Uploading files to preview location...",
@@ -1301,75 +1528,336 @@ const toggleNode = async (node: TreeNode) => {
     }
   };
 
+  // const uploadFiles = async () => {
+  //   if (!currentSiteUrl || !currentFolderPath || selectedUploadFiles.length === 0) return;
+
+  //   try {
+  //     const siteSP = spfi(currentSiteUrl).using(SPFx(context));
+
+  //     for (let i = 0; i < selectedUploadFiles.length; i++) {
+  //       const file = selectedUploadFiles[i];
+  //       setUploadProgress(((i + 1) / selectedUploadFiles.length) * 100);
+
+  //       const uplaodfile = await siteSP.web
+  //         .getFolderByServerRelativePath(
+  //           `/sites/${currentSiteUrl.split("/sites/")[1]}/${currentFolderPath}`
+  //         )
+  //         .files.addChunked(file.name, file);
+  //       console.log("[upload] File uploaded:", uplaodfile.data, JSON.stringify(uplaodfile.data));
+
+  //       const encodeSharePointPath = (path: string): string => {
+  //         return encodeURIComponent(path)
+  //           .replace(/'/g, "%27")
+  //           .replace(/\(/g, "%28")
+  //           .replace(/\)/g, "%29")
+  //           .replace(/\*/g, "%2A")
+  //           .replace(/!/g, "%21")
+  //           .replace(/#/g, "%23")
+  //           .replace(/\$/g, "%24")
+  //           .replace(/&/g, "%26")
+  //           .replace(/\+/g, "%2B")
+  //           .replace(/,/g, "%2C")
+  //           .replace(/;/g, "%3B")
+  //           .replace(/=/g, "%3D")
+  //           .replace(/\?/g, "%3F")
+  //           .replace(/\[/g, "%5B")
+  //           .replace(/\]/g, "%5D")
+  //           .replace(/_/g, "%5F")
+  //           .replace(/\./g, "%2E")
+  //           .replace(/-/g, "%2D");
+  //       };
+
+  //       const getSharePointPreviewUrl = (siteUrl: string, serverRelativePath: string): string => {
+  //         const parentFolder = serverRelativePath.substring(0, serverRelativePath.lastIndexOf("/"));
+  //         const encodedFilePath = encodeSharePointPath(serverRelativePath);
+  //         const encodedParentPath = encodeSharePointPath(parentFolder);
+
+  //         return `${siteUrl}${parentFolder.replace(/ /g, "%20")}/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodedParentPath}`;
+  //       };
+
+  //       const siteUrl = "https://officeindia.sharepoint.com";
+  //       const filePath = uplaodfile.data.ServerRelativeUrl;
+  //       const previewUrl = getSharePointPreviewUrl(siteUrl, filePath);
+  //       console.log("[upload] Preview URL:", previewUrl);
+  //     }
+
+  //     // Refresh the file list
+  //     if (breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1].type !== "view") {
+  //       const lastNode = nodeMap[breadcrumbs[breadcrumbs.length - 1].key];
+  //       if (lastNode) {
+  //         await loadFilesForNode(lastNode);
+  //       }
+  //     }
+
+  //     setSelectedUploadFiles([]);
+  //     setPreviewFileUrls([]);
+  //     setShowUploadPanel(false);
+  //     setUploadProgress(0);
+  //   } catch (error) {
+  //     console.error("[upload] Error uploading files:", error);
+  //   }
+  // }; hide it updated with new function by ritik 
+
+
+
+
+  //Helper function to get root site URL // 19/01/2026 //Ritik
+
+
+
+  const getRootSiteUrl = (url: string): string => {
+    const match = url.match(/^(https?:\/\/[^\/]+\/sites\/[^\/]+)/i);
+    if (!match) {
+      throw new Error("Invalid SharePoint site URL");
+    }
+    return match[1];
+  };
+
+
+  const formatFileSizeForMeta = (bytes: number): string => {
+    if (!bytes || bytes === 0) return "0 KB";
+
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+
+
+
+
+  //Doc Lib upload function and metadata save to root site FileMaster list // 19/01/2026 // Ritik
+
   const uploadFiles = async () => {
-    if (!currentSiteUrl || !currentFolderPath || selectedUploadFiles.length === 0) return;
+    if (!currentSiteUrl || !currentFolderPath || selectedUploadFiles.length === 0) {
+      return;
+    }
 
     try {
-      const siteSP = spfi(currentSiteUrl).using(SPFx(context));
+      /* ===============================
+         STEP 1: Contexts
+         =============================== */
+
+      const spSubsite = spfi(currentSiteUrl).using(SPFx(context)); // upload
+      const rootSiteUrl = getRootSiteUrl(currentSiteUrl);
+      const spRoot = spfi(rootSiteUrl).using(SPFx(context)); // metadata
+
+      /* ===============================
+         STEP 2: Resolve FileMaster List Name Dynamically
+         =============================== */
+
+      // Extract subsite name from currentSiteUrl
+      // Example: https://officeindia.sharepoint.com/sites/edcspfx/Test%20Entity
+
+      const urlParts = currentSiteUrl.split('/sites/')[1]?.split('/');
+      const rootSiteName = urlParts?.[0]; // e.g., "edcspfx", "Intranetdemos", "AlRostmaniSpfx2"
+
+      // Decode URL-encoded subsite name (Test%20Entity → Test Entity)
+      let subsiteName = urlParts?.[1];
+      if (subsiteName) {
+        subsiteName = decodeURIComponent(subsiteName);
+      }
+
+      if (!subsiteName) {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid Context",
+          text: "Cannot determine subsite. Please ensure you're uploading to a subsite document library.",
+        });
+        return;
+      }
+
+      // Construct FileMaster list name using naming convention
+      // Pattern: DMS{SubsiteName}FileMaster
+      // **KEEP SPACES** - SharePoint list names can have spaces
+      const fileMasterListName = `DMS${subsiteName}FileMaster`;
+
+      console.log("🔍 Derived FileMaster List:", fileMasterListName);
+      console.log("📍 Root Site:", rootSiteUrl);
+      console.log("📍 Subsite:", currentSiteUrl);
+      console.log("📍 Subsite Name:", subsiteName);
+
+      // Validate that the list exists on root site
+      try {
+        await spRoot.web.lists
+          .getByTitle(fileMasterListName)
+          .select("Title")();
+        console.log("✅ FileMaster list found:", fileMasterListName);
+      } catch (error) {
+        console.error("❌ FileMaster list not found:", fileMasterListName, error);
+        Swal.fire({
+          icon: "error",
+          title: "Configuration Error",
+          html: `FileMaster list "<strong>${fileMasterListName}</strong>" not found on root site "${rootSiteName}".<br><br>Expected list: <strong>${fileMasterListName}</strong><br>Subsite: <strong>${subsiteName}</strong><br><br>Please contact administrator.`,
+        });
+        return;
+      }
+
+      /* ===============================
+         STEP 3: Upload Loop (SUBSITE)
+         =============================== */
 
       for (let i = 0; i < selectedUploadFiles.length; i++) {
         const file = selectedUploadFiles[i];
         setUploadProgress(((i + 1) / selectedUploadFiles.length) * 100);
 
-        const uplaodfile = await siteSP.web
-          .getFolderByServerRelativePath(
-            `/sites/${currentSiteUrl.split("/sites/")[1]}/${currentFolderPath}`
-          )
+        const siteRelativePath = currentSiteUrl.replace(window.location.origin, "");
+        const serverRelativePath =
+          siteRelativePath +
+          (currentFolderPath.startsWith("/") ? "" : "/") +
+          currentFolderPath;
+
+        console.log("📤 Uploading to:", serverRelativePath);
+
+        const uploadResult = await spSubsite.web
+          .getFolderByServerRelativePath(serverRelativePath)
           .files.addChunked(file.name, file);
-        console.log("[upload] File uploaded:", uplaodfile.data, JSON.stringify(uplaodfile.data));
 
-        const encodeSharePointPath = (path: string): string => {
-          return encodeURIComponent(path)
-            .replace(/'/g, "%27")
-            .replace(/\(/g, "%28")
-            .replace(/\)/g, "%29")
-            .replace(/\*/g, "%2A")
-            .replace(/!/g, "%21")
-            .replace(/#/g, "%23")
-            .replace(/\$/g, "%24")
-            .replace(/&/g, "%26")
-            .replace(/\+/g, "%2B")
-            .replace(/,/g, "%2C")
-            .replace(/;/g, "%3B")
-            .replace(/=/g, "%3D")
-            .replace(/\?/g, "%3F")
-            .replace(/\[/g, "%5B")
-            .replace(/\]/g, "%5D")
-            .replace(/_/g, "%5F")
-            .replace(/\./g, "%2E")
-            .replace(/-/g, "%2D");
-        };
+        const uploadedFile = uploadResult.data;
+        console.log("✅ File uploaded:", uploadedFile.Name);
 
-        const getSharePointPreviewUrl = (siteUrl: string, serverRelativePath: string): string => {
-          const parentFolder = serverRelativePath.substring(0, serverRelativePath.lastIndexOf("/"));
-          const encodedFilePath = encodeSharePointPath(serverRelativePath);
-          const encodedParentPath = encodeSharePointPath(parentFolder);
+        /* ===============================
+           STEP 4: Dynamic metadata (ROOT)
+           =============================== */
 
-          return `${siteUrl}${parentFolder.replace(/ /g, "%20")}/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodedParentPath}`;
-        };
+        const fields = await spRoot.web.lists
+          .getByTitle(fileMasterListName)
+          .fields.select("InternalName")();
 
-        const siteUrl = "https://officeindia.sharepoint.com";
-        const filePath = uplaodfile.data.ServerRelativeUrl;
-        const previewUrl = getSharePointPreviewUrl(siteUrl, filePath);
-        console.log("[upload] Preview URL:", previewUrl);
-      }
+        const allowed = fields.map(f => f.InternalName);
 
-      // Refresh the file list
-      if (breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1].type !== "view") {
-        const lastNode = nodeMap[breadcrumbs[breadcrumbs.length - 1].key];
-        if (lastNode) {
-          await loadFilesForNode(lastNode);
+
+
+        // 🔹 STEP: Build full site-relative folder path (NO hard-code)
+        const siteRelativeUrl = currentSiteUrl.replace(window.location.origin, "");
+
+        const fullFolderPath =
+          siteRelativeUrl +
+          (currentFolderPath.startsWith("/") ? "" : "/") +
+          currentFolderPath;
+
+
+
+        // ✅ ALWAYS use serverRelativePath / fullFolderPath to extract folder
+        let folderName = "";
+
+        const normalizedFullPath = fullFolderPath.replace(/^\/+/, "");
+        const pathParts = normalizedFullPath.split("/");
+
+        // example:
+        // sites / AlRostmaniSpfx2 / TestHub1 / Approval Temp Lib / Test8
+        // index 0   1               2          3                4
+
+        if (pathParts.length > 4) {
+          folderName = pathParts[pathParts.length - 1];
         }
+
+
+
+
+
+
+        const rawPayload: Record<string, any> = {
+          Title: uploadedFile.Name,
+          FileName: uploadedFile.Name,
+          FileUID: uploadedFile.UniqueId,
+
+          FileVersion: "1",
+          FileSize: formatFileSizeForMeta(file.size),
+
+          IsFavourite: false,     // Yes/No → boolean
+          MyRequest: true,       // Yes/No → boolean
+          IsDeleted: null,       // ✅ DateTime column FIX
+
+          CurrentUser: context.pageContext.user.email,
+
+          DocumentLibraryName: selectedCurrentNode?.libraryTitle || "",
+          FolderName: folderName,
+          CurrentFolderPath: fullFolderPath,
+
+          ShareWithMe: "",
+          ShareWithOthers: "",
+
+          Status: "Pending",
+
+          SiteID: context.pageContext.site.id.toString(),
+          SiteName: subsiteName,
+
+          FilePreviewURL: `${window.location.origin}${uploadedFile.ServerRelativeUrl}`,
+
+          Processname: "New File Request",
+          RequestNo: uploadedFile.Name.split(".")[0],
+        };
+
+
+
+
+
+        const safePayload: Record<string, any> = {};
+        for (const key in rawPayload) {
+          if (allowed.includes(key)) {
+            safePayload[key] = rawPayload[key];
+          }
+        }
+
+        console.log("💾 Saving metadata to:", fileMasterListName);
+        console.log("📝 Payload:", safePayload);
+
+        await spRoot.web.lists
+          .getByTitle(fileMasterListName)
+          .items.add(safePayload);
+
+        console.log("✅ Metadata saved for:", uploadedFile.Name);
       }
+
+      /* ===============================
+         STEP 5: UI reset
+         =============================== */
 
       setSelectedUploadFiles([]);
       setPreviewFileUrls([]);
       setShowUploadPanel(false);
       setUploadProgress(0);
-    } catch (error) {
-      console.error("[upload] Error uploading files:", error);
+
+      Swal.fire({
+        icon: "success",
+        title: "Upload Successful",
+        text: `File(s) uploaded to ${subsiteName} and metadata saved to ${fileMasterListName}.`,
+      });
+
+      // Refresh file list
+      if (selectedCurrentNode) {
+        await loadFilesForNode(selectedCurrentNode);
+      }
+
+    } catch (err) {
+      console.error("❌ uploadFiles failed:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: err?.message || "Please check console for details.",
+      });
     }
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   /** --------------------------------------- render ------------------------------------------- */
   const renderTree = (nodes: TreeNode[]) => (
@@ -1380,7 +1868,7 @@ const toggleNode = async (node: TreeNode) => {
             {node.hasChildren && (
               <button type="button"
                 onClick={() => toggleNode(node)}
-               className="arrowdesign"
+                className="arrowdesign"
               >
                 {node.isExpanded ? "−" : "+"}
               </button>
@@ -1406,9 +1894,9 @@ const toggleNode = async (node: TreeNode) => {
     </ul>
   );
 
-  
+
   /* ----------------- AUDIT HISTORY FUNCTION------------------ */
-const handleAuditHistory = async (file: any) => {
+  const handleAuditHistory = async (file: any) => {
     try {
       setAuditLoading(true);
       setModalFile(file);
@@ -1467,7 +1955,7 @@ const handleAuditHistory = async (file: any) => {
             Created: v?.Created ? new Date(v.Created).toLocaleString() : '',
             ModifiedByName: v?.CreatedBy?.Title || v?.CreatedBy?.Name || '',
             ModifiedByEmail: v?.CreatedBy?.Email || v?.CreatedBy?.LoginName || '',
-            SizeDisplay: (v?.Size ? (v.Size/1024) : v?.Length ? (v.Length/1024) : 0).toFixed(2) + ' KB'
+            SizeDisplay: (v?.Size ? (v.Size / 1024) : v?.Length ? (v.Length / 1024) : 0).toFixed(2) + ' KB'
           }));
         } catch (e) {
           console.warn('versions() fetch failed', e);
@@ -1498,7 +1986,7 @@ const handleAuditHistory = async (file: any) => {
         Modified: src?.Modified ? new Date(src.Modified).toLocaleString() : (file?.Modified ? new Date(file.Modified).toLocaleString() : ''),
         ModifiedBy: (src?.Editor?.Title || src?.Editor?.Name || file?.ModifiedBy || '')
       };
-       console.log('composed metadata', metadata);
+      console.log('composed metadata', metadata);
       // If no versions found, try to synthesize single current entry
       if ((!versions || versions.length === 0) && (fileItem || listItem)) {
         const s = fileItem || listItem;
@@ -1507,7 +1995,7 @@ const handleAuditHistory = async (file: any) => {
           Created: s?.Modified ? new Date(s.Modified).toLocaleString() : '',
           ModifiedByName: s?.Editor?.Title || '',
           ModifiedByEmail: s?.Editor?.Email || '',
-          SizeDisplay: s?.Length ? (s.Length/1024).toFixed(2) + ' KB' : ''
+          SizeDisplay: s?.Length ? (s.Length / 1024).toFixed(2) + ' KB' : ''
         }];
       }
 
@@ -1520,100 +2008,100 @@ const handleAuditHistory = async (file: any) => {
     }
   }
   /* ----------------- end handleAuditHistory ------------------ */
-  
 
-    // sourish 20/8/25
-    const deleteFolder = async (file: any) => {
-      try {
-        if (!file?.FolderPath || !file?.__siteUrl) {
-          console.error("Missing folder path or site URL");
-          return;
-        }
-  
-        // Delete Folder
-  
-        // Build correct web URL for the subsite
-        const fullWebUrl = `${file.__siteUrl}/${encodeURIComponent(file.SiteTitle)}`;
-        const sp = spfi(fullWebUrl).using(SPFx(context));
-  
-        // FolderPath is already server-relative, so just use it directly
-        const finalPath = file.FolderPath;
-  
-        console.log("Deleting from:", fullWebUrl);
-        console.log("Final server-relative path:", finalPath);
-  
-        await sp.web.getFolderByServerRelativePath(finalPath).delete();
-  
-  
-        // Delete corresponding item from list in site collection root
-        const spRoot = spfi(file.__siteUrl).using(SPFx(context));
-  
-        console.log("Deleting list item from site:", file.__siteUrl, " List: DMSFolderMaster, ID:", file.ID);
-  
-        await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(file.ID).delete();
-  
-        const refreshed = await loadViewData("MyFolders");
-        setSelectedFiles(refreshed);
-        setActiveView("My Folders");
-        setBreadcrumbs([
-          { key: "my-folders", title: "My Folders", type: "view", siteUrl: "" },
-        ]);
-        setCurrentPage(1);
-  
-  
-      } catch (err) {
-        console.error("Error deleting folder:", err);
+
+  // sourish 20/8/25
+  const deleteFolder = async (file: any) => {
+    try {
+      if (!file?.FolderPath || !file?.__siteUrl) {
+        console.error("Missing folder path or site URL");
+        return;
       }
-    };
-  
-    // sourish 21/8/25
-    const renameFolder = async () => {
-      try {
-        if (!modalFile?.FolderPath || !modalFile?.__siteUrl) {
-          console.error("Missing folder path or site URL");
-          return;
-        }
-  
-        const fullWebUrl = `${modalFile.__siteUrl}/${encodeURIComponent(modalFile.SiteTitle)}`;
-        const sp = spfi(fullWebUrl).using(SPFx(context));
-  
-        const folder = sp.web.getFolderByServerRelativePath(modalFile.FolderPath);
-  
-        // Build new path with the renamed folder name
-        const parentPath = modalFile.FolderPath.substring(0, modalFile.FolderPath.lastIndexOf("/"));
-        const newPath = `${parentPath}/${renameValue}`;
-  
-        console.log("Renaming folder:", modalFile.FolderPath, " → ", newPath);
-  
-        // ✅ Use moveByPath instead of moveTo
-        await folder.moveByPath(newPath);
-  
-        // Update item in DMSFolderMaster list
-        const spRoot = spfi(modalFile.__siteUrl).using(SPFx(context));
-        await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(modalFile.ID).update({
-          FolderName: renameValue,
-          FolderPath: newPath,
-        });
-  
-        // Refresh view
-        const refreshed = await loadViewData("MyFolders");
-        setSelectedFiles(refreshed);
-        setActiveView("My Folders");
-        setBreadcrumbs([{ key: "my-folders", title: "My Folders", type: "view", siteUrl: "" }]);
-        setCurrentPage(1);
-  
-        // Close modal
-        setRenameModalOpen(false);
-        setModalFile(null);
-        setRenameValue("");
-  
-      } catch (err) {
-        console.error("Error renaming folder:", err);
+
+      // Delete Folder
+
+      // Build correct web URL for the subsite
+      const fullWebUrl = `${file.__siteUrl}/${encodeURIComponent(file.SiteTitle)}`;
+      const sp = spfi(fullWebUrl).using(SPFx(context));
+
+      // FolderPath is already server-relative, so just use it directly
+      const finalPath = file.FolderPath;
+
+      console.log("Deleting from:", fullWebUrl);
+      console.log("Final server-relative path:", finalPath);
+
+      await sp.web.getFolderByServerRelativePath(finalPath).delete();
+
+
+      // Delete corresponding item from list in site collection root
+      const spRoot = spfi(file.__siteUrl).using(SPFx(context));
+
+      console.log("Deleting list item from site:", file.__siteUrl, " List: DMSFolderMaster, ID:", file.ID);
+
+      await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(file.ID).delete();
+
+      const refreshed = await loadViewData("MyFolders");
+      setSelectedFiles(refreshed);
+      setActiveView("My Folders");
+      setBreadcrumbs([
+        { key: "my-folders", title: "My Folders", type: "view", siteUrl: "" },
+      ]);
+      setCurrentPage(1);
+
+
+    } catch (err) {
+      console.error("Error deleting folder:", err);
+    }
+  };
+
+  // sourish 21/8/25
+  const renameFolder = async () => {
+    try {
+      if (!modalFile?.FolderPath || !modalFile?.__siteUrl) {
+        console.error("Missing folder path or site URL");
+        return;
       }
-    };
-  
-    // aman code manage folder permission
-    // === Manage Permission helpers ===
+
+      const fullWebUrl = `${modalFile.__siteUrl}/${encodeURIComponent(modalFile.SiteTitle)}`;
+      const sp = spfi(fullWebUrl).using(SPFx(context));
+
+      const folder = sp.web.getFolderByServerRelativePath(modalFile.FolderPath);
+
+      // Build new path with the renamed folder name
+      const parentPath = modalFile.FolderPath.substring(0, modalFile.FolderPath.lastIndexOf("/"));
+      const newPath = `${parentPath}/${renameValue}`;
+
+      console.log("Renaming folder:", modalFile.FolderPath, " → ", newPath);
+
+      // ✅ Use moveByPath instead of moveTo
+      await folder.moveByPath(newPath);
+
+      // Update item in DMSFolderMaster list
+      const spRoot = spfi(modalFile.__siteUrl).using(SPFx(context));
+      await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(modalFile.ID).update({
+        FolderName: renameValue,
+        FolderPath: newPath,
+      });
+
+      // Refresh view
+      const refreshed = await loadViewData("MyFolders");
+      setSelectedFiles(refreshed);
+      setActiveView("My Folders");
+      setBreadcrumbs([{ key: "my-folders", title: "My Folders", type: "view", siteUrl: "" }]);
+      setCurrentPage(1);
+
+      // Close modal
+      setRenameModalOpen(false);
+      setModalFile(null);
+      setRenameValue("");
+
+    } catch (err) {
+      console.error("Error renaming folder:", err);
+    }
+  };
+
+  // aman code manage folder permission
+  // === Manage Permission helpers ===
   const deriveFolderContext = (folder: any) => {
     const rootSite = folder?.__siteUrl || context.pageContext.web.absoluteUrl;
     const siteTitle = folder?.SiteTitle || folder?.SiteName || "";
@@ -1659,7 +2147,7 @@ const handleAuditHistory = async (file: any) => {
       let can = false;
       try {
         can = await web.web.currentUserHasPermissions(PermissionKind.ManagePermissions);
-      } catch {}
+      } catch { }
       setMpCanManage(!!can);
       let ras: any[] = [];
       try {
@@ -1771,96 +2259,420 @@ const handleAuditHistory = async (file: any) => {
     }
   };
 
-    //abhay delete file from folder
-    const deleteFileFolder = async (file: any, siteUrl: string, context: any) => {
+  //abhay delete file from folder
+  // const deleteFileFolder = async (file: any, siteUrl: string, context: any) => {
+  // try {
+  //   const siteSP = spfi(siteUrl).using(SPFx(context));
+
+  //   if (!file?.ServerRelativeUrl) {
+  //     console.error("[deleteFile] No ServerRelativeUrl found on file:", file);
+  //     return;
+  //   }
+
+  //   console.log("[deleteFile] Deleting:", file.ServerRelativeUrl);
+
+  //   await siteSP.web
+  //     .getFileByServerRelativePath(file.ServerRelativeUrl)
+  //     .delete();
+  //     // UI update just after deletion of files from Document libraries fix by aman 15/01/26
+  //      if (selectedCurrentNode) {
+  //     await loadFilesForNode(selectedCurrentNode);
+  //     }
+
+
+  //   console.log("[deleteFile] File deleted successfully:", file.Name);
+  //   alert("File Deleted");
+
+  //   // Optionally, refresh your list after delete
+  //   // await loadFilesForNode(currentNode);
+  // } catch (err) {
+  //   console.error("[deleteFile] Error deleting file:", err);
+  // } 
+  // }
+
+  const deleteFileFolder = async (file: any, siteUrl: string, context: any) => {
     try {
+      console.log("[deleteFileFolder] file:", file);
+      console.log("[deleteFileFolder] siteUrl:", siteUrl);
+
+      const isoDate = new Date().toISOString();
+
+
       const siteSP = spfi(siteUrl).using(SPFx(context));
- 
-      if (!file?.ServerRelativeUrl) {
-        console.error("[deleteFile] No ServerRelativeUrl found on file:", file);
+      const fileItem = await siteSP.web
+        .getFileByServerRelativePath(file.ServerRelativeUrl)
+        .getItem();
+
+      await fileItem.update({
+        IsDeleted: isoDate,
+      });
+
+
+      const baseSiteUrl = siteUrl.split("/sites/")[0] + "/sites/";
+      const siteCollection = siteUrl.split("/sites/")[1].split("/")[0]; // AlRostmaniSpfx2
+      const entityName = siteUrl.split("/").pop(); // Rohittest
+
+      console.log("[deleteFileFolder] entityName:", entityName);
+
+      const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
+
+
+      const fmItems = await spRoot.web.lists
+        .getByTitle(`DMS${entityName}FileMaster`)
+        .items.filter(`FileName eq '${file.Name}' and IsDeleted eq null`)();
+
+      if (!fmItems.length) {
+        console.warn("FileMaster item not found:", file.Name);
         return;
       }
- 
-      console.log("[deleteFile] Deleting:", file.ServerRelativeUrl);
- 
-      await siteSP.web
-        .getFileByServerRelativePath(file.ServerRelativeUrl)
-        .delete();
- 
-      console.log("[deleteFile] File deleted successfully:", file.Name);
-      alert("File Deleted");
- 
-      // Optionally, refresh your list after delete
-      // await loadFilesForNode(currentNode);
+
+      await spRoot.web.lists
+        .getByTitle(`DMS${entityName}FileMaster`)
+        .items.getById(fmItems[0].Id)
+        .update({
+          IsDeleted: isoDate,
+        });
+
+      setSelectedFiles((prev: any[]) =>
+        prev.filter(
+          (f) => f.ServerRelativeUrl !== file.ServerRelativeUrl
+        )
+      );
+
+      console.log("File soft deleted and FileMaster updated");
     } catch (err) {
-      console.error("[deleteFile] Error deleting file:", err);
-    } 
+      console.error("Delete failed:", err);
     }
+  };
 
 
 
-    // toggle favourite in my folder
-    const toggleFavouriteDoc = async (
+
+
+  // toggle favourite in my folder
+  //   const toggleFavouriteDoc = async (
+  //   file: any,
+  //   siteUrl: string,
+  //   context: any
+  // ) => {
+  //   try {
+  //     const siteSP = spfi(siteUrl).using(SPFx(context));
+
+  //     if (!file?.ServerRelativeUrl) {
+  //       console.error(
+  //         "[toggleFavourite] No ServerRelativeUrl found on file:",
+  //         file
+  //       );
+  //       return;
+  //     }
+
+  //     // Get the list item backing this file
+  //     const item = await siteSP.web
+  //       .getFileByServerRelativePath(file.ServerRelativeUrl)
+  //       .getItem();
+
+  //     // Read current favourite value
+  //     const currentItem = await item.select("Id", "IsFavourite")();
+  //     const currentFav = currentItem?.IsFavourite || false;
+
+  //     console.log(`[toggleFavourite] Current favourite: ${currentFav}`);
+
+  //     // Toggle
+  //     await item.update({
+  //       IsFavourite: !currentFav,
+  //     });
+
+  //     console.log(
+  //       `[toggleFavourite] File ${file.Name} is now ${
+  //         !currentFav ? "marked as favourite" : "unmarked as favourite"
+  //       }`
+  //     );
+
+  //     alert(
+  //       ` File ${file.Name} is now ${
+  //         !currentFav ? "marked as favourite" : "unmarked as favourite"
+  //       }`
+  //     );
+
+  //     // Optional: return new status
+  //     return !currentFav;
+  //   } catch (err) {
+  //     console.error("[toggleFavourite] Error toggling favourite:", err);
+  //   }
+  // };
+
+
+  const toggleFavouriteDoc = async (
+
+
+
+
+
     file: any,
     siteUrl: string,
     context: any
   ) => {
-    try {
-      const siteSP = spfi(siteUrl).using(SPFx(context));
- 
-      if (!file?.ServerRelativeUrl) {
-        console.error(
-          "[toggleFavourite] No ServerRelativeUrl found on file:",
-          file
-        );
-        return;
-      }
- 
-      // Get the list item backing this file
-      const item = await siteSP.web
-        .getFileByServerRelativePath(file.ServerRelativeUrl)
-        .getItem();
- 
-      // Read current favourite value
-      const currentItem = await item.select("Id", "IsFavourite")();
-      const currentFav = currentItem?.IsFavourite || false;
- 
-      console.log(`[toggleFavourite] Current favourite: ${currentFav}`);
- 
-      // Toggle
-      await item.update({
-        IsFavourite: !currentFav,
+    //       console.log("  Addhyan [toggleFavourite] Toggling favourite for:");
+    //       console.log("this is file value:",    file);
+    //       console.log("this is siteUrl value:",    siteUrl);
+    //       console.log("this is context value:",    context);
+
+    //       const siteurl = siteUrl;
+    //       const urlsss = siteUrl.split("/sites/")[1].split("/")[0];
+
+    //       console.log("this is urlsss value:",    urlsss);
+    //       const baseSiteUrl = siteUrl.split("/sites/")[0] + "/sites/";
+    //       console.log("this is baseSiteUrl value:",    baseSiteUrl);
+
+    //       const test = siteurl.split("/").pop();
+    //       console.log("this is test value:",    test);
+    // //addhyan fav
+    //        const meName = context.pageContext.user.displayName || "";
+    //     const meEmail =
+    //       (context.pageContext as any)?.user?.email ||
+    //       (context.pageContext as any)?.user?.loginName ||
+    //       "";
+
+
+    //       console.log("Addhyan   ->>>[toggleFavourite] meName:", meName);
+    //       console.log("Addhyan   ->>>[toggleFavourite] meEmail:", meEmail);      
+
+    //        const siteSP = spfi(`${baseSiteUrl}${urlsss}`).using(SPFx(context));
+    //       const datacheck  = await siteSP.web.lists.getByTitle(`DMS${test}FileMaster`).items.select("Id", "Title", " IsFavourite").top(5000)();
+    //       console.log("Addhyan   ->>>[toggleFavourite] datacheck:", datacheck);
+
+    console.log("🔁 Toggle Favourite Started");
+    console.log("File Object:", file);
+
+    const fileUniqueId = file.UniqueId;
+    console.log("File UniqueId:", fileUniqueId);
+
+    const meName = context.pageContext.user.displayName || "";
+    const meEmail =
+      (context.pageContext as any)?.user?.email ||
+      (context.pageContext as any)?.user?.loginName ||
+      "";
+
+    console.log("User Name:", meName);
+    console.log("User Email:", meEmail);
+
+    const baseSiteUrl = siteUrl.split("/sites/")[0] + "/sites/";
+    const siteCollectionName = siteUrl.split("/sites/")[1].split("/")[0];
+    const subSiteName = siteUrl.split("/").pop(); // TestHub1
+
+    console.log("BaseSiteUrl:", baseSiteUrl);
+    console.log("Site Collection:", siteCollectionName);
+    console.log("Sub Site:", subSiteName);
+
+    const siteSP = spfi(`${baseSiteUrl}${siteCollectionName}`).using(
+      SPFx(context)
+    );
+
+    const listName = `DMS${subSiteName}FileMaster`;
+
+    const items = await siteSP.web.lists
+      .getByTitle(listName)
+      .items
+      .select("Id", "FileUID", "IsFavourite", "CurrentUser")
+      .filter(
+        `FileUID eq '${fileUniqueId}'`
+      )
+      .top(1)();
+
+    console.log("Matched Items:", items);
+    if (items.length === 0) {
+      console.log("❌ No matching record found for this user & file");
+      return;
+    }
+
+    const item = items[0];
+    const newFavouriteValue = !item.IsFavourite;
+
+    console.log("Old IsFavourite:", item.IsFavourite);
+    console.log("New IsFavourite:", newFavouriteValue);
+
+    await siteSP.web.lists
+      .getByTitle(listName)
+      .items
+      .getById(item.Id)
+      .update({
+        IsFavourite: newFavouriteValue
       });
- 
-      console.log(
-        `[toggleFavourite] File ${file.Name} is now ${
-          !currentFav ? "marked as favourite" : "unmarked as favourite"
-        }`
-      );
- 
-      alert(
-        ` File ${file.Name} is now ${
-          !currentFav ? "marked as favourite" : "unmarked as favourite"
-        }`
-      );
- 
-      // Optional: return new status
-      return !currentFav;
+
+    console.log("✅ Favourite status updated successfully");
+
+
+    return newFavouriteValue;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    try {
+      // const siteSP = spfi(siteUrl).using(SPFx(context));
+
+
+      // if (!file?.ServerRelativeUrl) {
+      //   console.error(
+      //     "[toggleFavourite] No ServerRelativeUrl found on file:",
+      //     file
+      //   );
+      //   return;
+      // }
+
+      // // Get the list item backing this file
+      // const item = await siteSP.web
+      //   .getFileByServerRelativePath(file.ServerRelativeUrl)
+      //   .getItem();
+
+      // // Read current favourite value
+      // const currentItem = await item.select("Id", "IsFavourite")();
+      // const currentFav = currentItem?.IsFavourite || false;
+
+      // console.log(`[toggleFavourite] Current favourite: ${currentFav}`);
+
+      // // Toggle
+      // await item.update({
+      //   IsFavourite: !currentFav,
+      // });
+
+      // console.log(
+      //   `[toggleFavourite] File ${file.Name} is now ${
+      //     !currentFav ? "marked as favourite" : "unmarked as favourite"
+      //   }`
+      // );
+
+      // alert(
+      //   ` File ${file.Name} is now ${
+      //     !currentFav ? "marked as favourite" : "unmarked as favourite"
+      //   }`
+      // );
+
+      // // Optional: return new status
+      // return !currentFav;
     } catch (err) {
       console.error("[toggleFavourite] Error toggling favourite:", err);
     }
   };
-
   // abhay change for seach in all tabs
- // #region SEARCH TAB 
+  // #region SEARCH TAB 
   // Abhay 10/10/25 merger 
 
-const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  //ritik 19/01/2026 for search input box value
+  const [searchInput, setSearchInput] = useState("");
 
-const filteredFiles = !searchTerm.trim()
-  ? selectedFiles
-  : selectedFiles.filter((file: any) => {
+  // const filteredFiles = !searchTerm.trim()
+  //   ? selectedFiles
+  //   : selectedFiles.filter((file: any) => {
+  //     const term = searchTerm.toLowerCase();
+
+  //     if (activeView === "My Folders") {
+  //       return (
+  //         (file.FolderName || "").toLowerCase().includes(term) ||
+  //         (file.SiteTitle || "").toLowerCase().includes(term) ||
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+
+  //       );
+  //     }
+  //     else if (activeView === "SharedWithMe") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.ShareWithMe || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "SharedWithOthers") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.ShareWithOther || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "MyRequest") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.RequestStatus || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "MyFavourite") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "RecycleBin") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DeletedBy || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else {
+  //       // Default case
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term) ||
+  //         (file.Status || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //   });
+
+  // const pageSize = 12;
+  // let location: string = "";
+  // const paginatedFiles = useMemo(() => {
+  //   const start = (currentPage - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   return filteredFiles.slice(start, end);
+  // }, [filteredFiles, currentPage]);
+
+  // useEffect(() => {
+  //   setCurrentPage(1);
+  // }, [searchTerm]);
+
+  // // 🧩 ✅ Clear search when section changes
+  // useEffect(() => {
+  //   setSearchTerm("");
+  //   setCurrentPage(1);
+  // }, [activeView]);
+
+
+
+
+  //Handle browse view search //Ritik 14/01/2025
+
+  const filteredFiles = !searchTerm.trim()
+    ? selectedFiles
+    : selectedFiles.filter((file: any) => {
       const term = searchTerm.toLowerCase();
+
+      // Handle Browse View (Folder Hierarchy)
+      if (!activeView || activeView === "browse") {
+        return (
+          (file.Name || "").toLowerCase().includes(term) ||
+          (file.FileLeafRef || "").toLowerCase().includes(term) ||
+          (file.ServerRelativeUrl || "").toLowerCase().includes(term)
+        );
+      }
 
       if (activeView === "My Folders") {
         return (
@@ -1868,43 +2680,42 @@ const filteredFiles = !searchTerm.trim()
           (file.SiteTitle || "").toLowerCase().includes(term) ||
           (file.FileName || "").toLowerCase().includes(term) ||
           (file.DocumentLibraryName || "").toLowerCase().includes(term)
-
         );
-      } 
+      }
       else if (activeView === "SharedWithMe") {
         return (
           (file.FileName || "").toLowerCase().includes(term) ||
           (file.ShareWithMe || "").toLowerCase().includes(term) ||
           (file.DocumentLibraryName || "").toLowerCase().includes(term)
         );
-      } 
+      }
       else if (activeView === "SharedWithOthers") {
         return (
           (file.FileName || "").toLowerCase().includes(term) ||
           (file.ShareWithOther || "").toLowerCase().includes(term) ||
           (file.DocumentLibraryName || "").toLowerCase().includes(term)
         );
-      } 
+      }
       else if (activeView === "MyRequest") {
         return (
           (file.FileName || "").toLowerCase().includes(term) ||
           (file.RequestStatus || "").toLowerCase().includes(term) ||
           (file.DocumentLibraryName || "").toLowerCase().includes(term)
         );
-      } 
+      }
       else if (activeView === "MyFavourite") {
         return (
           (file.FileName || "").toLowerCase().includes(term) ||
           (file.DocumentLibraryName || "").toLowerCase().includes(term)
         );
-      } 
+      }
       else if (activeView === "RecycleBin") {
         return (
           (file.FileName || "").toLowerCase().includes(term) ||
           (file.DeletedBy || "").toLowerCase().includes(term) ||
           (file.DocumentLibraryName || "").toLowerCase().includes(term)
         );
-      } 
+      }
       else {
         // Default case
         return (
@@ -1914,31 +2725,89 @@ const filteredFiles = !searchTerm.trim()
         );
       }
     });
+  //
 
   const pageSize = 12;
   let location: string = "";
   const paginatedFiles = useMemo(() => {
-  const start = (currentPage - 1) * pageSize;
-  const end = start + pageSize;
-  return filteredFiles.slice(start, end);
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredFiles.slice(start, end);
   }, [filteredFiles, currentPage]);
-  
-useEffect(() => {
-  setCurrentPage(1);
-}, [searchTerm]);
 
-// 🧩 ✅ Clear search when section changes
-useEffect(() => {
-  setSearchTerm("");
-  setCurrentPage(1);
-}, [activeView]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
-
+  // 🧩 ✅ Clear search when section changes
+  useEffect(() => {
+    setSearchTerm("");
+    setCurrentPage(1);
+  }, [activeView]);
 
 
 
 
 
+  const extensionColors: any = {
+    doc: "#105abe", // Blue
+    docx: "#105abe",
+    txt: "#bebfc1", // Gray (Text Files)
+    pdf: "#fe0100", // Red (PDFs)
+    xls: "#257952", // Green (Excel)
+    xlsx: "#257952",
+    zip: "#fcc41e", // Yellow (Archives)
+
+    // 🎬 Video Files  
+    mp4: "#ff5733", // Orange-Red  
+    avi: "#ff5733",
+    mkv: "#ff5733",
+    mov: "#ff5733",
+    wmv: "#ff5733",
+    flv: "#ff5733",
+
+    // 🎵 Audio Files  
+    mp3: "#4caf50", // Green  
+    wav: "#4caf50",
+    flac: "#4caf50",
+    aac: "#4caf50",
+    ogg: "#4caf50",
+
+    // 🖼️ Image Files  
+    jpg: "#ff9800", // Orange  
+    jpeg: "#ff9800",
+    png: "#00bcd4", // Cyan  
+    gif: "#9c27b0", // Purple  
+    svg: "#673ab7", // Dark Purple  
+    webp: "#009688", // Teal  
+
+    default: "#17a2b8", // Teal (Unknown Files)
+  };
+
+  // helper function to get actual file name // Ritik today 
+  const getActualFileName = (file: any) => {
+    if (file.FileName) return file.FileName;
+
+    if (file.Name) {
+      // "/{name}" remove karega
+      return file.Name.split("/")[0];
+    }
+
+    return "";
+  };
+
+
+
+  const createFileExtensionHtml = (FileName: any, bgColor?: string) => {
+    const fileExtension = FileName?.split(".")?.pop()?.toLowerCase() || "file"; // Get the file extension with fallback
+
+    const finalColor = bgColor || extensionColors[fileExtension] || extensionColors.default;
+
+    const fileIconHtml = `<div class="file-extension-icon" style="background-color: ${finalColor}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-align: center; min-width: 40px; display: inline-block;">
+      ${fileExtension.toUpperCase()}
+  </div>`;
+    return fileIconHtml;
+  }
 
 
 
@@ -1947,7 +2816,9 @@ useEffect(() => {
 
 
 
-return (
+
+
+  return (
     <div
       id="maincontainer"
       style={{
@@ -1957,943 +2828,196 @@ return (
       }}
     >
       {/* sourish 30/9/25 */}
-    <div
-      className="app-menu"
-      id="myHeader">
-      <VerticalSideBar _context={sp} />
-    </div>
-{/* sourish 30/9/25 */}
-     <div className="content-page">
-      <HorizontalNavbar _context={sp}/>
-      <div className="content" style={{marginLeft: `${!useHide ? '240px' : '80px'}`,marginTop:'0.8rem'}}>
-     {/* <div className="content-page">
+      <div
+        className="app-menu"
+        id="myHeader">
+        <VerticalSideBar _context={sp} />
+      </div>
+      {/* sourish 30/9/25 */}
+      <div className="content-page">
+        <HorizontalNavbar _context={sp} />
+        <div className="content" style={{ marginLeft: `${!useHide ? '240px' : '80px'}`, marginTop: '0.8rem' }}>
+          {/* <div className="content-page">
       <HorizontalNavbar _context={sp}/>
       <div className="content" style={{marginLeft: `${!useHide ? '240px' : '80px'}`,marginTop:'0.8rem'}}> */}
-      {/* Left Panel with Quick Views and Folder Hierarchy */}
-      <div style={{display:'flex'}}>
-      <div className="inbox-leftbar">
-        {/* Quick Views Panel */}
-        <div
-          id="buttonpanel"
-          style={{
-            padding: "0px 15px",
-         
-          
-            flexShrink: 0,
-          }}
-        >
-          <h2 className="page-title fw-bold mb-3 pt-5 mt-0 font-20"> Quick Views</h2>
-          {[
-            "My request",
-            "My favourite",
-            "My Folders",
-            "Share with me",
-            "Share with other",
-            "Recycle bin",
-          ].map((view) => (
-            <button type="button"
-              key={view}
-              onClick={() => handleViewButtonClick(view)}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "8px 10px",
-                marginBottom: "8px",
-                textAlign: "left",
-                backgroundColor: activeView === view ? "#0078d4" : "#f7fbfc ",
-                color: activeView === view ? "white" : "#6c757d",
-                border:"0px solid #ccc",
-                borderRadius: "30px",
-                cursor: "pointer",
-                fontSize: "14px", 
-                transition: "all 0.2s",
-              }}
-            >
-              {view}
-            </button>
-          ))}
-        </div>
+          {/* Left Panel with Quick Views and Folder Hierarchy */}
+          <div style={{ display: 'flex' }}>
+            <div className="inbox-leftbar">
+              {/* Quick Views Panel */}
+              <div
+                id="buttonpanel"
+                style={{
+                  padding: "0px 15px",
 
-        {/* Folder Hierarchy Panel */}
-        <div
-          id="folderhierarchycontainer"
-          style={{
-            flexGrow: 1,
-            padding: "15px",
-            overflow: "auto",
-           
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "16px",
-              fontWeight: "600",
-              marginBottom: "15px",
-              color: "#333",
-              paddingBottom: "5px",
-              borderBottom: "1px solid #eee",
-            }}
-          >
-            Folder Hierarchy
-          </h2>
-          {treeData.length > 0 ? (
-            renderTree(treeData)
-          ) : (
-            <p>Loading folder structure...</p>
-          )}
-        </div>
-      </div>
 
-      {/* File List Panel */}
-      <div
-        id="filelistcontainer"
-        className="inbox-rightbar">
-        {/* Upload File Button - Only shown when in a folder/library */}
-       
+                  flexShrink: 0,
+                }}
+              >
+                <h2 className="page-title fw-bold mb-3 pt-5 mt-0 font-20"> Quick Views</h2>
+                {[
+                  "My request",
+                  "My favourite",
+                  "My Folders",
+                  "Share with me",
+                  "Share with other",
+                  "Recycle bin",
+                ].map((view) => (
+                  <button type="button"
+                    key={view}
+                    onClick={() => handleViewButtonClick(view)}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "8px 10px",
+                      marginBottom: "8px",
+                      textAlign: "left",
+                      backgroundColor: activeView === view ? "#0078d4" : "#f7fbfc ",
+                      color: activeView === view ? "white" : "#6c757d",
+                      border: "0px solid #ccc",
+                      borderRadius: "30px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {view}
+                  </button>
+                ))}
+              </div>
 
-{/* sourish 3/10/25 */}
-         <div className="newalignbutton">
-         {
-        breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1].type !== "view" && (
-            <div>
-               <button type="button"
-            className="mybutton2 mt-0 me-1"
-            id="CreateFolder"
-            onClick={() => setActiveComponent(true)}
-          >
-            + Create Folder
-          </button>
-          <button type="button"   className="mybutton2 mt-0"
-            onClick={() => setShowUploadPanel(!showUploadPanel)}
-           >
-            Upload File
-          </button>
- 
+              {/* Folder Hierarchy Panel */}
+              <div
+                id="folderhierarchycontainer"
+                style={{
+                  flexGrow: 1,
+                  padding: "15px",
+                  overflow: "auto",
+
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    marginBottom: "15px",
+                    color: "#333",
+                    paddingBottom: "5px",
+                    borderBottom: "1px solid #eee",
+                  }}
+                >
+                  Folder Hierarchy
+                </h2>
+                {treeData.length > 0 ? (
+                  renderTree(treeData)
+                ) : (
+                  <p>Loading folder structure...</p>
+                )}
+              </div>
             </div>
-          
-        )}
-        
-    <button type="button"
-      onClick={() => setActiveLayout('grid')}
-      style={{
-        background: activeLayout === 'grid' ? '#0078d4' : '#ffffff',
-        color: activeLayout === 'grid' ? 'white' : '#6c757d',
-        border: '0px solid #ddd',
-        borderRadius: 4,
-        padding: '6px 15px',
-        fontWeight: 500,
-        fontSize: "14px",
-      }}
-    >
-      Grid View
-    </button>
-    <button type="button"
-      onClick={() => setActiveLayout('list')}
-      style={{
-        background: activeLayout === 'list' ? '#0078d4' : '#ffffff',
-        color: activeLayout === 'list' ? 'white' : '#333',
-        border: '0px solid #ddd',
-        borderRadius: 4,
-        padding: '6px 15px',
-        fontWeight: 500,
-        fontSize: "14px",
-      }}
-    >
-      List View
-    </button>
-    
-  </div>
 
-        <h2
-          style={{
-            fontSize: "16px",
-            fontWeight: "600",
-            marginBottom: "15px",
-            color: "#333",
-            paddingBottom: "5px",
-            borderBottom: "1px solid #eee",
-            paddingRight: "100px", // Make space for upload button
-          }}
-        >
-          {breadcrumbs.length > 0 ? (
+            {/* File List Panel */}
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              {breadcrumbs.map((item, index) => (
-                <React.Fragment key={item.key}>
-                  {index > 0 && (
-                    <span
+              id="filelistcontainer"
+              className="inbox-rightbar">
+              {/* ===== FILE LIST / UI ===== */}
+              {!showPreviewModal && (
+                <>
+
+                  {/* Upload File Button - Only shown when in a folder/library */}
+
+
+                  {/* sourish 3/10/25 */}
+                  <div className="newalignbutton">
+                    {
+                      selectedCurrentNode && (
+                        <div>
+                          <button type="button"
+                            className="mybutton2 mt-0 me-1"
+                            id="CreateFolder"
+                            onClick={() => setActiveComponent(true)}
+                            disabled={selectedCurrentNode.type === "site"}
+                          >
+                            + Create Folder
+                          </button>
+
+                          {                                          // Upload File Button Hide From Site collection and Subsites click by Aman
+                            selectedCurrentNode &&
+                            (
+                              <button
+                                type="button"
+                                className="mybutton2 mt-0"
+                                onClick={() => setShowUploadPanel(true)}
+                                disabled={
+                                  !(
+                                    selectedCurrentNode.type === "library" ||
+                                    selectedCurrentNode.type === "folder"
+                                  )
+                                }
+                              >
+                                Upload File
+                              </button>
+                            )
+                          }
+
+                        </div>
+
+                      )}
+
+                    {/* add this code here for create and upload button disable - add by addhyan 22-01-2026 */}
+                    {
+                      (activeView === "My request" || activeView === "My favourite" || activeView === "My Folders" || activeView === "Share with me" || activeView === "Share with other" || activeView === "Recycle bin") && (
+                        <div>
+                          <button type="button"
+                            className="mybutton2 mt-0 me-1"
+                            id="CreateFolder"
+                            disabled
+                          >
+                            + Create Folder
+                          </button>
+                          <button type="button"
+                            className="mybutton2 mt-0"
+                            disabled
+                          >
+                            Upload File
+                          </button>
+                        </div>
+                      )
+                    }
+
+                    {/* end add this code here for create and upload button disable - add by addhyan 22-01-2026 */}
+
+                    <button type="button"
+                      onClick={() => setActiveLayout('grid')}
                       style={{
-                        margin: "0 8px",
-                        color: "#999",
+                        background: activeLayout === 'grid' ? '#0078d4' : '#ffffff',
+                        color: activeLayout === 'grid' ? 'white' : '#6c757d',
+                        border: '0px solid #ddd',
+                        borderRadius: 4,
+                        padding: '6px 15px',
+                        fontWeight: 500,
                         fontSize: "14px",
                       }}
                     >
-                      ›
-                    </span>
-                  )}
-                  <span
-                    className="breadcrumb-item mb-0 font-18 fw-bold text-dark header-title"
-                    onClick={() => handleBreadcrumbClick(item)}
-                    style={{
-                      cursor: "pointer",
-                      color: index === breadcrumbs.length - 1 ? "#333" : "#0066cc",
-                      fontWeight: index === breadcrumbs.length - 1 ? "600" : "normal",
-                      fontSize: "14px",
-                      padding: "2px 5px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    {item.title}
-                  </span>
-                </React.Fragment>
-              ))}
-            </div>
-          ) : (
-            <div style={{ color: "#666", fontSize: "14px" }}>Select a folder to view files</div>
-          )}
-        </h2>
+                      Grid View
+                    </button>
+                    <button type="button"
+                      onClick={() => setActiveLayout('list')}
+                      style={{
+                        background: activeLayout === 'list' ? '#0078d4' : '#ffffff',
+                        color: activeLayout === 'list' ? 'white' : '#333',
+                        border: '0px solid #ddd',
+                        borderRadius: 4,
+                        padding: '6px 15px',
+                        fontWeight: 500,
+                        fontSize: "14px",
+                      }}
+                    >
+                      List View
+                    </button>
 
-        {/* Upload Panel */}
-        {showUploadPanel && (
-          <div
-            style={{
-              marginBottom: "20px",
-              padding: "15px",
-              backgroundColor: "#f5f5f5",
-              borderRadius: "4px",
-              border: "1px solid #ddd",
-            }}
-          >
-            <h3 style={{ fontSize: "14px", marginBottom: "10px" }}>Upload Files</h3>
-            <input type="file" ref={fileInputRef} onChange={handleFileSelect} multiple style={{ display: "none" }} />
-            <button type="button"
-              onClick={triggerFileInput}
-              style={{
-                padding: "8px 15px",
-                backgroundColor: "#0078d4",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginRight: "10px",
-              }}
-            >
-              Choose Files
-            </button>
-
-            {selectedUploadFiles.length > 0 && (
-              <div style={{ marginTop: "10px" }}>
-                <h4 style={{ fontSize: "13px", marginBottom: "5px" }}>Selected Files:</h4>
-                <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
-                  {selectedUploadFiles.map((file, index) => (
-                    <li
-                      key={index}
-                      style={{
-                        padding: "5px 0",
-                        fontSize: "13px",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span style={{ marginRight: "10px" }}>📄</span>
-                      <div>
-                        <div>{file.name}</div>
-                        {previewFileUrls[index] && (
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#666",
-                              marginTop: "2px",
-                            }}
-                          >
-                            Preview:{" "}
-                            <a href={previewFileUrls[index]} target="_blank" rel="noopener noreferrer">
-                              View File
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <button type="button"
-                  onClick={uploadFiles}
-                  style={{
-                    padding: "8px 15px",
-                    backgroundColor: "#107c10",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    marginTop: "10px",
-                  }}
-                >
-                  Upload Files to Destination
-                </button>
-                {uploadProgress > 0 && (
-                  <div style={{ marginTop: "10px" }}>
-                    <div
-                      style={{
-                        width: "100%",
-                        backgroundColor: "#e0e0e0",
-                        borderRadius: "4px",
-                        height: "20px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${uploadProgress}%`,
-                          backgroundColor: "#0078d4",
-                          height: "100%",
-                          borderRadius: "4px",
-                          transition: "width 0.3s",
-                        }}
-                      ></div>
-                    </div>
-                    <div
-                      style={{
-                        textAlign: "center",
-                        marginTop: "5px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {Math.round(uploadProgress)}% Complete
-                    </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* File List */}
-   {!showUploadPanel && (
-  activeView === "browse" ? (
-    // 📂 BROWSE VIEW (no pagination, list style)
-    selectedFiles.length > 0 ? (
-      <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
-        {selectedFiles.map((file) => (
-          <li
-            key={file.Name}
-            style={{
-              padding: "8px 0",
-              borderBottom: "1px solid #eee",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ marginRight: "8px" }}>📄</span>
-            <span style={{ fontSize: "14px" }}>{file.Name}</span>
-            <span
-              style={{
-                fontSize: "14px",
-                marginLeft: "10px",
-                color: "#666",
-              }}
-            >
-              {currentFolderPath}
-            </span>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <div
-        style={{
-          color: "#666",
-          fontSize: "14px",
-          padding: "20px",
-          textAlign: "center",
-          marginTop: "20px",
-        }}
-      >
-        {breadcrumbs.length > 0
-          ? "No files in this folder"
-          : "Please select a folder from the hierarchy to view files"}
-      </div>
-    )
-     ) : null
-)}
- 
- 
-        {/* --- CONDITIONAL RENDERING FOR PREVIEW --- */}
-  {showPreviewModal ? (
-    <PreviewModal
-      show={true}
-        fileUrl={previewFile}
-        onClose={() => setShowPreviewModal(false)}
-    />
-    
-  ) :
-
-  (
-
-    // 📄 ALL OTHER VIEWS (grid + pagination) 
-    <>
- 
-      {/* this is my documnet library files ternary oprator */}
-      {
-      paginatedFiles.length > 0 ? 
-      (
-                        <>
-                          
-
-
-  {/* abhay change for seach in all tabs */}
-
- <input
-  type="text"
-  placeholder="Search..."
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-  style={{
-    padding: "8px 12px",
-    marginBottom: "10px",
-    width: "100%",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-  }}
-/>
-
-
-
-
-
-
-        {activeLayout === "grid" && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: "18px",
-            marginBottom: "20px",
-          }}
-        >
-          {filesLoadedfromnode  && paginatedFiles.length > 0 ? (
-            paginatedFiles.map((file, idx) => (
-              <div
-              key={file.Id || file.FileUID || idx}
-             className="carddesign"
-            >
-              {/* File Content */}
-              <div style={{ fontWeight: 600, fontSize: "15px" }}>
-                {`${file.Name}/{name}`  || "Unnamed File"}
-              </div>
-              <div  className="text-muted font-12">
-                {file.Length
-                  ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
-                  : ""}
-              </div>
-              <div  className="text-muted font-12">
-                {file.TimeCreated
-                  ? new Date(file.TimeCreated).toLocaleDateString()
-                  : ""}
-              </div>
-
-              {/* Three-dot menu button */}
-              <div className="dotbutton">
-                <button type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    fontSize: "20px",
-                    cursor: "pointer",
-                  }}
-                >
-                  ⋮
-                </button>
-
-                {/* Context-specific menu */}
-                {menuOpenIdx === idx && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      right: 0,
-                      top: "28px",
-                      background: "#fff",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      zIndex: 10,
-                      minWidth: "160px",
-                    }}
-                  >
-                     <ul className="internalbutton">
-                      {/* Common actions for all views */}
-                      <li>
-                        <button type="button" className="newbuttontext"
-                        
-                        onClick={() => {
-              setPreviewFile(file);
-              setShowPreviewModal(true);
-            }}
-                        >
-                          <span>👁️</span> Preview File
-                        </button>
-                      </li>
-                       <li>
-                            <button type="button"
-                             className="newbuttontext"
-                              onClick={() => {
-                                handleAuditHistory(file); setMenuOpenIdx(null);
-                              }}
-                            >
-                              <span>📝</span> Audit History
-                            </button>
-                          </li>
-                          <li>
-                            <button type="button"
-                             className="newbuttontext"
-                              onClick={() => {
-                                 setModalFile(file);
-                                 
-                                        setShowVersionModal(true);
-                                        setMenuOpenIdx(null);
-                              }}
-                            >
-                              <span>🕰️</span> Version History
-                            </button>
-                          </li>
-                          <li>
-                            <button type="button"
-                             className="newbuttontext"
-                            onClick={() => {
-                                           
- 
-                                            setDirectDownloadFile(file); // new state for direct downloader
-                                            setMenuOpenIdx(null);
-                                          }}
-                            >
-                              <span>🕰️</span> Download File
-                            </button>
-                          </li>
-                          <li>
-                            <button type="button"
-                             className="newbuttontext"
-                             onClick={async () => {
-                                        await deleteFileFolder(
-                                          file,
-                                          currentSiteUrl,
-                                          context
-                                        );
-                                        setMenuOpenIdx(null);
-                                      }}
-                                    
-                            >
-                              <span>🕰️</span> Delete File
-                            </button>
-                          </li>
-                          <li>
-                                    <button type="button"
-                                      className="newbuttontext"
-                                      onClick={async () => {
-                                        const newFav = await toggleFavouriteDoc(
-                                          file,
-                                          currentSiteUrl,
-                                          context
-                                        );
-                                        setMenuOpenIdx(null);
- 
-                                        // Update local state to reflect new favourite status
-                                        setSelectedFiles((prev) =>
-                                          prev.map((f) =>
-                                            f.UniqueId === file.UniqueId
-                                              ? { ...f, IsFavourite: newFav }
-                                              : f
-                                          )
-                                        );
-                                      }}
-                                    >
-                                      <span>⭐</span>{" "}
-                                      {file.IsFavourite
-                                        ? "Unmark Favourite"
-                                        : "Mark as Favourite"}
-                                    </button>
-                                  </li>
-                   
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-            ))
-          ) :
-          // this is my request and my favourite my recucle bin files ternary operator
-           (
-               paginatedFiles.map((file, idx) => (
-  <div
-    key={file.Id || file.FileUID || idx}
-    className="carddesign"
-   
-  >
-    {/* Card Content */}
-    {
-         activeView === "My request" ? (   
-      <>
-        <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-        <div  className="text-muted font-12">{file.FileSize}</div>
-        <div  className="text-muted font-12">{file.DocumentLibraryName}</div>
-        <div  className="text-muted font-12">{file.Status}</div>    
-      </>
-      ) : activeView === "My favourite" ? (
-        <>
-          <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div  className="text-muted font-12">{file.FileSize}</div>
-        </>
-      ) : activeView === "My Folders" ? (
-        <>
-          <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FolderName}</div>
-          <div  className="text-muted font-12">{file.SiteTitle}</div>
-        </>
-      ) : activeView === "Share with me" ? (
-        <>
-          <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div  className="text-muted font-12">{file.FileSize}</div>
-        </>
-      ) : activeView === "Share with other" ? (
-        <>
-          <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div  className="text-muted font-12">{file.FileSize}</div>
-        </>
-      ) : activeView === "Recycle bin" ? (
-        <>
-          <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-          <div  className="text-muted font-12">{file.FileSize}</div>
-        </>
-      ) : null
-    }
-
-    {/* Three-dot Menu */}
-    <div className="dotbutton">
-      <button type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
-        }}
-        style={{
-          background: "none",
-          border: "none",
-          fontSize: "20px",
-          cursor: "pointer",
-        }}
-      >
-        ⋮
-      </button>
-
-      {menuOpenIdx === idx && (
-        <div
-
-         className="three-dot-menu"
-          style={{
-            position: "absolute",
-            right: 0,
-            top: "28px",
-            background: "#fff",
-            border: "1px solid #ddd",
-            borderRadius: "4px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            zIndex: 10,
-            minWidth: "160px",
-          }}
-        >
-          <ul className="internalbutton">
-            
-            {/* Menu for My Request */}
-            {activeView === "My request" && (
-              <>
-                <li><button type="button"  onClick={() => {
-                  // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-              setPreviewFile(file);
-              setShowPreviewModal(true);
-            }}>👁️ Preview File</button></li>
-                <li><button  onClick={() => {
-                                  // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-                                handleAuditHistory(file); setMenuOpenIdx(null);
-                              }}>📝 Audit History</button></li>
-                <li><button type="button">↗️ Share</button></li>
-                <li><button type="button" onClick={() => {
-                                           
-   // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-                                            setDirectDownloadFile(file); // new state for direct downloader
-                                            setMenuOpenIdx(null);
-                                          }}>⬇️ Download</button></li>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-                                 setModalFile(file);
-                                        setShowVersionModal(true);
-                                        setMenuOpenIdx(null);
-                              }}>🕰️ Version History</button></li>
-              </>
-            )}
-
-            {/* Menu for My Favourite */}
-            {activeView === "My favourite" && (
-              <>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-              setPreviewFile(file);
-              setShowPreviewModal(true);
-            }}>👁️ Preview File</button></li>
-                <li><button type="button">↗️ Share</button></li>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-                                          // handleUnmarkFavourite(file);
-                                          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                                          toggleFavourite(file);
- 
-                                          setMenuOpenIdx(null);
-                                        }}>⭐ Unmark as Favourite</button></li>
-              </>
-            )}
-
-            {/* Menu for My Folders */}
-            {activeView === "My Folders" && (
-              <>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-                                                setModalFile(file);
-                                                setMenuOpenIdx(null);
-                                                deleteFolder(file);  // sourish 20/8/25
-                                              }}
-                        >🗑️ Delete Folder</button></li>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-                                                setModalFile(file);
-                                                setRenameValue(file?.FolderName || ""); // prefill with old name
-                                                setRenameModalOpen(true);
-                                                setMenuOpenIdx(null);
-                                              }}>✏️ Rename Folder</button></li>
-                                                 <li>
-                                    <button type="button" onClick={() => {
-                                      const pageBefore = currentPage;
-                                      setMenuOpenIdx(null);
-                                      window.managePermission?.(file);
-                                      setCurrentPage(pageBefore);
-                                    }}>
-                                      🔒 Manage Permission
-                                    </button>
-                                  </li>
-              </>
-            )}
-
-            {/* Menu for Share with me */}
-            {activeView === "Share with me" && (
-              <>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-              setPreviewFile(file);
-              setShowPreviewModal(true);
-            }}>👁️ Preview File</button></li>
-                <li><button type="button" onClick={() => {
-                                             // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
- 
-                                            setDirectDownloadFile(file); // new state for direct downloader
-                                            setMenuOpenIdx(null);
-                                          }}>⬇️ Download File</button></li>
-              </>
-            )}
-
-            {/* Menu for Share with other */}
-            {activeView === "Share with other" && (
-              <>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-              setPreviewFile(file);
-              setShowPreviewModal(true);
-            }}>👁️ Preview File</button></li>
-                <li><Button
-  variant="warning"
-  onClick={() => {
-    setShowRevokeModal(true);
-    setAcessFile(file); // file = your folder/file object
-  }}
->
-  Revoke Access
-</Button></li>
-              </>
-            )}
-
-            {/* Menu for Recycle Bin */}
-            {activeView === "Recycle bin" && (
-              <>
-                <li><button type="button" onClick={() => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-              setPreviewFile(file);
-              setShowPreviewModal(true);
-            }}>👁️ Preview File</button></li>
-                <li><button type="button" onClick={async () => {
-                    // this is to hide li options in every tab (addhyan)
-                  setMenuOpenIdx(null);
-                  // this is to hide li options in every tab (addhyan)
-                  await handleUndoDelete(file); setMenuOpenIdx(null); }}
-                  >↩️ Undo (Restore)</button></li>
-              </>
-            )}
-          </ul>
-        </div>
-      )}
-    </div>
-  </div>
-)
-
-          )
-          
-        )}
-    
-        </div>
-        )}
-
- {activeLayout === "list" && (
-        <div>
-           <table className="mtablenew">
-         <thead>
-  <tr >
-    <th style={{minWidth:'50px',maxWidth:'50px',}}>S.No</th>
-    <th style={{minWidth:'250px',maxWidth:'250px',}}>Name</th>
-    {/* <th >Size</th> */}
-    <th>Size</th>
-    {/* <th>Library</th> */}
-    <th>
-            {paginatedFiles.some((f) => f.DocumentLibraryName)
-              ? "Library"
-              : "Created Date"}
-          </th>
-      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
-            <th style={{ minWidth:'80px',maxWidth:'80px',}}>Status</th>
-          )}
-    {/* <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th> */}
-    <th style={{textAlign:"center"}}>Action</th> {/* New column */}
-  </tr>
-</thead>
- 
-        <tbody>
-  {paginatedFiles.map((file, idx) => (
-    <tr key={file.Id || idx}>
-      <td style={{minWidth:'50px',maxWidth:'50px',}}>{file.SNo || idx + 1}</td>
-      {/* <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td> */}
-      <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName || file.Name || file.FolderName}</td>
-      {/* <td >{file.FileSize}</td> */}
-        <td>
-  {file.FileSize
-    ? file.FileSize
-    : file.Length
-    ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
-    : "-"}
-</td>
-      {/* <td >{file.DocumentLibraryName}</td> */}
-         <td>
-  {file.DocumentLibraryName
-    ? file.DocumentLibraryName
-    : file.TimeCreated
-    ? new Date(file.TimeCreated).toLocaleDateString()
-    : "-"}
-</td>
-      {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
-      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
-      <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status || ""}</td>
-       )}
-      <td style={{textAlign:"center"}}>
-        <button type="button" className="dotbutton2"
-          onClick={(e) => {
-            e.stopPropagation();
-            setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
-          }}
-         
-        >
-          ⋮
-        </button>
- 
-        {menuOpenIdx === idx && (
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              top: "20px",
-              background: "#fff",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              zIndex: 10,
-              minWidth: "140px",
-            }}
-          >
-            <ul  className="internalbutton">
-              <li>
-                <button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>
-                  👁️ Preview
-                </button>
-              </li>
-              <li>
-                <button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>
-                  ⬇️ Download
-                </button>
-              </li>
-              <li>
-                <button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}>
-                  🗑️ Delete
-                </button>
-              </li>
-            </ul>
-          </div>
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
- 
-       </table>
-        </div>
- )}
-        </>
-      ) : (
-        <div
-          style={{
-            color: "#666",
-            fontSize: "14px",
-            padding: "20px",
-            textAlign: "center",
-            marginTop: "20px",
-          }}
-        >
-          No files found in 
-        </div>
-      )}
-      {/* create Folder modal */}
-        <Modal show={activeComponent} onHide={() => setActiveComponent(false)} className='filemodal'>
-                <Modal.Header closeButton>
-                  <Modal.Title > <h4 className='font-16 text-dark fw-bold mb-1'>This Folder will create under:  <h2
+                  <h2
                     style={{
                       fontSize: "16px",
                       fontWeight: "600",
@@ -2926,16 +3050,12 @@ return (
                               </span>
                             )}
                             <span
-                              className="breadcrumb-item"
-                              // onClick={() => handleBreadcrumbClick(item)}
+                              className="breadcrumb-item mb-0 font-18 fw-bold text-dark header-title"
+                              onClick={() => handleBreadcrumbClick(item)}
                               style={{
                                 cursor: "pointer",
-                                color:
-                                  "#333",
-                                // color:
-                                //   index === breadcrumbs.length - 1 ? "#333" : "#0066cc",
-                                fontWeight:
-                                  index === breadcrumbs.length - 1 ? "600" : "normal",
+                                color: index === breadcrumbs.length - 1 ? "#333" : "#0066cc",
+                                fontWeight: index === breadcrumbs.length - 1 ? "600" : "normal",
                                 fontSize: "14px",
                                 padding: "2px 5px",
                                 borderRadius: "3px",
@@ -2947,497 +3067,1518 @@ return (
                         ))}
                       </div>
                     ) : (
-                      <div style={{ color: "#666", fontSize: "14px" }}>
-                        Select a folder to view files
-                      </div>
+                      <div style={{ color: "#666", fontSize: "14px" }}>Select a folder to view files</div>
                     )}
-                  </h2></h4>
-                    {/* <p className='text-muted font-14 mb-0 fw-400'>Below are the attachment details for Memorandum
-                    </p> */}
-      
-                  </Modal.Title>
-      
-      
-                </Modal.Header>
-                <Modal.Body className="" id="style-5">
-      
-                  <>
-      
-                    {activeComponent && (
-                      <CreateFolder
-                        OthProps={{
-                          "Entity": `${currentSiteUrl.split("/sites/")[1].split("/")[1]}`,
-                          "Entityurl": currentSiteUrl,
-                          "siteID": currentSiteUrl,
-                          "Devision": "",
-                          "Department": "",
-                          // "DocumentLibrary": currentFolderPath,
-                          "DocumentLibrary": selectedCurrentNode.type === "site" || selectedCurrentNode.type === "subsite" ? "" : selectedCurrentNode.title,
-                          "Folder": currentFolderPath,
-                          "folderpath": `/sites/${currentSiteUrl.split("/sites/")[1]}/${currentFolderPath}`,
-                          "IsFolderDeligationUser": "false",
-                        }}
-                        context={context}
-                      // onReturnToMain={handleReturnToMain}
-                      />
-                    )}
-      
-                  </>
-                  {/* </>
-                                                                  )
-                                                              } */}
-      
-                </Modal.Body>
-      
-              </Modal>
-   {/* // sourish 21/8/25 */}
-                {renameModalOpen && (
-                  <div
-                    style={{
-                      position: "fixed",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background: "rgba(0,0,0,0.5)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      zIndex: 9999,
-                    }}
-                  >
+                  </h2>
+
+                  {/* Upload Panel */}
+                  {showUploadPanel && (
                     <div
                       style={{
-                        background: "#fff",
-                        padding: "20px",
-                        borderRadius: "10px",
-                        width: "320px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "12px",
+                        marginBottom: "20px",
+                        padding: "15px",
+                        backgroundColor: "#f5f5f5",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
                       }}
                     >
-                      <h3 style={{ margin: 0 }}>Rename Folder</h3>
-                      <input
-                        type="text"
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
+                      <h3 style={{ fontSize: "14px", marginBottom: "10px" }}>Upload Files</h3>
+                      <input type="file" ref={fileInputRef} onChange={handleFileSelect} multiple style={{ display: "none" }} />
+                      <button type="button"
+                        onClick={triggerFileInput}
                         style={{
-                          width: "100%",
-                          padding: "8px",
-                          borderRadius: "6px",
-                          border: "1px solid #ccc",
+                          padding: "8px 15px",
+                          backgroundColor: "#0078d4",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          marginRight: "10px",
                         }}
-                      />
+                      >
+                        Choose Files
+                      </button>
+
+                      {selectedUploadFiles.length > 0 && (
+                        <div style={{ marginTop: "10px" }}>
+                          <h4 style={{ fontSize: "13px", marginBottom: "5px" }}>Selected Files:</h4>
+                          <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                            {selectedUploadFiles.map((file, index) => (
+                              <li
+                                key={index}
+                                style={{
+                                  padding: "5px 0",
+                                  fontSize: "13px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <span style={{ marginRight: "10px" }}>📄</span>
+                                <div>
+                                  <div>{file.name}</div>
+                                  {previewFileUrls[index] && (
+                                    <div
+                                      style={{
+                                        fontSize: "11px",
+                                        color: "#666",
+                                        marginTop: "2px",
+                                      }}
+                                    >
+                                      Preview:{" "}
+                                      <a href={previewFileUrls[index]} target="_blank" rel="noopener noreferrer">
+                                        View File
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                          <button type="button"
+                            onClick={uploadFiles}
+                            style={{
+                              padding: "8px 15px",
+                              backgroundColor: "#107c10",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginTop: "10px",
+                            }}
+                          >
+                            Upload Files to Destination
+                          </button>
+                          {uploadProgress > 0 && (
+                            <div style={{ marginTop: "10px" }}>
+                              <div
+                                style={{
+                                  width: "100%",
+                                  backgroundColor: "#e0e0e0",
+                                  borderRadius: "4px",
+                                  height: "20px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: `${uploadProgress}%`,
+                                    backgroundColor: "#0078d4",
+                                    height: "100%",
+                                    borderRadius: "4px",
+                                    transition: "width 0.3s",
+                                  }}
+                                />
+                              </div>
+                              <div
+                                style={{
+                                  textAlign: "center",
+                                  marginTop: "5px",
+                                  fontSize: "12px",
+                                }}
+                              >
+                                {Math.round(uploadProgress)}% Complete
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+
+                  {/* File List - edited by ritik - 13/01/2026 - fixed Whenever we searched, the page would disappear if the file was not found.*/}
+                  {!showUploadPanel && (
+                    activeView === "browse" ? (
+                      <>
+                        {/* Search bar for Browse View */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            width: "260px",
+                            border: "1px solid #d1d1d1",
+                            borderRadius: "18px",
+                            padding: "6px 10px",
+                            backgroundColor: "#fff",
+                            marginBottom: "12px",
+                          }}
+                        >
+                          {/* 🔍 search icon  ritik 19/01/2026*/}
+                          <span
+                            onClick={() => {
+                              setSearchTerm(searchInput.trim()); // ✅ search yahan trigger hoga
+                              setCurrentPage(1);
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              color: "#666",
+                              fontSize: "14px",
+                              marginRight: "6px",
+                            }}
+                          >
+                            🔍
+                          </span>
+
+                          {/* ritik 19/01/2026 - search input box */}
+                          <input
+                            type="text"
+                            placeholder="Search"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            style={{
+                              border: "none",
+                              outline: "none",
+                              flex: 1,
+                              fontSize: "14px",
+                              background: "transparent",
+                            }}
+                          />
+
+
+                          {/* ✖ clear button fix Ritik 19/01/2026 */}
+
+
+                          {searchInput && (
+                            <span
+                              onClick={() => {
+                                setSearchInput("");
+                                setSearchTerm("");
+                                setCurrentPage(1);
+                              }}
+                              style={{
+                                cursor: "pointer",
+                                color: "#999",
+                                fontSize: "14px",
+                                marginLeft: "6px",
+                              }}
+                            >
+                              ✖
+                            </span>
+                          )}
+
+                        </div>
+
+
+
+                        {selectedFiles.length > 0 ? (
+                          <>
+                            {(() => {
+                              // Browse View Filter
+                              const browseFiltered = selectedFiles.filter((file) => {
+                                if (!searchTerm.trim()) return true;
+                                const term = searchTerm.toLowerCase();
+                                return (
+                                  (file.Name || "").toLowerCase().includes(term) ||
+                                  (file.FileLeafRef || "").toLowerCase().includes(term) ||
+                                  (file.ServerRelativeUrl || "").toLowerCase().includes(term)
+                                );
+                              });
+
+                              const start = (currentPage - 1) * pageSize;
+                              const end = start + pageSize;
+                              const paginatedBrowseFiles = browseFiltered.slice(start, end);
+
+                              return browseFiltered.length > 0 ? (
+                                <>
+                                  <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                                    {paginatedBrowseFiles.map((file, idx) => (
+                                      <li
+                                        key={file.Name || file.UniqueId || idx}
+                                        style={{
+                                          padding: "8px 0",
+                                          borderBottom: "1px solid #eee",
+                                          display: "flex",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <div
+                                          style={{ marginRight: "8px" }}
+                                          dangerouslySetInnerHTML={{
+                                            __html: createFileExtensionHtml(
+                                              getActualFileName(file)
+                                            ),
+                                          }}
+                                        />
+                                        <span style={{ fontSize: "14px" }}>
+                                          {file.Name || file.FileLeafRef}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+
+                                  {browseFiltered.length > pageSize && (
+                                    <div
+                                      style={{
+                                        margin: "10px 0",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                      }}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        style={{
+                                          marginRight: "10px",
+                                          padding: "5px 12px",
+                                          borderRadius: "4px",
+                                          border: "1px solid #ccc",
+                                          background: currentPage === 1 ? "#eee" : "#fff",
+                                          cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                                        }}
+                                      >
+                                        Prev
+                                      </button>
+                                      <span style={{ margin: "0 10px" }}>
+                                        Page {currentPage} of {Math.ceil(browseFiltered.length / pageSize) || 1}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setCurrentPage((p) =>
+                                            p < Math.ceil(browseFiltered.length / pageSize) ? p + 1 : p
+                                          );
+                                        }}
+                                        disabled={currentPage === Math.ceil(browseFiltered.length / pageSize)}
+                                        style={{
+                                          marginLeft: "10px",
+                                          padding: "5px 12px",
+                                          borderRadius: "4px",
+                                          border: "1px solid #ccc",
+                                          background:
+                                            currentPage === Math.ceil(browseFiltered.length / pageSize)
+                                              ? "#eee"
+                                              : "#fff",
+                                          cursor:
+                                            currentPage === Math.ceil(browseFiltered.length / pageSize)
+                                              ? "not-allowed"
+                                              : "pointer",
+                                        }}
+                                      >
+                                        Next
+                                      </button>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <div
+                                  style={{
+                                    color: "#666",
+                                    fontSize: "14px",
+                                    padding: "20px",
+                                    textAlign: "center",
+                                    marginTop: "20px",
+                                  }}
+                                >
+                                  {searchTerm.trim() !== ""
+                                    ? `No files found matching "${searchTerm}"`
+                                    : "No files in this folder"}
+                                </div>
+                              );
+                            })()}
+                          </>
+                        ) : (
+                          <div
+                            style={{
+                              color: "#666",
+                              fontSize: "14px",
+                              padding: "20px",
+                              textAlign: "center",
+                              marginTop: "20px",
+                            }}
+                          >
+                            No files in this folder
+                          </div>
+                        )}
+                      </>
+                    ) : null
+                  )}
+
+                  {/* Search bar for Quick Views */}
+                  {!showUploadPanel && activeView !== "browse" && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        marginBottom: "12px",
+                      }}
+                    >
                       <div
                         style={{
                           display: "flex",
-                          justifyContent: "flex-end",
-                          gap: "10px",
-                          marginTop: "10px",
+                          alignItems: "center",
+                          width: "300px",
+                          border: "1px solid #dcdcdc",
+                          borderRadius: "22px",
+                          padding: "6px 12px",
+                          backgroundColor: "#fff",
                         }}
                       >
-                        <button
+                        <input
+                          type="text"
+                          placeholder="Search files..."
+                          value={searchInput}
+                          onChange={(e) => setSearchInput(e.target.value)}
                           style={{
-                            padding: "6px 12px",
-                            borderRadius: "6px",
-                            border: "1px solid #ccc",
-                            background: "#f5f5f5",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => setRenameModalOpen(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          style={{
-                            padding: "6px 12px",
-                            borderRadius: "6px",
                             border: "none",
-                            background: "#0078d4",
-                            color: "#fff",
+                            outline: "none",
+                            flex: 1,
+                            fontSize: "14px",
+                            background: "transparent",
+                          }}
+                        />
+
+                        {/* ✖ clear */}
+                        {searchInput && (
+                          <span
+                            onClick={() => {
+                              setSearchInput("");
+                              setSearchTerm("");
+                              setCurrentPage(1);
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              color: "#999",
+                              marginRight: "8px",
+                              fontSize: "14px",
+                            }}
+                          >
+                            ✖
+                          </span>
+                        )}
+
+                        {/* 🔍 search icon */}
+                        <span
+                          onClick={() => {
+                            setSearchTerm(searchInput.trim()); // ✅ SEARCH TRIGGER
+                            setCurrentPage(1);
+                          }}
+                          style={{
+                            color: "#666",
+                            fontSize: "15px",
                             cursor: "pointer",
                           }}
-                          onClick={renameFolder}
                         >
-                          Rename
-                        </button>
+                          🔍
+                        </span>
                       </div>
                     </div>
-                  </div>
-                )}
-                {/* download component */}
-                <DirectDownloader
-                file={directDownloadFile}
-                context={context}
-                trigger={true}
-              />
- 
-
-      {/* preview file modal */}
- <PreviewModal
-    show={showPreviewModal}
-    fileUrl={previewFile}
-    onClose={() => setShowPreviewModal(false)}
-  />
-
-{/*revoke modal*/ }
- <Revoke
-  show={showRevokeModal}
-  selectedFolder={revoke}
-  context={context}
-  onClose={() => setShowRevokeModal(false)}
-  onRevoke={(userId: string) => {
-    console.log("Revoked user ID:", userId);
-    alert(`Access revoked for user ID: ${userId}`);
-  }}
-/>
-
-     {/* version history  */}
-   <VersionHistoryModal
-                show={showVersionModal}
-                file={modalFile}
-                context={context}
-                onClose={() => setShowVersionModal(false)}
-              />
-
-              {/* aman code manage folder permission */}
-    {/* === Step 1 Popup === */}
-{showPermissionModal && (
-  <Modal show={showPermissionModal} onHide={() => setShowPermissionModal(false)}>
-    <Modal.Header closeButton>
-      <Modal.Title>Set Permission</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      <div style={{ marginBottom: 10 }}>
-        Set permissions for:{" "}
-        <strong>{selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || "Selected Folder"}</strong>
-      </div>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <button
-          onClick={() => setShowPermissionModal(false)}
-          style={{ padding: "6px 10px", border: "1px solid #ccc", borderRadius: 4, background: "#fff" }}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={async () => {
-            const pageBefore = currentPage;
-            setShowPermissionModal(false);
-            await loadAndOpenManagePermission();
-            setCurrentPage(pageBefore);
-          }}
-          style={{ padding: "6px 10px", border: "1px solid #0b66c3", borderRadius: 4, background: "#0b66c3", color: "#fff" }}
-        >
-          Set Permission
-        </button>
-      </div>
-    </Modal.Body>
-  </Modal>
-)}
-
-{/* === Step 2 Popup (with People Picker) === */}
-{showManagePermissionModal && (
-  <Modal show={showManagePermissionModal} onHide={() => setShowManagePermissionModal(false)} size="lg">
-    <Modal.Header closeButton>
-      <Modal.Title>Manage Permission</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      {(() => {
-        const ctx = selectedFolder ? deriveFolderContext(selectedFolder) : { webUrl: "", serverRel: "", documentLibraryName: "" };
-        return (
-          <>
-            <div style={{ marginBottom: 10, fontSize: 13, color: "#555" }}>
-              <div><strong>Folder:</strong> {selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || ctx.serverRel}</div>
-              <div><strong>Library:</strong> {ctx.documentLibraryName}</div>
-              <div><strong>Web:</strong> {ctx.webUrl}</div>
-            </div>
-
-            {mpLoading ? (
-              <div>Loading permissions...</div>
-            ) : (
-              <>
-                {mpError && (
-                  <div style={{ color: "#b00020", marginBottom: 10, whiteSpace: "pre-wrap" }}>{mpError}</div>
-                )}
-
-                <div style={{ marginBottom: 10 }}>
-                  <strong>Inheritance:</strong>{" "}
-                  {mpHasUnique ? (
-                    <span style={{ color: "#b26a00" }}>This folder has unique permissions</span>
-                  ) : (
-                    <span style={{ color: "#2e7d32" }}>Inheriting from parent</span>
                   )}
-                </div>
 
-                <div style={{ marginBottom: 10 }}>
-                  <strong>Your ability:</strong>{" "}
-                  {mpCanManage ? (
-                    <span style={{ color: "#2e7d32" }}>You can manage permissions</span>
-                  ) : (
-                    <span style={{ color: "#b00020" }}>You cannot manage permissions on this folder</span>
-                  )}
-                </div>
-
-                <div
-                  style={{
-                    borderTop: "1px solid #eee",
-                    paddingTop: 10,
-                    marginTop: 10,
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {/* <select
-                    value={newUser}
-                    onChange={(e) => setNewUser(e.target.value)}
-                    style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
-                    disabled={!mpCanManage}
-                  >
-                    <option value="" disabled>
-                      Select a user…
-                    </option>
-                    {mpSiteUsers.map((u) => (
-                      <option key={u.id} value={u.loginName}>
-                        {u.title} {u.email ? `(${u.email})` : ""}
-                      </option>
-                    ))}
-                  </select> */}
-
-                       {/* Typeahead user picker (replaces static dropdown) */}
-                  <div ref={userSuggestRef} style={{ position: "relative", minWidth: 320 }}>
-                    <input
-                      type="text"
-                      placeholder="Type user name or email..."
-                      value={newUserDisplay || (mpSiteUsers.find(u => u.loginName === newUser)?.title || "")}
-                      onChange={(e) => {
-                        const val = e.target.value || "";
-                        setNewUserDisplay(val);
-                        setShowUserSuggestions(true);
-                        const q = val.trim().toLowerCase();
-                        const filtered = (mpSiteUsers || []).filter((u) => {
-                          return (
-                            (u.title || "").toLowerCase().includes(q) ||
-                            (u.email || "").toLowerCase().includes(q) ||
-                            (u.loginName || "").toLowerCase().includes(q)
-                          );
-                        }).slice(0, 50);
-                        setMpUserSuggestions(filtered);
-                        // Clear previously selected loginName (we'll set login on selection)
-                        setNewUser("");
-                      }}
-                      onFocus={() => {
-                        setShowUserSuggestions(true);
-                        setMpUserSuggestions((mpSiteUsers || []).slice(0,50));
-                      }}
-                      disabled={!mpCanManage}
-                      style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
-                    />
-                    {showUserSuggestions && mpUserSuggestions && mpUserSuggestions.length > 0 && (
-                      <ul style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9999, background: "#fff", border: "1px solid #ccc", borderRadius: 4, maxHeight: 200, overflowY: "auto", listStyle: "none", margin: 0, padding: 0 }}>
-                        {mpUserSuggestions.map((u) => (
-                          <li
-                            key={u.id}
-                            onMouseDown={(e) => { e.preventDefault(); }}
-                            onClick={() => {
-                              setNewUser(u.loginName);
-                              setNewUserDisplay(`${u.title}${u.email ? ` (${u.email})` : ""}`);
-                              setShowUserSuggestions(false);
-                            }}
-                            style={{ padding: "8px", cursor: "pointer", borderBottom: "1px solid #eee" }}
-                          >
-                            <div style={{ fontSize: 13 }}>{u.title}</div>
-                            <div style={{ fontSize: 12, opacity: 0.7 }}>{u.email || u.loginName}</div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  <select
-                    value={newPermission}
-                    onChange={(e) => setNewPermission(e.target.value)}
-                    style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4 }}
-                    disabled={!mpCanManage}
-                  >
-                    <option value="Read">Read</option>
-                    <option value="Edit">Edit</option>
-                    <option value="Full Control">Full Control</option>
-                  </select>
-                  <button
-                    onClick={addUserToSelectedFolder}
-                    style={{ padding: "6px 10px", border: "1px solid #107c10", borderRadius: 4, background: "#107c10", color: "#fff" }}
-                    disabled={!mpCanManage || !newUser.trim()}
-                  >
-                    + Add User
-                  </button>
-                </div>
-
-                <div style={{ margin: "10px 0" }}>
-                  <strong>Current access:</strong>
-                  {permissionUsers?.length ? (
-                    <div style={{ marginTop: 8 }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", background: "#f6f7f8", border: "1px solid #e1e4e8", borderRadius: 6, fontWeight: 600 }}>
-                        <div>S.No.</div>
-                        <div>User/Groups</div>
-                        <div>Permission</div>
-                        <div>Action</div>
-                      </div>
-                      {permissionUsers.map((a: any, i: number) => (
-                        <div key={a.principalId} style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", border: "1px solid #e1e4e8", borderTop: "none" }}>
-                          <div>{i + 1}</div>
-                          <div title={a.principalTitle}>{a.principalTitle}</div>
-                          <div>{a.roles && a.roles.length ? a.roles.join(", ") : "—"}</div>
-                          <div>
-                            <button
-                              style={{ padding: "4px 8px", border: "1px solid #ccc", borderRadius: 4, background: "#fff", cursor: "pointer" }}
-                              onClick={() => removeUserFromSelectedFolder(a.principalId)}
-                              disabled={!mpCanManage}
+                  {/* Quick Views Grid/List */}
+                  {!showUploadPanel && activeView !== "browse" && (
+                    <>
+                      {paginatedFiles.length > 0 ? (
+                        <>
+                          {/* Grid View */}
+                          {activeLayout === "grid" && (
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                                gap: "18px",
+                                marginBottom: "20px",
+                              }}
                             >
-                              Remove
-                            </button>
+                              {filesLoadedfromnode && paginatedFiles.length > 0 ? (
+                                paginatedFiles.map((file, idx) => (
+                                  <div
+                                    key={file.Id || file.FileUID || idx}
+                                    className="carddesign"
+                                  >
+                                    {/* File Content */}
+
+
+                                    {/* File Extension Badge */}
+                                    <div
+                                      dangerouslySetInnerHTML={{
+                                        __html: createFileExtensionHtml(getActualFileName(file)),
+                                      }}
+                                    />
+
+                                    {/* File Name */}
+                                    <div style={{ fontWeight: 600, fontSize: "15px" }}>
+                                      {getActualFileName(file)}
+                                    </div>
+
+
+
+
+
+
+
+                                    <div className="text-muted font-12">
+                                      {file.Length
+                                        ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
+                                        : ""}
+                                    </div>
+                                    <div className="text-muted font-12">
+                                      {file.TimeCreated
+                                        ? new Date(file.TimeCreated).toLocaleDateString()
+                                        : ""}
+                                    </div>
+
+                                    {/* Three-dot menu button */}
+                                    <div className="dotbutton">
+                                      <button type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
+                                        }}
+                                        style={{
+                                          background: "none",
+                                          border: "none",
+                                          fontSize: "20px",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        ⋮
+                                      </button>
+
+                                      {/* Context-specific menu */}
+                                      {menuOpenIdx === idx && (
+                                        <div
+                                          style={{
+                                            position: "absolute",
+                                            right: 0,
+                                            top: "28px",
+                                            background: "#fff",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "4px",
+                                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                            zIndex: 10,
+                                            minWidth: "160px",
+                                          }}
+                                        >
+                                          <ul className="internalbutton">
+                                            {/* Common actions for all views */}
+                                            <li>
+                                              <button type="button" className="newbuttontext"
+
+                                                onClick={() => {
+                                                  setPreviewFile(file);
+                                                  setShowPreviewModal(true);
+                                                }}
+                                              >
+                                                <span>👁️</span> Preview File
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={() => {
+                                                  // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                  handleAuditHistory(file);
+                                                  setMenuOpenIdx(null);
+                                                }}
+                                              >
+                                                <span>📝</span> Audit History
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={() => {
+                                                  setModalFile(file);
+
+                                                  setShowVersionModal(true);
+                                                  setMenuOpenIdx(null);
+                                                }}
+                                              >
+                                                <span>🕰️</span> Version History
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={async () => {
+                                                  await deleteFileFolder(
+                                                    file,
+                                                    currentSiteUrl,
+                                                    context
+                                                  );
+                                                  setMenuOpenIdx(null);
+                                                }}
+
+                                              >
+                                                <span>🕰️</span> Delete File
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={async () => {
+                                                  const newFav = await toggleFavouriteDoc(
+                                                    file,
+                                                    currentSiteUrl,
+                                                    context
+                                                  );
+                                                  setMenuOpenIdx(null);
+
+                                                  // Update local state to reflect new favourite status
+                                                  setSelectedFiles((prev) =>
+                                                    prev.map((f) =>
+                                                      f.UniqueId === file.UniqueId
+                                                        ? { ...f, IsFavourite: newFav }
+                                                        : f
+                                                    )
+                                                  );
+                                                }}
+                                              >
+                                                <span>⭐</span>{" "}
+                                                {file.IsFavourite
+                                                  ? "Unmark Favourite"
+                                                  : "Mark as Favourite"}
+                                              </button>
+                                            </li>
+
+                                          </ul>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))
+                              ) :
+                                // this is my request and my favourite my recucle bin files ternary operator
+                                (
+                                  paginatedFiles.map((file, idx) => (
+                                    <div
+                                      key={file.Id || file.FileUID || idx}
+                                      className="carddesign"
+
+                                    >
+                                      {/* Card Content */}
+                                      {
+                                        activeView === "My request" ? (
+                                          <>
+
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                            <div className="text-muted font-12">{file.DocumentLibraryName}</div>
+                                            <div className="text-muted font-12">{file.Status}</div>
+                                          </>
+                                        ) : activeView === "My favourite" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+
+
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : activeView === "My Folders" ? (
+                                          <>
+                                            <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.FolderName}</div>
+                                            <div className="text-muted font-12">{file.SiteTitle}</div>
+                                          </>
+                                        ) : activeView === "Share with me" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : activeView === "Share with other" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : activeView === "Recycle bin" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : null
+                                      }
+
+                                      {/* Three-dot Menu */}
+                                      <div className="dotbutton">
+                                        <button type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
+                                          }}
+                                          style={{
+                                            background: "none",
+                                            border: "none",
+                                            fontSize: "20px",
+                                            cursor: "pointer",
+                                          }}
+                                        >
+                                          ⋮
+                                        </button>
+
+                                        {menuOpenIdx === idx && (
+                                          <div
+
+                                            className="three-dot-menu"
+                                            style={{
+                                              position: "absolute",
+                                              right: 0,
+                                              top: "28px",
+                                              background: "#fff",
+                                              border: "1px solid #ddd",
+                                              borderRadius: "4px",
+                                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                              zIndex: 10,
+                                              minWidth: "160px",
+                                            }}
+                                          >
+                                            <ul className="internalbutton">
+
+                                              {/* Menu for My Request */}
+                                              {activeView === "My request" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}>👁️ Preview File</button></li>
+                                                  <li><button onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                    handleAuditHistory(file);
+                                                    setMenuOpenIdx(null);
+                                                  }}>📝 Audit History</button></li>
+                                                  <li><button type="button">↗️ Share</button></li>
+                                                  <li><button type="button" onClick={() => {
+
+
+                                                    setDirectDownloadFile(file); // new state for direct downloader
+                                                    setMenuOpenIdx(null);
+                                                  }}>⬇️ Download</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setModalFile(file);
+                                                    setShowVersionModal(true);
+                                                    setMenuOpenIdx(null);
+                                                  }}>🕰️ Version History</button></li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for My Favourite */}
+                                              {activeView === "My favourite" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}>👁️ Preview File</button></li>
+                                                  <li><button type="button">↗️ Share</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    // handleUnmarkFavourite(file);
+                                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                                                    toggleFavourite(file);
+
+                                                    setMenuOpenIdx(null);
+                                                  }}>⭐ Unmark as Favourite</button></li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for My Folders */}
+                                              {activeView === "My Folders" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setModalFile(file);
+                                                    setMenuOpenIdx(null);
+                                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                    deleteFolder(file); // sourish 20/8/25
+                                                  }}
+                                                  >🗑️ Delete Folder</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setModalFile(file);
+                                                    setRenameValue(file?.FolderName || ""); // prefill with old name
+                                                    setRenameModalOpen(true);
+                                                    setMenuOpenIdx(null);
+                                                  }}>✏️ Rename Folder</button></li>
+                                                  <li>
+                                                    <button type="button" onClick={() => {
+                                                      const pageBefore = currentPage;
+                                                      setMenuOpenIdx(null);
+                                                      window.managePermission?.(file);
+                                                      setCurrentPage(pageBefore);
+                                                    }}>
+                                                      🔒 Manage Permission
+                                                    </button>
+                                                  </li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for Share with me */}
+                                              {activeView === "Share with me" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}>👁️ Preview File</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+
+                                                    setDirectDownloadFile(file); // new state for direct downloader
+                                                    setMenuOpenIdx(null);
+                                                  }}>⬇️ Download File</button></li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for Share with other */}
+                                              {activeView === "Share with other" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}>👁️ Preview File</button></li>
+                                                  <li><Button
+                                                    variant="warning"
+                                                    onClick={() => {
+                                                      setShowRevokeModal(true);
+                                                      setAcessFile(file); // file = your folder/file object
+                                                    }}
+                                                  >
+                                                    Revoke Access
+                                                  </Button></li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for Recycle Bin */}
+                                              {activeView === "Recycle bin" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}>👁️ Preview File</button></li>
+                                                  <li><button type="button" onClick={async () => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    await handleUndoDelete(file); setMenuOpenIdx(null);
+                                                  }}
+                                                  >↩️ Undo (Restore)</button></li>
+                                                </>
+                                              )}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+
+                                  )
+
+                                )}
+
+                            </div>
+                          )}
+
+                          {activeLayout === "list" && (
+                            <div>
+                              <table className="mtablenew">
+                                <thead>
+                                  <tr >
+                                    <th style={{ minWidth: '50px', maxWidth: '50px', }}>S.No</th>
+                                    <th style={{ minWidth: '250px', maxWidth: '250px', }}>Name</th>
+                                    {/* <th >Size</th> */}
+                                    <th>Size</th>
+                                    {/* <th>Library</th> */}
+                                    <th>
+                                      {paginatedFiles.some((f) => f.DocumentLibraryName)
+                                        ? "Library"
+                                        : "Created Date"}
+                                    </th>
+                                    {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+                                      <th style={{ minWidth: '80px', maxWidth: '80px', }}>Status</th>
+                                    )}
+                                    {/* <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th> */}
+                                    <th style={{ textAlign: "center" }}>Action</th> {/* New column */}
+                                  </tr>
+                                </thead>
+
+                                <tbody>
+                                  {paginatedFiles.map((file, idx) => (
+                                    <tr key={file.Id || idx}>
+                                      <td style={{ minWidth: '50px', maxWidth: '50px', }}>{file.SNo || idx + 1}</td>
+                                      {/* <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td> */}
+                                      <td style={{ minWidth: '250px', maxWidth: '250px', }}>{file.FileName || file.Name || file.FolderName}</td>
+                                      {/* <td >{file.FileSize}</td> */}
+                                      <td>
+                                        {file.FileSize
+                                          ? file.FileSize
+                                          : file.Length
+                                            ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
+                                            : "-"}
+                                      </td>
+                                      {/* <td >{file.DocumentLibraryName}</td> */}
+                                      <td>
+                                        {file.DocumentLibraryName
+                                          ? file.DocumentLibraryName
+                                          : file.TimeCreated
+                                            ? new Date(file.TimeCreated).toLocaleDateString()
+                                            : "-"}
+                                      </td>
+                                      {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
+                                      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+                                        <td style={{ minWidth: '80px', maxWidth: '80px', }}>{file.Status || ""}</td>
+                                      )}
+                                      <td style={{ textAlign: "center" }}>
+                                        <button type="button" className="dotbutton2"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
+                                          }}
+
+                                        >
+                                          ⋮
+                                        </button>
+
+                                        {menuOpenIdx === idx && (
+                                          <div
+                                            style={{
+                                              position: "absolute",
+                                              right: 0,
+                                              top: "20px",
+                                              background: "#fff",
+                                              border: "1px solid #ddd",
+                                              borderRadius: "4px",
+                                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                              zIndex: 10,
+                                              minWidth: "140px",
+                                            }}
+                                          >
+                                            <ul className="internalbutton">
+                                              <li>
+                                                <button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>
+                                                  👁️ Preview
+                                                </button>
+                                              </li>
+                                              <li>
+                                                <button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>
+                                                  ⬇️ Download
+                                                </button>
+                                              </li>
+                                              <li>
+                                                <button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}>
+                                                  🗑️ Delete
+                                                </button>
+                                              </li>
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+
+                              </table>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div
+                          style={{
+                            color: "#666",
+                            fontSize: "14px",
+                            padding: "20px",
+                            textAlign: "center",
+                            marginTop: "20px",
+                          }}
+                        >
+                          {searchTerm.trim() !== ""
+                            ? `No records found matching "${searchTerm}"`
+                            : "No files found in this view"}
+                        </div>
+                      )}
+                      {/* create Folder modal */}
+                      <Modal show={activeComponent} onHide={() => setActiveComponent(false)} className='filemodal'>
+                        <Modal.Header closeButton>
+                          <Modal.Title > <h4 className='font-16 text-dark fw-bold mb-1'>This Folder will create under: <h2
+                            style={{
+                              fontSize: "16px",
+                              fontWeight: "600",
+                              marginBottom: "15px",
+                              color: "#333",
+                              paddingBottom: "5px",
+                              borderBottom: "1px solid #eee",
+                              paddingRight: "100px", // Make space for upload button
+                            }}
+                          >
+                            {breadcrumbs.length > 0 ? (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                {breadcrumbs.map((item, index) => (
+                                  <React.Fragment key={item.key}>
+                                    {index > 0 && (
+                                      <span
+                                        style={{
+                                          margin: "0 8px",
+                                          color: "#999",
+                                          fontSize: "14px",
+                                        }}
+                                      >
+                                        ›
+                                      </span>
+                                    )}
+                                    <span
+                                      className="breadcrumb-item"
+                                      // onClick={() => handleBreadcrumbClick(item)}
+                                      style={{
+                                        cursor: "pointer",
+                                        color:
+                                          "#333",
+                                        // color:
+                                        // index === breadcrumbs.length - 1 ? "#333" : "#0066cc",
+                                        fontWeight:
+                                          index === breadcrumbs.length - 1 ? "600" : "normal",
+                                        fontSize: "14px",
+                                        padding: "2px 5px",
+                                        borderRadius: "3px",
+                                      }}
+                                    >
+                                      {item.title}
+                                    </span>
+                                  </React.Fragment>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ color: "#666", fontSize: "14px" }}>
+                                Select a folder to view files
+                              </div>
+                            )}
+                          </h2></h4>
+                            {/* <p className='text-muted font-14 mb-0 fw-400'>Below are the attachment details for Memorandum
+              </p> */}
+
+                          </Modal.Title>
+
+
+                        </Modal.Header>
+                        <Modal.Body className="" id="style-5">
+
+                          <>
+
+                            {activeComponent && (
+                              <CreateFolder
+                                OthProps={{
+                                  "Entity": `${currentSiteUrl.split("/sites/")[1].split("/")[1]}`,
+                                  "Entityurl": currentSiteUrl,
+                                  "siteID": currentSiteUrl,
+                                  "Devision": "",
+                                  "Department": "",
+                                  // "DocumentLibrary": currentFolderPath,
+                                  "DocumentLibrary": selectedCurrentNode.type === "site" || selectedCurrentNode.type === "subsite" ? "" : selectedCurrentNode.title,
+                                  "Folder": currentFolderPath,
+                                  "folderpath": `/sites/${currentSiteUrl.split("/sites/")[1]}/${currentFolderPath}`,
+                                  "IsFolderDeligationUser": "false",
+                                }}
+                                context={context}
+                              // onReturnToMain={handleReturnToMain}
+                              />
+                            )}
+
+                          </>
+                          {/* </>
+              )
+              } */}
+
+                        </Modal.Body>
+
+                      </Modal>
+                      {/* // sourish 21/8/25 */}
+                      {renameModalOpen && (
+                        <div
+                          style={{
+                            position: "fixed",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: "rgba(0,0,0,0.5)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 9999,
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: "#fff",
+                              padding: "20px",
+                              borderRadius: "10px",
+                              width: "320px",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "12px",
+                            }}
+                          >
+                            <h3 style={{ margin: 0 }}>Rename Folder</h3>
+                            <input
+                              type="text"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              style={{
+                                width: "100%",
+                                padding: "8px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc",
+                              }}
+                            />
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                gap: "10px",
+                                marginTop: "10px",
+                              }}
+                            >
+                              <button
+                                style={{
+                                  padding: "6px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #ccc",
+                                  background: "#f5f5f5",
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => setRenameModalOpen(false)}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                style={{
+                                  padding: "6px 12px",
+                                  borderRadius: "6px",
+                                  border: "none",
+                                  background: "#0078d4",
+                                  color: "#fff",
+                                  cursor: "pointer",
+                                }}
+                                onClick={renameFolder}
+                              >
+                                Rename
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 13, color: "#666" }}>No direct role assignments found.</div>
-                  )}
-                </div>
-              </>
-            )}
-          </>
-        );
-      })()}
-    </Modal.Body>
-  </Modal>
-)}
-              {/* aman code manage folder permission */}
+                      )}
+                      {/* download component */}
+                      <DirectDownloader
+                        file={directDownloadFile}
+                        context={context}
+                        trigger={true}
+                      />
 
 
-      {/* Pagination controls */}
-                  {
-                    
-                    // selectedFiles
-                    
-                    
-                       filteredFiles
-                    
-                    .length > 0 && (
-        <div
-          style={{
-            margin: "10px 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            disabled={currentPage === 1}
-            style={{
-              marginRight: "10px",
-              padding: "5px 12px",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              background: currentPage === 1 ? "#eee" : "#fff",
-              cursor: currentPage === 1 ? "not-allowed" : "pointer",
-            }}
-          >
-            Prev
-          </button>
-          <span style={{ margin: "0 10px" }}>
-                          {/* Page {currentPage} of {Math.ceil(selectedFiles.length / pageSize)} */}
-                            Page {currentPage} of {Math.ceil(filteredFiles.length / pageSize) || 1}
-
-          </span>
-          <button
-           onClick={(e) => {
-            e.preventDefault(); // Add this line
-            setCurrentPage((p) =>
-              p < Math.ceil(selectedFiles.length / pageSize) ? p + 1 : p
-            );
-          }}
-            // onClick={() =>
-            //   setCurrentPage((p) =>
-            //     p < Math.ceil(selectedFiles.length / pageSize) ? p + 1 : p
-            //   )
-            // }
-            disabled={currentPage === Math.ceil(selectedFiles.length / pageSize)}
-            style={{
-              marginLeft: "10px",
-              padding: "5px 12px",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              background:
-                currentPage === Math.ceil(selectedFiles.length / pageSize)
-                  ? "#eee"
-                  : "#fff",
-              cursor:
-                currentPage === Math.ceil(selectedFiles.length / pageSize)
-                  ? "not-allowed"
-                  : "pointer",
-            }}
-          >
-            Next
-          </button>
-        </div>
-      )}
-    </>
-  )
-}
-     
 
 
-      </div></div>
-       {/* ---------------------------Audit History Modal ---------------------*/}
-    {showAuditModal && (
-      <Modal show={showAuditModal} onHide={() => setShowAuditModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Audit History</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {auditLoading ? (
-            <div>Loading...</div>
-          ) : (
-            <div>
-              <h5>Metadata</h5>
-              <ul>
-                {Object.entries(auditVersions.Metadata || {}).map(([key, value]) => (
-                  <li key={key}><strong>{key}:</strong> {String(value)}</li>
-                ))}
-              </ul>
+                      {/*revoke modal*/}
+                      <Revoke
+                        show={showRevokeModal}
+                        selectedFolder={revoke}
+                        context={context}
+                        onClose={() => setShowRevokeModal(false)}
+                        onRevoke={(userId: string) => {
+                          console.log("Revoked user ID:", userId);
+                          alert(`Access revoked for user ID: ${userId}`);
+                        }}
+                      />
 
-              <h5>Versions</h5>
-              {auditVersions.Versions && auditVersions.Versions.length ? (
-                <ul>
-                  {auditVersions.Versions.map((v: any, i: number) => (
-                    <li key={i}>{JSON.stringify(v)}</li>
-                  ))}
-                </ul>
-              ) : (
-                <div>No versions available</div>
+                      {/* version history */}
+                      <VersionHistoryModal
+                        show={showVersionModal}
+                        file={modalFile}
+                        context={context}
+                        onClose={() => setShowVersionModal(false)}
+                      />
+
+                      {/* aman code manage folder permission */}
+                      {/* === Step 1 Popup === */}
+                      {showPermissionModal && (
+                        <Modal show={showPermissionModal} onHide={() => setShowPermissionModal(false)}>
+                          <Modal.Header closeButton>
+                            <Modal.Title>Set Permission</Modal.Title>
+                          </Modal.Header>
+                          <Modal.Body>
+                            <div style={{ marginBottom: 10 }}>
+                              Set permissions for:{" "}
+                              <strong>{selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || "Selected Folder"}</strong>
+                            </div>
+                            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                              <button
+                                onClick={() => setShowPermissionModal(false)}
+                                style={{ padding: "6px 10px", border: "1px solid #ccc", borderRadius: 4, background: "#fff" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  const pageBefore = currentPage;
+                                  setShowPermissionModal(false);
+                                  await loadAndOpenManagePermission();
+                                  setCurrentPage(pageBefore);
+                                }}
+                                style={{ padding: "6px 10px", border: "1px solid #0b66c3", borderRadius: 4, background: "#0b66c3", color: "#fff" }}
+                              >
+                                Set Permission
+                              </button>
+                            </div>
+                          </Modal.Body>
+                        </Modal>
+                      )}
+
+                      {/* === Step 2 Popup (with People Picker) === */}
+                      {showManagePermissionModal && (
+                        <Modal show={showManagePermissionModal} onHide={() => setShowManagePermissionModal(false)} size="lg">
+                          <Modal.Header closeButton>
+                            <Modal.Title>Manage Permission</Modal.Title>
+                          </Modal.Header>
+                          <Modal.Body>
+                            {(() => {
+                              const ctx = selectedFolder ? deriveFolderContext(selectedFolder) : { webUrl: "", serverRel: "", documentLibraryName: "" };
+                              return (
+                                <>
+                                  <div style={{ marginBottom: 10, fontSize: 13, color: "#555" }}>
+                                    <div><strong>Folder:</strong> {selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || ctx.serverRel}</div>
+                                    <div><strong>Library:</strong> {ctx.documentLibraryName}</div>
+                                    <div><strong>Web:</strong> {ctx.webUrl}</div>
+                                  </div>
+
+                                  {mpLoading ? (
+                                    <div>Loading permissions...</div>
+                                  ) : (
+                                    <>
+                                      {mpError && (
+                                        <div style={{ color: "#b00020", marginBottom: 10, whiteSpace: "pre-wrap" }}>{mpError}</div>
+                                      )}
+
+                                      <div style={{ marginBottom: 10 }}>
+                                        <strong>Inheritance:</strong>{" "}
+                                        {mpHasUnique ? (
+                                          <span style={{ color: "#b26a00" }}>This folder has unique permissions</span>
+                                        ) : (
+                                          <span style={{ color: "#2e7d32" }}>Inheriting from parent</span>
+                                        )}
+                                      </div>
+
+                                      <div style={{ marginBottom: 10 }}>
+                                        <strong>Your ability:</strong>{" "}
+                                        {mpCanManage ? (
+                                          <span style={{ color: "#2e7d32" }}>You can manage permissions</span>
+                                        ) : (
+                                          <span style={{ color: "#b00020" }}>You cannot manage permissions on this folder</span>
+                                        )}
+                                      </div>
+
+                                      <div
+                                        style={{
+                                          borderTop: "1px solid #eee",
+                                          paddingTop: 10,
+                                          marginTop: 10,
+                                          display: "flex",
+                                          gap: 8,
+                                          alignItems: "center",
+                                          flexWrap: "wrap",
+                                        }}
+                                      >
+                                        {/* <select
+              value={newUser}
+              onChange={(e) => setNewUser(e.target.value)}
+              style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
+              disabled={!mpCanManage}
+              >
+              <option value="" disabled>
+              Select a user…
+              </option>
+              {mpSiteUsers.map((u) => (
+              <option key={u.id} value={u.loginName}>
+              {u.title} {u.email ? `(${u.email})` : ""}
+              </option>
+              ))}
+              </select> */}
+
+                                        {/* Typeahead user picker (replaces static dropdown) */}
+                                        <div ref={userSuggestRef} style={{ position: "relative", minWidth: 320 }}>
+                                          <input
+                                            type="text"
+                                            placeholder="Type user name or email..."
+                                            value={newUserDisplay || (mpSiteUsers.find(u => u.loginName === newUser)?.title || "")}
+                                            onChange={(e) => {
+                                              const val = e.target.value || "";
+                                              setNewUserDisplay(val);
+                                              setShowUserSuggestions(true);
+                                              const q = val.trim().toLowerCase();
+                                              const filtered = (mpSiteUsers || []).filter((u) => {
+                                                return (
+                                                  (u.title || "").toLowerCase().includes(q) ||
+                                                  (u.email || "").toLowerCase().includes(q) ||
+                                                  (u.loginName || "").toLowerCase().includes(q)
+                                                );
+                                              }).slice(0, 50);
+                                              setMpUserSuggestions(filtered);
+                                              // Clear previously selected loginName (we'll set login on selection)
+                                              setNewUser("");
+                                            }}
+                                            onFocus={() => {
+                                              setShowUserSuggestions(true);
+                                              setMpUserSuggestions((mpSiteUsers || []).slice(0, 50));
+                                            }}
+                                            disabled={!mpCanManage}
+                                            style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
+                                          />
+                                          {showUserSuggestions && mpUserSuggestions && mpUserSuggestions.length > 0 && (
+                                            <ul style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9999, background: "#fff", border: "1px solid #ccc", borderRadius: 4, maxHeight: 200, overflowY: "auto", listStyle: "none", margin: 0, padding: 0 }}>
+                                              {mpUserSuggestions.map((u) => (
+                                                <li
+                                                  key={u.id}
+                                                  onMouseDown={(e) => { e.preventDefault(); }}
+                                                  onClick={() => {
+                                                    setNewUser(u.loginName);
+                                                    setNewUserDisplay(`${u.title}${u.email ? ` (${u.email})` : ""}`);
+                                                    setShowUserSuggestions(false);
+                                                  }}
+                                                  style={{ padding: "8px", cursor: "pointer", borderBottom: "1px solid #eee" }}
+                                                >
+                                                  <div style={{ fontSize: 13 }}>{u.title}</div>
+                                                  <div style={{ fontSize: 12, opacity: 0.7 }}>{u.email || u.loginName}</div>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          )}
+                                        </div>
+
+                                        <select
+                                          value={newPermission}
+                                          onChange={(e) => setNewPermission(e.target.value)}
+                                          style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4 }}
+                                          disabled={!mpCanManage}
+                                        >
+                                          <option value="Read">Read</option>
+                                          <option value="Edit">Edit</option>
+                                          <option value="Full Control">Full Control</option>
+                                        </select>
+                                        <button
+                                          onClick={addUserToSelectedFolder}
+                                          style={{ padding: "6px 10px", border: "1px solid #107c10", borderRadius: 4, background: "#107c10", color: "#fff" }}
+                                          disabled={!mpCanManage || !newUser.trim()}
+                                        >
+                                          + Add User
+                                        </button>
+                                      </div>
+
+                                      <div style={{ margin: "10px 0" }}>
+                                        <strong>Current access:</strong>
+                                        {permissionUsers?.length ? (
+                                          <div style={{ marginTop: 8 }}>
+                                            <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", background: "#f6f7f8", border: "1px solid #e1e4e8", borderRadius: 6, fontWeight: 600 }}>
+                                              <div>S.No.</div>
+                                              <div>User/Groups</div>
+                                              <div>Permission</div>
+                                              <div>Action</div>
+                                            </div>
+                                            {permissionUsers.map((a: any, i: number) => (
+                                              <div key={a.principalId} style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", border: "1px solid #e1e4e8", borderTop: "none" }}>
+                                                <div>{i + 1}</div>
+                                                <div title={a.principalTitle}>{a.principalTitle}</div>
+                                                <div>{a.roles && a.roles.length ? a.roles.join(", ") : "—"}</div>
+                                                <div>
+                                                  <button
+                                                    style={{ padding: "4px 8px", border: "1px solid #ccc", borderRadius: 4, background: "#fff", cursor: "pointer" }}
+                                                    onClick={() => removeUserFromSelectedFolder(a.principalId)}
+                                                    disabled={!mpCanManage}
+                                                  >
+                                                    Remove
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <div style={{ fontSize: 13, color: "#666" }}>No direct role assignments found.</div>
+                                        )}
+                                      </div>
+                                    </>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </Modal.Body>
+                        </Modal>
+                      )}
+                      {/* aman code manage folder permission */}
+
+
+                      {/* Pagination controls - edited by ritik - 13/01/2026 */}
+                      {
+
+                        // selectedFiles
+
+
+                        filteredFiles
+
+                          .length > 0 && (
+                          <div
+                            style={{
+                              margin: "10px 0",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              disabled={currentPage === 1}
+                              style={{
+                                marginRight: "10px",
+                                padding: "5px 12px",
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                                background: currentPage === 1 ? "#eee" : "#fff",
+                                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                              }}
+                            >
+                              Prev
+                            </button>
+                            <span style={{ margin: "0 10px" }}>
+                              Page {currentPage} of {Math.ceil(filteredFiles.length / pageSize) || 1}
+
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage((p) =>
+                                  p < Math.ceil(filteredFiles.length / pageSize)
+                                    ? p + 1
+                                    : p
+                                );
+                              }}
+                              disabled={currentPage === Math.ceil(filteredFiles.length / pageSize)}
+                              style={{
+                                marginLeft: "10px",
+                                padding: "5px 12px",
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                                background:
+                                  currentPage === Math.ceil(filteredFiles.length / pageSize)
+                                    ? "#eee"
+                                    : "#fff",
+                                cursor:
+                                  currentPage === Math.ceil(filteredFiles.length / pageSize)
+                                    ? "not-allowed"
+                                    : "pointer",
+                              }}
+                            >
+                              Next
+                            </button>
+                          </div>
+                        )}
+                    </>
+                  )
+                  }
+
+                </>
               )}
-            </div>
+              {/* ritik today */}
+
+
+              {showPreviewModal && (
+                <PreviewModal
+                  show={true}
+                  fileUrl={previewFile}
+                  onClose={() => setShowPreviewModal(false)}
+                />
+              )}
+
+            </div></div>
+          {/* ---------------------------Audit History Modal ---------------------*/}
+          {showAuditModal && (
+            <Modal show={showAuditModal} onHide={() => setShowAuditModal(false)} size="lg">
+              <Modal.Header closeButton>
+                <Modal.Title>Audit History</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                {auditLoading ? (
+                  <div>Loading...</div>
+                ) : (
+                  <div>
+                    <h5>Metadata</h5>
+                    <ul>
+                      {Object.entries(auditVersions.Metadata || {}).map(([key, value]) => (
+                        <li key={key}><strong>{key}:</strong> {String(value)}</li>
+                      ))}
+                    </ul>
+
+                    <h5>Versions</h5>
+                    {auditVersions.Versions && auditVersions.Versions.length ? (
+                      <ul>
+                        {auditVersions.Versions.map((v: any, i: number) => (
+                          <li key={i}>{JSON.stringify(v)}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div>No versions available</div>
+                    )}
+                  </div>
+                )}
+              </Modal.Body>
+            </Modal>
           )}
-        </Modal.Body>
-      </Modal>
-    )}
-    {/* sourish 30/9/25 two div added*/}
-    </div>
-    </div>
+          {/* sourish 30/9/25 two div added*/}
+        </div>
+      </div>
     </div>
   );
 };
 
 const DMSMain: React.FC<IEssadmsMainProps> = (props) => {
   return (
-      <Provider>
-        <ArgPoc context={props.context} />;
-        </Provider>
+    <Provider>
+      <ArgPoc context={props.context} />;
+    </Provider>
   )
 };
 
