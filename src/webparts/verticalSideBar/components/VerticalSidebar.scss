@@ -237,7 +237,7 @@ a:hover, a:active {
 .mainevent{border-bottom: 1px solid #ccc; padding: 10px 0px;}
 .mainevent:last-child{border-bottom: 0px !important;}
 .ipaddw{width: 10px;}
-.footer{background: #d4d4d3;bottom:-70px;padding: 8px 10px;position: relative;text-align: right; width: 100%;}
+.footer{background: #d4d4d3;bottom:0px;padding: 8px 10px;position: fixed;text-align: right; width: 100%;}
 .dropcss{padding: 0px;}
 .dropcss a{display: block; text-align: center; font-size: 12px; padding: 10px; }
 .text-dark-new{color: #343a40 !important;}
@@ -707,6 +707,7 @@ margin-left: 0px;
   position: relative;
   -webkit-transition: var(--ct-menu-transition);
   transition: var(--ct-menu-transition);
+  padding: 0px 5px;
 }
 #wrapper {
   display: -webkit-box;
@@ -1045,14 +1046,108 @@ background-color: rgb(167, 30, 132);
   height: 160px !important;
 }
 .inbox-leftbar{
-  width: 25%;
-  float: left;
-  padding: 0 0px 20px 0px;
-  position: relative;
+  
+  padding: 12px;
+  position: relative; background: #fff;
+}
+.doc-count {
+    margin-left: auto;
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
 }
 .inbox-rightbar{
-  width: 75%;
-    padding: 15px;
+ position: relative;    background: #fff;
+    
+}
+.status_new {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.file-extension-badge{
+      display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    color: white;
+}
+#buttonpanel button{
+      display: flex;
+    align-items: center;
+    padding: 12px 15px;
+   
+    text-decoration: none;
+   
+    transition: all 0.3s ease;
+}
+.dotbutton button{
+  background-color: #f8fafc !important;
+    border: none;
+    width: 32px !important;
+    height: 32px !important;min-width: 32px !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b; margin-top: -3px !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.internalbutton button img{margin-right: 3px;}
+.dotbutton2{
+  background-color: #f8fafc !important;
+    border: none;
+    width: 32px !important;
+    height: 32px !important;min-width: 32px !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b; margin-top: 0px !important;
+    cursor: pointer;
+    transition: all 0.2s ease; margin: auto;
+}
+.folder-icon {
+    font-size: 24px;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    color: #1976d2;
+    flex-shrink: 0;
+}
+.badge1{
+      display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    gap: 0px;
+}
+.badge1 svg{margin-top: -2px;}
+.folder-icon svg{
+  color: #1976d2;
+}
+#folderhierarchycontainer button{margin: 0px;}
+.main-content-new{
+      display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 10px; margin-bottom: 65px;
+  
 }
 .me-1{margin-right: 8px;}
 .mybutton2{background: #fff; font-weight: 500; border-radius: 4px; font-size: 14px; border: none; color: #6c757d;}
@@ -1072,8 +1167,10 @@ background-color: rgb(167, 30, 132);
   background: transparent;
   border: 1px solid #ccc;
   border-radius: 1000px;
-  width: 16px;
-  height: 16px;
+    width: 16px; height: 16px;
+    color: #000;
+    line-height: 16px;
+  
 }
 .newalignbutton{
   margin-bottom: 10px; display: 'flex'; gap: 8px; justify-content: right;
@@ -1109,21 +1206,31 @@ margin: 10px 0px !important ;
   width: 22px;}
   .text-dark{color: #000;}
   .dotbutton{
-    position: absolute; top: 10px; right: 10px;
+    position: absolute; top: 17px; right: 10px;
   }
   .dotbutton button{min-width: auto !important;}
   .internalbutton{padding: 0px; list-style: none; margin: 0px;}
-  .internalbutton button{background: transparent; font-size: 13px; text-align: left; border: none; color: #6c757d; width: 100%;}
+  .internalbutton button{    background: 0 0 !important;
+    border: none;
+    color: #6c757d;
+    font-size: 13px;
+    margin-top: 0;
+    text-align: left; border-radius: 0px !important;
+    width: 100%;
+    width: 100% !important;
+    min-width: 100% !important;
+    justify-content: left;}
   .internalbutton button:hover{background: #f7fbfc !important;}
+  .internalbutton button svg{margin-top: -2px; margin-right: 5px;}
   .text-muted{
     color: #6c757d;
   }
   .font-12{font-size: 12px;}
   .carddesign{
     background: #fff;
-    border: 0px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 16px;
+    border: 2px dotted #e0e0e0;
+    border-radius: 4px;
+    padding: 12px;
     min-height: 120px;
     display: flex;
     flex-direction: column;
@@ -1872,19 +1979,22 @@ color: #fff !important;
   padding: .55rem .9rem !important;
 }
 .indexdesign {
-  background: #d2effa !important;
-  border: none;
-  border-radius: 1000px;
-  color: #1fb0e5 !important;
-  float: left;
-  font-size: 16px !important;
-  font-weight: 600;
-  height: 28px !important;
-  line-height: 30px !important;
-  margin-left: 1px;
-  padding: 0 1px !important;
-  text-align: center;
-  width: 28px !important;
+  background: #f2f5f8 !important;
+    border: none;
+    border-radius: 1000px;
+    color: #5b5b5b !important;
+    float: left;
+    font-size: 14px !important;
+    font-weight: 600;
+    height: 25px !important;
+    line-height: 25px !important;
+    margin-left: 1px;
+    padding: 0 1px !important;
+    text-align: center;
+    width: 25px !important; margin: auto;
+}
+.newicon svg{
+  height: 1.3em;    width: 1rem;
 }
 .mtable th{position: relative;}
 .mtablenew {
@@ -1922,15 +2032,21 @@ color: #fff !important;
 .mtablenew td {
   min-width: 130px;
   max-width: 130px;
-  padding: 6px 10px;
+  padding: 3px 10px;
   text-align: left;
-  background-color: #fff;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #6c757d;
   font-size: 13px;
-  border-bottom: 1px solid #e1e1e1;
+  border-bottom: 0px solid #e1e1e1;
+}
+.onelinetrim{
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mtablenew tbody tr:nth-child(even) {
+    background-color: #f1f1f12e  !important;
 }
 .mtablenew tr{width: 100%; display: table;}
 .tabcss:hover{ background: #fff !important; color: #000 !important;}

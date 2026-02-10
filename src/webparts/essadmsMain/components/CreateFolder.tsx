@@ -78,7 +78,7 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   >([{ id: 0, selectedUserForPermission: [], selectedPermission: "" }]);
   console.log("rowsForPermission", rowsForPermission);
   // Add new row for permission
-  const handleAddRowForPermission = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  const handleAddRowForPermission = (event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
     event.preventDefault();
     const newId = rowsForPermission.length ? rowsForPermission[rowsForPermission.length - 1].id + 1 : 0;
     setRowsForPermission([
@@ -90,7 +90,7 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   // Remove new row for permission
   const handleRemoveRowForPermission = (
     id: number,
-    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+    event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>
   ) => {
     event.preventDefault();
     setRowsForPermission(rowsForPermission.filter((row) => row.id !== id));
@@ -240,7 +240,8 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
     }
   }
   //   add new field row
-  const handleAddFields = () => {
+  const handleAddFields = (event?: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
+    if (event) event.preventDefault();
     const newId = formFields.length ? formFields[formFields.length - 1].id + 1 : 0;
     setFormFields([
       ...formFields,
@@ -250,7 +251,7 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   console.log("FormsField Array", formFields);
 
   //   remove field row
-  const handleRemoveField = (id: number, event: any) => {
+  const handleRemoveField = (id: number, event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
     event.preventDefault();
     // console.log("index",id);
     // console.log("Remove Field Called");
@@ -394,7 +395,7 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   };
 
   const handleAddRow = (
-    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+    event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>
   ) => {
     event.preventDefault();
     const newId = rows.length ? rows[rows.length - 1].id + 1 : 0;
@@ -411,7 +412,7 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   //   remove new row
   const handleRemoveRow = (
     id: number,
-    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+    event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>
   ) => {
     event.preventDefault();
     setRows(rows.filter((row) => row.id !== id));
@@ -604,12 +605,37 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
           // const { web } = await sp.site.openWebById(OthProps.siteID);
           // const folderAddResult = await web.folders.addUsingPath(`${OthProps.folderpath}/${folderName}`);
           console.log("Folder created successfully -", folderAddResult);
-        } catch (error) {
-          console.log("Error In creating Folder Inside the Document Library", error);
+      //   } catch (error) {
+      //     console.log("Error In creating Folder Inside the Document Library", error);
+      //   }
+
+
+      // }
+      if (folderPrivacy === "private") {
+            const folderItem = await folderAddResult.folder.getItem();
+            
+            // Break inheritance and clear existing permissions (false)
+            await folderItem.breakRoleInheritance(false);
+
+            // Add the current user so they don't lose access to the folder they just created!
+            const currentUser = await siteSP1.web.currentUser();
+            await folderItem.roleAssignments.add(currentUser.Id, 1073741829); // Full Control
+
+            // Add selected users from rowsForPermission
+            for (const row of rowsForPermission) {
+                const roleDefId = getRoleDefinitionId(row.selectedPermission);
+                if (row.selectedUserForPermission.length > 0) {
+                    for (const user of row.selectedUserForPermission as any) {
+                        await folderItem.roleAssignments.add(user.userId, roleDefId);
+                    }
+                }
+            }
+            console.log("Unique permissions applied to subfolder.");
         }
-
-
-      }
+    } catch (error) {
+        console.log("Error In creating Folder or setting permissions", error);
+    }
+}
       // END NEW CODE
 
       if (OthProps.DocumentLibrary === "" && toggleApproval) {
@@ -910,6 +936,18 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
     setShowDiv(e.target.value === "private")
   };
 
+  const getRoleDefinitionId = (permission: String): number => {
+  switch (permission) {
+    case "Full Control": return 1073741829;
+    case "Design":       return 1073741828;
+    case "Edit":         return 1073741830;
+    case "Contribute":   return 1073741827;
+    case "Read":         return 1073741826;
+    case "View":         return 1073741825; // View Only
+    default:             return 1073741826; // Default to Read
+  }
+};
+
   return (
     <>
       {/* <button className="BackButton me-0 mb-3"
@@ -920,453 +958,344 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
  
         Back
       </button> */}
-      <div className="mt-3">
-        <div className="card cardborder p-31" style={{
-
-        }}>
+      <div className="create-folder-mt-20">
+        <div className="create-folder-card">
           <form>
-            <div className="row mt-0">
-              <h3 className="header-title text-dark font-16 mb-1">Basic Information</h3>
-              <p className="subheader font-14 mb-3">Specify Basic Information and create folder  </p>
-              <div className="col-12 col-md-6">
-                <div className="form-group">
-                  <label htmlFor="folderName" className="headerfont">
-                    Folder Name
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control fieldmargin"
-                    id="folderName"
-                    placeholder="Enter project name"
-                    value={folderName}
-                    onChange={(e) => setFolderName(e.target.value)}
-                  />
-                  {errors.folderName && (
-                    <span className="text-danger">{errors.folderName}</span>
-                  )}
-                </div>
+            <div className="create-folder-form-row">
+              <div className="create-folder-form-group" style={{ flex: "1 1 100%" }}>
+                <h3 className="create-folder-section-header">Basic Information</h3>
+                <p className="create-folder-section-subheader">Specify Basic Information and create folder</p>
               </div>
-              {/* {togglefolderPrivacy &&  ( */}
-              <div className="col-12 col-md-6" id="folderPrivacy" style={{
-                width: "25%"
-              }}>
-                <div className="form-group">
-                  <label htmlFor="folderPrivacy" className="headerfont">
-                    Folder Privacy
-                  </label>
-                  <div>
-                    <div className="form-check form-check-inline fieldmargin">
-                      <input
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          handlePrivacyChange(e);
-                          // handleToggleApproval();
-                          // handlePermissionToggle(true);
-                        }}
-                        className="form-check-input"
-                        type="radio"
-                        name="folderPrivacy"
-                        id="private"
-                        value="private"
-                        checked={folderPrivacy === "private"}
-                      />
-                      <label className="form-check-label" htmlFor="private">
-                        Private
-                      </label>
-                    </div>
-                    <div className="form-check form-check-inline">
-                      <input
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          handlePrivacyChange(e);
-                          // handleToggleRemove();
-                          // handlePermissionToggle(false);
-                        }}
-                        className="form-check-input"
-                        type="radio"
-                        name="folderPrivacy"
-                        id="public"
-                        value="public"
-                        checked={folderPrivacy === "public"}
-                      />
-                      <label className="form-check-label" htmlFor="public">
-                        Public
-                      </label>
-                    </div>
+              
+              <div className="create-folder-form-group">
+                <label htmlFor="folderName" className="create-folder-form-label">
+                  Folder Name
+                </label>
+                <input
+                  type="text"
+                  className="create-folder-form-control"
+                  id="folderName"
+                  placeholder="Enter project name"
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                />
+                {errors.folderName && (
+                  <span className="create-folder-error-message">{errors.folderName}</span>
+                )}
+              </div>
+              
+              <div className="create-folder-form-group-narrow">
+                <label className="create-folder-form-label">
+                  Folder Privacy
+                </label>
+                <div className="create-folder-radio-group">
+                  <div className="create-folder-radio-option">
+                    <input
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        handlePrivacyChange(e);
+                      }}
+                      className="create-folder-radio-input"
+                      type="radio"
+                      name="folderPrivacy"
+                      id="private"
+                      value="private"
+                      checked={folderPrivacy === "private"}
+                    />
+                    <label className="create-folder-radio-label" htmlFor="private">
+                      Private
+                    </label>
                   </div>
-                  {errors.folderPrivacy && (
-                    <span className="text-danger">{errors.folderPrivacy}</span>
-                  )}
+                  <div className="create-folder-radio-option">
+                    <input
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        handlePrivacyChange(e);
+                      }}
+                      className="create-folder-radio-input"
+                      type="radio"
+                      name="folderPrivacy"
+                      id="public"
+                      value="public"
+                      checked={folderPrivacy === "public"}
+                    />
+                    <label className="create-folder-radio-label" htmlFor="public">
+                      Public
+                    </label>
+                  </div>
                 </div>
+                {errors.folderPrivacy && (
+                  <span className="create-folder-error-message">{errors.folderPrivacy}</span>
+                )}
               </div>
-              {/* )} */}
 
               {togglefolderPrivacy && (
-                <div className="col-12 col-md-6" id="approvalOption" style={{
-                  width: "25%"
-                }}>
-                  <div className="form-group">
-                    <label htmlFor="approvalOption" className="headerfont">
-                      Approval
-                    </label>
-                    <div>
-                      <div className="form-check form-check-inline fieldmargin">
-                        <input
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            // handleDeleteOption(e);
-                            handleToggleApproval(e);
-                          }}
-                          className="form-check-input"
-                          type="radio"
-                          name="approvalOption"
-                          id="Yes"
-                          value="Yes"
-                          checked={approvalOption === "Yes"}
-                        />
-                        <label className="form-check-label" htmlFor="Yes">
-                          Yes
-                        </label>
-                      </div>
-                      <div className="form-check form-check-inline">
-                        <input
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            // handleDeleteOption(e);
-                            handleToggleRemove(e);
-                          }}
-                          className="form-check-input"
-                          type="radio"
-                          name="approvalOption"
-                          id="No"
-                          value="No"
-                          checked={approvalOption === "No"}
-                        />
-                        <label className="form-check-label" htmlFor="No">
-                          No
-                        </label>
-                      </div>
+                <div className="create-folder-form-group-narrow">
+                  <label className="create-folder-form-label">
+                    Approval
+                  </label>
+                  <div className="create-folder-radio-group">
+                    <div className="create-folder-radio-option">
+                      <input
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          handleToggleApproval(e);
+                        }}
+                        className="create-folder-radio-input"
+                        type="radio"
+                        name="approvalOption"
+                        id="Yes"
+                        value="Yes"
+                        checked={approvalOption === "Yes"}
+                      />
+                      <label className="create-folder-radio-label" htmlFor="Yes">
+                        Yes
+                      </label>
                     </div>
-                    {errors.approvalOption && (
-                      <span className="text-danger">{errors.approvalOption}</span>
-                    )}
+                    <div className="create-folder-radio-option">
+                      <input
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          handleToggleRemove(e);
+                        }}
+                        className="create-folder-radio-input"
+                        type="radio"
+                        name="approvalOption"
+                        id="No"
+                        value="No"
+                        checked={approvalOption === "No"}
+                      />
+                      <label className="create-folder-radio-label" htmlFor="No">
+                        No
+                      </label>
+                    </div>
                   </div>
+                  {errors.approvalOption && (
+                    <span className="create-folder-error-message">{errors.approvalOption}</span>
+                  )}
                 </div>
-               )}
+              )}
             </div>
 
-            <div className="form-group mt-3">
-              <label htmlFor="folderOverview" className="headerfont">
+            <div className="create-folder-form-group">
+              <label htmlFor="folderOverview" className="create-folder-form-label">
                 Folder Overview
               </label>
-              <textarea style={{ height: '70px' }}
-                className="form-control fieldmargin multilinetextWidth"
+              <textarea
+                className="create-folder-form-control create-folder-textarea"
                 id="folderOverview"
                 placeholder="Enter some brief about project"
                 value={folderOverview}
                 onChange={(e) => setFolderOverview(e.target.value)}
               />
               {errors.folderOverview && (
-                <span className="text-danger">{errors.folderOverview}</span>
+                <span className="create-folder-error-message">{errors.folderOverview}</span>
               )}
             </div>
-
-
-
           </form>
         </div>
-
-
-
       </div>
-      {/* this is meta column fields */}
-      {/* {OthProps.DocumentLibrary === "" && (
-        <div className="card cardborder p-31 mt-3">
-        <div className="">
-        {toggleaddFieldsButton && ( 
-              <div className="row mt-0" id="addFieldsButton">
-                <div className="col-md-10">
-                <h3 className="header-title text-dark font-16 mb-1">List of Document</h3>
-                <p className="subheader font-14 mb-3">Specify sub folder and create list of documents to be prepared and submitted bt team members.  </p>
-                </div>
-               
-                <div style={{position:'relative'}} className="col-md-2">
-                <div className="mb-3">
-                  <div className="col-12 d-flex justify-content-end">
-                      <a onClick={handleAddFields}>
-                      <img 
-                            className="bi bi-plus"
-                            src={require("../assets/plus.png")}
-                            alt="add"
-                            style={{ width: "50px", top:'5px', left:'auto', right:'0px', marginLeft:'16px', position:'absolute', height: "50px" }}
-                          />
-                     
-                      </a>
-                  </div>
-                  </div>
-                </div>
-                  
+
+      {/* List of Document Fields */}
+      {OthProps.DocumentLibrary === "" && (
+        <div className="create-folder-card">
+          {toggleaddFieldsButton && (
+            <div className="create-folder-section-title-row">
+              <div>
+                <h3 className="create-folder-section-header">List of Document</h3>
+                <p className="create-folder-section-subheader">
+                  Specify sub folder and create list of documents to be prepared and submitted by team members.
+                </p>
               </div>
+              <button 
+                type="button"
+                onClick={handleAddFields}
+                className="create-folder-add-button"
+              >
+                +
+              </button>
+            </div>
           )}
-  
+
           {togglecolumneDetails && formFields.map((formField) => (
-      <div className="row mt-3" key={formField.id} id="columnDetail">
-        <div className="col-12 col-md-6">
-          <div className="form-group">
-            <label htmlFor={`fieldName-${formField.id}`} className="headerfont">
-              Field Name
-            </label>
-            <input
-              type="text"
-              className="form-control fieldmargin"
-              id={`fieldName-${formField.id}`}
-              name="fieldName"
-              placeholder="Enter field name"
-              value={formField.fieldName}
-              onChange={(e) => handleInputChange(formField.id, e)}
-            />
-            
-            {errors1[formField.id]?.fieldName && (
-              <span className="text-danger">{errors1[formField.id].fieldName}</span>
-            )}
-          </div>
-        </div>
-
-        <div className="col-12 col-md-5">
-          <div className="form-group">
-            <label htmlFor={`selectField-${formField.id}`} className="headerfont">
-              Select Field Type
-            </label>
-            <select
-              className="form-control"
-              id={`selectField-${formField.id}`}
-              name="selectField"
-              value={formField.selectField}
-              onChange={(e) => handleSelectedType(formField.id, e)}
-            >
-              <option value="">Open this select menu</option>
-              <option value="Single Line of Text">Single Line of Text</option>
-              <option value="Multiple Line of Text">Multiple Line of Text</option>
-              <option value="Yes or No">Yes or No</option>
-              <option value="Date & Time">Date & Time</option>
-              <option value="Number">Number</option>
-            </select>
-            
-            
-                {errors1[formField.id]?.selectField && (
-              <span className="text-danger">{errors1[formField.id].selectField}</span>
-            )}
-          </div>
-        </div>
-
-        {formField.id === 0 ? (
-                null
-              ) : (
-                <div className="col-12 col-md-1 d-flex align-items-end">
-                  <a
-                    onClick={(e) => handleRemoveField(formField.id, e)}
-                    style={{
-                      width: "50px",
-                      height: "50px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <img style={{marginTop:'14px'}}
-                      className="fas fa-trash"
-                      src={require("../assets/del.png")}
-                      alt="delete"
-                    />
-                  </a>
-                </div>
-              )}
-      </div>
-      
-            ))}
-
-        </div>
-      </div>
-      )} */}
-
-
-      {toggleApproval ? (
-        <div className="card cardborder p-31 mt-3">
-          <div className="" style={{
-
-          }}>
-            {/* <h5 className="mb-1 Permissionsectionstyle">
-              <strong>Approval Hierarchy</strong>
-            </h5> */}
-            <h3 className="header-title text-dark font-16 mb-1">Approval Hierarchy</h3>
-
-            <p className="subheader font-14 mb-3">
-              Define approval hierarchy for the documents submitted by Team
-              members in this folder.
-            </p>
-
-            <div style={{ height: '0px', position: 'relative' }} className="mb-0">
-              <div className="col-12 d-flex justify-content-end">
-                <a onClick={handleAddRow}>
-                  <img
-                    className="bi bi-plus"
-                    src={require("../assets/plus.png")}
-                    alt="add"
-                    style={{ width: "50px", top: '-60px', position: 'absolute', right: '0px', left: 'auto', height: "50px" }}
-                  />
-                </a>
-              </div>
-            </div>
-            <div className="row mb-1 approvalheirarcystyle">
-              <div className="col-12 col-md-4">
-                <label
-                  htmlFor="level"
-                  className="form-label approvalhierarcyfont"
-                >
-                  Level
+            <div className="create-folder-field-row" key={formField.id}>
+              <div className="create-folder-field-input">
+                <label htmlFor={`fieldName-${formField.id}`} className="create-folder-form-label">
+                  Field Name
                 </label>
-              </div>
-              <div className="col-12 col-md-5">
-                <label
-                  htmlFor="approver"
-                  className="form-label approvalhierarcyfont"
-                >
-                  Approver
-                </label>
-              </div>
-            </div>
-            {rows.map((row) => (
-              <div className="row mb-3 approvalheirarchyfield" key={row.id}>
-                <div className="col-12 col-md-4">
-                  <input style={{ height: '36px' }}
-                    type="text"
-                    className="form-control"
-                    id={`level-${row.id}`}
-                    value={`Level ${row.id + 1}`}
-                    disabled
-                  />
-                </div>
-                <div className="col-12 col-md-5">
-                  {/* start */}
-                  <Select
-                    isMulti
-                    options={users}
-                    // value={Approver}
-                    onChange={(selected: any) =>
-                      handleUserSelect(selected, row.id)
-                    }
-                    placeholder="Enter names or email addresses..."
-                    noOptionsMessage={() => "No User Found..."}
-                  />
-                  {/* {errors.selectedUsers && (
-                    <span className="text-danger">{errors.selectedUsers}</span>
-                  )} */}
-                  {errorsForUserSelection[row.id]?.userSelect && (
-                    <span className="text-danger">{errorsForUserSelection[row.id].userSelect}</span>
-                  )}
-                  {/* end */}
-                </div>
-                {/* start */}
-                <div style={{ gap: '10px' }} className="col-12 col-md-2 d-flex">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name={`selection-${row.id}`}
-                      id={`all-${row.id}`}
-                      value="all"
-                      checked={row.selectionType === "All"}
-                      onChange={() => handleSelectionModeChange(row.id, "All")}
-                    />
-                    <label
-                      className="form-check-label"
-                      htmlFor={`all-${row.id}`}
-                    >
-                      All
-                    </label>
-                  </div>
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name={`selection-${row.id}`}
-                      id={`one-${row.id}`}
-                      value="one"
-                      checked={row.selectionType === "One"}
-                      onChange={() => handleSelectionModeChange(row.id, "One")}
-                    />
-                    <label
-                      className="form-check-label"
-                      htmlFor={`one-${row.id}`}
-                    >
-                      One
-                    </label>
-                  </div>
-                </div>
-                {/* end */}
-
-                {row.id === 0 ? (
-                  null
-                ) : (
-                  <div className="col-12 col-md-1 d-flex align-items-end">
-                    <a
-                      onClick={(e) => handleRemoveRow(row.id, e)}
-                      style={{
-                        width: "50px",
-                        height: "50px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <img
-                        className="fas fa-trash"
-                        src={require("../assets/del.png")}
-                        alt="delete"
-                      />
-                    </a>
-                  </div>
+                <input
+                  type="text"
+                  className="create-folder-form-control"
+                  id={`fieldName-${formField.id}`}
+                  name="fieldName"
+                  placeholder="Enter field name"
+                  value={formField.fieldName}
+                  onChange={(e) => handleInputChange(formField.id, e)}
+                />
+                {errors1[formField.id]?.fieldName && (
+                  <span className="create-folder-error-message">{errors1[formField.id].fieldName}</span>
                 )}
               </div>
-            ))}
-          </div>
-        </div>
-      ) : null
-      }
 
-      {/* {permission && ( */}
-      {showDiv && <div className="card cardborder p-31 mt-3">
-        <div className="" style={{
+              <div className="create-folder-field-select">
+                <label htmlFor={`selectField-${formField.id}`} className="create-folder-form-label">
+                  Select Field Type
+                </label>
+                <select
+                  className="create-folder-form-control"
+                  id={`selectField-${formField.id}`}
+                  name="selectField"
+                  value={formField.selectField}
+                  onChange={(e) => handleSelectedType(formField.id, e)}
+                >
+                  <option value="">Open this select menu</option>
+                  <option value="Single Line of Text">Single Line of Text</option>
+                  <option value="Multiple Line of Text">Multiple Line of Text</option>
+                  <option value="Yes or No">Yes or No</option>
+                  <option value="Date & Time">Date & Time</option>
+                  <option value="Number">Number</option>
+                </select>
+                {errors1[formField.id]?.selectField && (
+                  <span className="create-folder-error-message">{errors1[formField.id].selectField}</span>
+                )}
+              </div>
 
-        }}>
-          {/* <h5 className="mb-3 Permissionsectionstyle">
-                          <strong>Permission</strong>
-                      </h5> */}
-
-          <div className="row">
-            <div className="col-md-10">
-
-              <h3 className="header-title text-dark font-16 mb-1">Permission</h3>
-
-              <p className="subheader font-14 mb-3">
-                Define Permission for the documents submitted by Team
-                members in this folder.
-              </p>
-
+              {formField.id !== 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => handleRemoveField(formField.id, e)}
+                  className="create-folder-delete-button"
+                >
+                  ×
+                </button>
+              )}
             </div>
+          ))}
+        </div>
+      )}
 
-            <div className="col-md-2">
-              <div style={{ position: 'relative' }} className="mb-3">
-                <div className="col-12  d-flex justify-content-end">
-                  <a onClick={handleAddRowForPermission}>
-                    <img
-                      className="bi bi-plus"
-                      src={require("../assets/plus.png")}
-                      alt="add"
-                      style={{ width: "50px", top: '0px', left: 'auto', right: '0px', marginLeft: '10px', position: 'absolute', height: "50px" }}
-                    />
-                  </a>
+      {/* Approval Hierarchy */}
+      {toggleApproval && (
+        <div className="create-folder-card">
+          <div className="create-folder-section-title-row">
+            <div>
+              <h3 className="create-folder-section-header">Approval Hierarchy</h3>
+              <p className="create-folder-section-subheader">
+                Define approval hierarchy for the documents submitted by Team members in this folder.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddRow}
+              className="create-folder-add-button"
+            >
+              +
+            </button>
+          </div>
+
+          <div className="create-folder-table-header">
+            <div className="create-folder-approval-level">
+              <span className="create-folder-table-header-cell">Level</span>
+            </div>
+            <div className="create-folder-approval-users">
+              <span className="create-folder-table-header-cell">Approver</span>
+            </div>
+            <div className="create-folder-approval-type">
+              <span className="create-folder-table-header-cell">Type</span>
+            </div>
+            <div className="create-folder-width-40"></div>
+          </div>
+
+          {rows.map((row) => (
+            <div className="create-folder-field-row" key={row.id}>
+              <div className="create-folder-approval-level">
+                <input
+                  type="text"
+                  className="create-folder-form-control create-folder-disabled-input"
+                  id={`level-${row.id}`}
+                  value={`Level ${row.id + 1}`}
+                  disabled
+                />
+              </div>
+              
+              <div className="create-folder-approval-users">
+                <Select
+                  isMulti
+                  options={users}
+                  onChange={(selected: any) => handleUserSelect(selected, row.id)}
+                  placeholder="Enter names or email addresses..."
+                  noOptionsMessage={() => "No User Found..."}
+                />
+                {errorsForUserSelection[row.id]?.userSelect && (
+                  <span className="create-folder-error-message">
+                    {errorsForUserSelection[row.id].userSelect}
+                  </span>
+                )}
+              </div>
+
+              <div className="create-folder-approval-type">
+                <div className="create-folder-radio-option">
+                  <input
+                    className="create-folder-radio-input"
+                    type="radio"
+                    name={`selection-${row.id}`}
+                    id={`all-${row.id}`}
+                    value="all"
+                    checked={row.selectionType === "All"}
+                    onChange={() => handleSelectionModeChange(row.id, "All")}
+                  />
+                  <label className="create-folder-radio-label" htmlFor={`all-${row.id}`}>
+                    All
+                  </label>
+                </div>
+                <div className="create-folder-radio-option">
+                  <input
+                    className="create-folder-radio-input"
+                    type="radio"
+                    name={`selection-${row.id}`}
+                    id={`one-${row.id}`}
+                    value="one"
+                    checked={row.selectionType === "One"}
+                    onChange={() => handleSelectionModeChange(row.id, "One")}
+                  />
+                  <label className="create-folder-radio-label" htmlFor={`one-${row.id}`}>
+                    One
+                  </label>
                 </div>
               </div>
-            </div>
 
+              {row.id !== 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => handleRemoveRow(row.id, e)}
+                  className="create-folder-delete-button"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Permission */}
+      {showDiv && (
+        <div className="create-folder-card">
+          <div className="create-folder-section-title-row">
+            <div>
+              <h3 className="create-folder-section-header">Permission</h3>
+              <p className="create-folder-section-subheader">
+                Define Permission for the documents submitted by Team members in this folder.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddRowForPermission}
+              className="create-folder-add-button"
+            >
+              +
+            </button>
           </div>
 
           {rowsForPermission.map((rowForPermission) => (
-            <div className="row mb1 approvalheirarcystyle" key={rowForPermission.id}>
-              <div className="col-12 col-md-6">
+            <div className="create-folder-field-row" key={rowForPermission.id}>
+              <div className="create-folder-permission-users">
                 <Select
                   isMulti
                   options={siteUsers}
@@ -1377,9 +1306,8 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
                   noOptionsMessage={() => "No User Found..."}
                 />
               </div>
-              <div className="col-12 col-md-5"
-
-              >
+              
+              <div className="create-folder-permission-type">
                 <Select
                   options={permissionArray}
                   onChange={(selected: any) =>
@@ -1389,60 +1317,37 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
                   noOptionsMessage={() => "No Such Permission Find"}
                 />
               </div>
-              {rowForPermission.id === 0 ? (
-                null
-              ) : (
-                <div className="col-12 col-md-1 d-flex align-items-end">
-                  <a
-                    onClick={(e) => handleRemoveRowForPermission(rowForPermission.id, e)}
-                    style={{
-                      width: "50px",
-                      height: "50px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <img
-                      className="fas fa-trash"
-                      src={require("../assets/del.png")}
-                      alt="delete"
-                    />
-                  </a>
-                </div>
+
+              {rowForPermission.id !== 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => handleRemoveRowForPermission(rowForPermission.id, e)}
+                  className="create-folder-delete-button"
+                >
+                  ×
+                </button>
               )}
             </div>
           ))}
-
         </div>
+      )}
 
-        <div>
-
-        </div>
-      </div>}
-      <div className="d-flex mt-3 justify-content-center buttonstyle">
+      {/* Button Row */}
+      <div className="create-folder-button-row">
         <button
-          className="btn btn-create me-2 mt-0 btncolorCreate"
+          className="create-folder-btn-base create-folder-btn-create"
           onClick={handleCreate}
         >
           <img
-            className="bi"
+            className="create-folder-icon-size"
             src={require("../assets/checkmark2.png")}
             alt="Create"
           />
           Create
         </button>
-        {/* <button className="btn btn-cancel btncolorcancel" onClick={clearForm}>
-          <img
-            className="bi"
-            src={require("../assets/cross.png")}
-            alt="Cancel"
-          />
-          Cancel
-        </button> */}
       </div>
-      {/* ) */}
-      {/* } */}
+      
       <br />
-
     </>
   );
 };

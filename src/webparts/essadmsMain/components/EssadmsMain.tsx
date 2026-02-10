@@ -4,8 +4,11 @@ import { spfi, SPFI, SPFx } from "@pnp/sp";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import type { IEssadmsMainProps } from "./IEssadmsMainProps";
 import PreviewModal from "./previewfile"; // import your modal\
+import MetadataModal from "./MetadataModal";
+import ManageWorkflow from "./ManageWorkflow";
 import DirectDownloader from "./DownloadFile";
 import VersionHistoryModal from "./versionhistory"; // import version history modal
+import ShareModal from "./ShareModal";
 import Swal from 'sweetalert2'
 import { Button, Modal } from 'react-bootstrap';
 import CreateFolder from "./CreateFolder";
@@ -20,13 +23,19 @@ import { PermissionKind } from "@pnp/sp/security";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 //aman changes for folder permission manage
 import { useMemo } from "react";
-
+import UploadFile from "./UploadFile"; // srs 29/1/26
 // sourish 30/9/25
 import "../../verticalSideBar/components/VerticalSidebar.scss";
 import VerticalSideBar from "../../verticalSideBar/components/VerticalSideBar";
 import HorizontalNavbar from "../../horizontalNavBar/components/HorizontalNavBar";
 import UserContext from "../../../GlobalContext/context";
 import Provider from "../../../GlobalContext/provider";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { icon } from '@fortawesome/fontawesome-svg-core';
+import {faRedo, faUser,faFilePdf, faCloud,  faFolder as faFolders,  faGlobeAsia, faLock, faHeart as faHearts, faShareSquare,faTrash,faFile ,faDownload,faHistory,  faShareAlt, faCalendar, faClock, faCheckCircle, faFileWord, faFileExcel,faFileImage, faFileArchive, faFileVideo,faShoppingBag, } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faHeart, faCalendarAlt as faCalendars, faTrashAlt, faEye,  faFileAlt,faEdit, faPaperPlane  } from '@fortawesome/free-regular-svg-icons';
+ 
+
 
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 // let loadfilefromnode = ''
@@ -97,6 +106,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [selectedCurrentNode, setSelectedCurrentNode] = useState<TreeNode | null>(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [shareFile, setShareFile] = useState<any>(null);
   // this was by om revoke user permission
   //revoke state
   const [showRevokeModal, setShowRevokeModal] = useState(false);
@@ -115,10 +125,23 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   // preview modal state
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
+  const [previewKey, setPreviewKey] = useState(0);
+
+  //Metadata state Ritik 29/01/2026
+  const [showMetadataModal, setShowMetadataModal] = useState(false);
+  const [selectedFileForMetadata, setSelectedFileForMetadata] = useState<any>(null);
+
   //sourish 21/8/25
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
+  // ===== File Rename specific state =====
+  const [renameFileModalOpen, setRenameFileModalOpen] = useState(false);
+  const [renameFileValue, setRenameFileValue] = useState("");
+
+  // ===== Manage Workflow (ROOT FOLDER ONLY) =====
+  const [showManageWorkflow, setShowManageWorkflow] = useState<boolean>(false);
+  const [selectedWorkflowFolder, setSelectedWorkflowFolder] = useState<any>(null);
   //  setting direct file download state
   const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(null);
 
@@ -137,7 +160,37 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [mpLoading, setMpLoading] = useState<boolean>(false);
   const [mpError, setMpError] = useState<string>("");
   const [mpSiteUsers, setMpSiteUsers] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
+  
+  const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
+  // ✅ Load all view counts on initial page load
+useEffect(() => {
+  const loadAllCounts = async () => {
+    const [myReq, myFav, myFol, sharedMe, sharedOther, recycle] = await Promise.all([
+      loadViewData("MyRequest"),
+      loadViewData("MyFavourite"),
+      loadViewData("MyFolders"),
+      loadViewData("SharedWithMe"),
+      loadViewData("SharedWithOthers"),
+      loadViewData("RecycleBin"),
+    ]);
+ 
+    setViewCounts({
+      "My request": myReq.length,
+      "My favourite": myFav.length,
+      "My Folders": myFol.length,
+      "Share with me": sharedMe.length,
+      "Share with other": sharedOther.length,
+      "Recycle bin": recycle.length,
+    });
+  };
+ 
+  loadAllCounts();
+}, []); // ✅ Empty array = runs once on mount
 
+ type ViewType = "MyRequest" | "MyFavourite" | "MyFolders" | "SharedWithMe" | "SharedWithOthers" | "RecycleBin";
+// Add type definition type ViewType = "MyRequest" | "MyFavourite" | "MyFolders" | "SharedWithMe" | "SharedWithOthers" | "RecycleBin";
+  
+  //Privew file tittle and path state declare Ritik 29/01/2026
   //Aman Manage Permission Folder 
   // simple typeahead states for Manage Permission user picker (no external libs)
   const [mpUserSuggestions, setMpUserSuggestions] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
@@ -329,6 +382,63 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
   //-----------------Audit History function ends---------------
 
+  const handleRenameFile = (file: any) => {
+    setRenameFileValue(file.FileName);
+    setModalFile(file);
+    setRenameFileModalOpen(true);
+  };
+
+  // ----- Rename File Submit Handler -----
+  const submitRenameFile = async () => {
+    if (!modalFile || !renameFileValue) return;
+
+    try {
+      // 1. Rename in document library
+      const siteUrl = `${modalFile.__siteUrl}/${modalFile.SiteName}`;
+      const spSubsite = spfi(siteUrl).using(SPFx(context));
+
+      const oldPath =
+        `${modalFile.CurrentFolderPath}/${modalFile.FileName}`;
+
+      const newPath =
+        `${modalFile.CurrentFolderPath}/${renameFileValue}`;
+
+      await spSubsite.web
+        .getFileByServerRelativePath(oldPath)
+        .moveByPath(newPath, true);
+
+      // 2. Update ONLY FileName in FileMaster
+
+      const rootSP = spfi(modalFile.__siteUrl).using(SPFx(context));
+      await rootSP.web.lists
+        .getByTitle(modalFile.__fileMasterList)
+        .items.getById(modalFile.Id)
+        .update({
+          FileName: renameFileValue,
+        });
+
+      // 3. Refresh list
+      const refreshed = await loadViewData("MyRequest");
+      if (refreshed) {
+        setSelectedFiles([...refreshed]);
+      }
+
+      // 4. Reset preview state (important)
+      setShowPreviewModal(false);
+      setPreviewFile(null);
+      setPreviewKey(prev => prev + 1);
+
+      // 5. Close modal
+      setRenameFileModalOpen(false);
+      setRenameFileValue("");
+      setModalFile(null);
+
+      Swal.fire("Success", "File renamed successfully", "success");
+    } catch (err) {
+      console.error("Rename File failed:", err);
+      Swal.fire("Error", "Rename File failed", "error");
+    }
+  };
 
 
 
@@ -721,22 +831,94 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
         const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
 
-        const fmItems = await spRoot.web.lists
-          .getByTitle(`DMS${entityName}FileMaster`)
-          .items.select("FileName", "IsDeleted")
-          .top(5000)();
+      //  const fmItems  = await spRoot.web.lists
+      //     .getByTitle(`DMS${entityName}FileMaster`)
+      //     .items.select("FileName", "IsDeleted")
+      //     .top(5000)();
 
-        const deletedSet = new Set(
-          fmItems
-            .filter(i => i.IsDeleted !== null && i.IsDeleted !== undefined)
-            .map(i => i.FileName)
-        );
+      //   const deletedSet = new Set(
+      //     fmItems
+      //       .filter(i => i.IsDeleted !== null && i.IsDeleted !== undefined)
+      //       .map(i => i.FileName)
+      //   );
 
-        const visibleFiles = (files || []).filter(
-          (f: any) => !deletedSet.has(f.Name)
-        );
+      //   const visibleFiles = (files || []).filter(
+      //     (f: any) => !deletedSet.has(f.Name)
+      //   );
 
-        setSelectedFiles(visibleFiles);
+      //   setSelectedFiles(visibleFiles);
+
+//       const fmItems = await spRoot.web.lists
+//   .getByTitle(`DMS${entityName}FileMaster`)
+//   .items.select("FileName", "IsDeleted", "Status")
+//   .top(5000)();
+ 
+// // 2. Build the "Allowed" Set
+// const allowedSet = new Set(
+//   fmItems
+//     .filter(i => {
+//       // Must NOT be deleted
+//       const isNotDeleted = !i.IsDeleted;
+//       // Must be Approved, Auto Approved, or Null/Empty
+//       const hasValidStatus = i.Status === "Approved" ||
+//                              i.Status === "Auto Approved" ||
+//                              i.Status === null ||
+//                              i.Status === "";
+ 
+//       return isNotDeleted && hasValidStatus;
+//     })
+//     .map(i => i.FileName)
+// );
+ 
+// // 3. Filter your folder files based on the allowedSet
+// const visibleFiles = (files || []).filter(
+//   (f: any) => allowedSet.has(f.Name)
+// );
+ 
+// setSelectedFiles(visibleFiles);
+ 
+ // 1. Fetch the Master List data
+const currentFolder = node.title;
+const fmItems = await spRoot.web.lists
+  .getByTitle(`DMS${entityName}FileMaster`)
+  .items.select("ID", "FileName", "IsDeleted", "Status") // Included ID and Status
+  .filter(`DocumentLibraryName eq '${currentFolder}'`)
+  .top(5000)();
+
+// 2. Create a Map for quick lookup (Key: FileName, Value: {ID, Status})
+const masterDataMap = new Map();
+
+fmItems.forEach(i => {
+  // Logic: Only add to the map if it meets your requirements
+  const hasValidStatus = i.Status === "Approved" || 
+                         i.Status === "Auto Approved" || 
+                         i.Status === null || 
+                         i.Status === "";
+                         
+  const isNotDeleted = !i.IsDeleted; // Adjust if IsDeleted is "Yes"/1
+
+  if (hasValidStatus && isNotDeleted) {
+    masterDataMap.set(i.FileName, {
+      id: i.ID,
+      status: i.Status
+    });
+  }
+});
+
+// 3. Filter and Enrich the files array
+const visibleFiles = (files || [])
+  .filter((f: any) => masterDataMap.has(f.Name)) // Only keep if in the "allowed" map
+  .map((f: any) => {
+    const extraData = masterDataMap.get(f.Name);
+    return {
+      ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
+      ID: extraData.id, // Inject the List ID
+      Status: extraData.status // Inject the Status
+    };
+  });
+
+setSelectedFiles(visibleFiles);
+console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
 
         console.log("[loadFilesForNode] Selected files set:", selectedFiles);
         setBreadcrumbs(getNodePath(node.key));
@@ -885,6 +1067,10 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   /** ------------------------------------ quick views (same) ---------------------------------- */
   const handleViewButtonClick = async (viewName: string) => {
     setFilesLoadedloadedfromnode(false);
+    setActiveComponent(false);   // srs 29/1/26
+    setShowUploadPanel(false);   // srs 29/1/26
+    setMenuOpenIdx(null);
+    setSelectedCurrentNode(null);
     console.log("[view] button clicked:", viewName);
     setActiveView(viewName);
     setBreadcrumbs([
@@ -900,39 +1086,57 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
     window.history.pushState(null, "", window.location.pathname);
 
     try {
-      let files: any[] = [];
-      switch (viewName) {
-        case "My request":
-          files = await loadViewData("MyRequest");
-          break;
-        case "My favourite":
-          files = await loadViewData("MyFavourite");
-          break;
-        case "My Folders":
-          files = await loadViewData("MyFolders");
-          break;
-        case "Share with me":
-          files = await loadViewData("SharedWithMe");
-          break;
-        case "Share with other":
-          files = await loadViewData("SharedWithOthers");
-          break;
-        case "Recycle bin":
-          files = await loadViewData("RecycleBin");
-          break;
-      }
-      console.log(`[view] Loaded ${viewName} data:`, files);
-      setSelectedFiles(files);
-      console.log("[loadFilesForNode] Selected files set:", selectedFiles);
-      setCurrentFolderPath("");
-      setCurrentSiteUrl("");
-    } catch (error) {
+    let files: any[] = [];
+    let viewType: ViewType;
+    switch (viewName) {
+      case "My request":
+        viewType = "MyRequest";
+        break;
+      case "My favourite":
+        viewType = "MyFavourite";
+        break;
+      case "My Folders":
+        viewType = "MyFolders";
+        break;
+      case "Share with me":
+        viewType = "SharedWithMe";
+        break;
+      case "Share with other":
+        viewType = "SharedWithOthers";
+        break;
+      case "Recycle bin":
+        viewType = "RecycleBin";
+        break;
+      default:
+        viewType = "MyRequest";
+    }
+    files = await loadViewData(viewType);
+    updateViewCount(viewType, files.length);
+    console.log(`[view] Loaded ${viewName} data:`, files);
+    setSelectedFiles(files);
+    console.log("[loadFilesForNode] Selected files set:", selectedFiles);
+    setCurrentFolderPath("");
+    setCurrentSiteUrl("");
+  } catch (error) {
       console.error(`[view] Error loading ${viewName} data:`, error);
       setSelectedFiles([]);
     }
   };
 
-  const loadViewData = async (viewType: string): Promise<any[]> => {
+  //Ritik 28/01/2026
+  // 🔹 Safe field reader (case / internal name safe)
+  const readField = (obj: any, keys: string[]): string => {
+    if (!obj) return "";
+    const map: any = {};
+    Object.keys(obj).forEach(k => (map[k.toLowerCase()] = k));
+
+    for (const k of keys) {
+      const real = map[k.toLowerCase()];
+      if (real) return obj[real] || "";
+    }
+    return "";
+  };
+const loadViewData = async (viewType: ViewType): Promise<any[]> => {
     setShowPreviewModal(false)
     // sourish 20/8/25 previous wworking code 
     // if (viewType === "MyFolders") {
@@ -1066,6 +1270,10 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
               const isPublic = readBool(it, ["IsPublic", "Public", "ispublic"]);
               return {
                 ...it,
+                 DisplayName:
+    it.FolderName ||
+    it.Title ||
+    it.DocumentLibraryName || "",
                 __source: "MyFolders",
                 __siteUrl: ms.SiteURL,
                 __listName: "DMSFolderMaster",
@@ -1078,13 +1286,39 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
             });
 
             // Remove system Forms & dedupe, keep roots and folders
+            // const cleaned = normalized.filter((row: any) => {
+            //   const isLibrary = row.__flags?.isLibrary === true;
+            //   const name = row.FolderName || row.Title || "";
+            //   const path = row.FolderPath || row.folderpath || row.ServerRelativeUrl || "";
+            //   const lowerPath = (path || "").toLowerCase().replace(/\/+$/, "");
+            //   const isForms = /\/forms(\/|$)/i.test(lowerPath);
+            //   return !!name && !!path && !isForms;
+            // });
+
             const cleaned = normalized.filter((row: any) => {
-              const name = row.FolderName || row.Title || "";
-              const path = row.FolderPath || row.folderpath || row.ServerRelativeUrl || "";
-              const lowerPath = (path || "").toLowerCase().replace(/\/+$/, "");
-              const isForms = /\/forms(\/|$)/i.test(lowerPath);
-              return !!name && !!path && !isForms;
-            });
+
+  const isLibrary = row.__flags?.isLibrary === true;
+ 
+
+  const name =
+    row.FolderName || row.Title ||
+    row.Title ||
+    row.DocumentLibraryName || "";
+
+  const path =
+    row.FolderPath ||
+    row.folderpath ||
+    row.ServerRelativeUrl || "";
+
+  const lowerPath = (path || "").toLowerCase().replace(/\/+$/, "");
+  const isForms = /\/forms(\/|$)/i.test(lowerPath);
+
+  // ⭐ Library ko force allow karo
+  if (isLibrary) return !!path && !isForms;
+
+  return !!name && !!path && !isForms;
+});
+
 
             const unique: any[] = [];
             const seen = new Set<string>();
@@ -1140,13 +1374,30 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
               const listItems = await siteSP.web.lists
                 .getByTitle(listName)
                 .items.top(5000)();
+              // 🔹 Filter by CurrentUser
+              //Ritik 28/01/2026
+              const filtered = (listItems || []).filter((it: any) => {
+                const owner = readField(it, ["CurrentUser", "Owner", "CreatedBy"]);
+                const sharedTo = readField(it, ["ShareWithMe", "SharedTo", "SharedWith"]);
+                const isDeleted = it.IsDeleted !== null && it.IsDeleted !== undefined;
 
-              const filtered = (listItems || []).filter(
-                (it: any) =>
-                  (it.CurrentUser || "").toLowerCase() === meEmail.toLowerCase() &&
-                  (it.ShareWithMe || "").toLowerCase() !== meEmail.toLowerCase()
+                return (
+                  owner.toLowerCase() === meEmail.toLowerCase() &&
+                  sharedTo &&
+                  !sharedTo.toLowerCase().includes(meEmail.toLowerCase()) &&
+                  !isDeleted &&
+                  it.IsFavourite !== true
+                );
+              });
+
+              //debugging console table Ritik 28/01/2026
+              console.table(
+                filtered.map(f => ({
+                  File: f.FileName || f.Title,
+                  Owner: readField(f, ["CurrentUser", "Owner", "CreatedBy"]),
+                  SharedTo: readField(f, ["ShareWithMe", "SharedTo", "SharedWith"])
+                }))
               );
-
 
               allSharedOtherData.push(
                 ...filtered.map((it: any) => ({
@@ -1206,10 +1457,38 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                 .items.top(5000)();
 
               // 🔹 Filter by CurrentUser
-              const filtered = (listItems || []).filter(
-                (it: any) =>
-                  (it.CurrentUser || "").toLowerCase() === meEmail.toLowerCase()
+              // const filtered = (listItems || []).filter(
+              //   (it: any) =>
+              //     (it.CurrentUser || "").toLowerCase() === meEmail.toLowerCase()
+              // );
+
+
+
+              // 🔹 Shared WITH ME = kisi aur ne mujhe share kiya - Ritik Today 29/01/2026
+              const filtered = (listItems || []).filter((it: any) => {
+                const owner = readField(it, ["CurrentUser", "Owner", "CreatedBy"]);
+                const sharedTo = readField(it, ["ShareWithMe", "SharedTo", "SharedWith"]);
+
+                return (
+                  sharedTo.toLowerCase().includes(meEmail.toLowerCase()) && // 👈 mujhe mila
+                  owner.toLowerCase() !== meEmail.toLowerCase()             // 👈 maine create/share nahi ki
+                );
+              });
+
+
+
+              //Debugging console table Ritik 28/01/2026
+              console.table(
+                filtered.map(f => ({
+                  File: f.FileName || f.Title,
+                  Owner: readField(f, ["CurrentUser", "Owner", "CreatedBy"]),
+                  SharedTo: readField(f, ["ShareWithMe", "SharedTo", "SharedWith"])
+                }))
               );
+
+
+
+
 
               allSharedData.push(
                 ...filtered.map((it: any) => ({
@@ -1273,8 +1552,14 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                   .items.top(1000)();
 
                 if (viewType === "MyFavourite") {
-                  // 🔹 Filter favourites
-                  return items.filter((item: any) => item.IsFavourite === true);
+                  // 🔹 Filter favourites // ritik 29/01/2026
+                  return items.filter((item: any) =>
+                    item.IsFavourite === true &&
+                    item.IsDeleted === null &&          // 🔴
+                    item.MyRequest !== true &&          // 🔴
+                    !item.ShareWithMe                   // 🔴
+                  );
+
                 }
 
                 if (viewType === "RecycleBin") {
@@ -1295,11 +1580,33 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                 }
 
                 // 🔹 Default: MyRequest (no filter, just tag for traceability)
-                return (items || []).map((it: any) => ({
-                  ...it,
-                  __siteUrl: siteUrl,
-                  __fileMasterList: config.FileMaster,
-                }));
+                //Ritik 29/01/2026 added isdeleted filter
+
+                // 🔹 MyRequest ONLY
+                if (viewType === "MyRequest") {
+                  return (items || [])
+                    .filter((it: any) =>
+                      it.MyRequest === true &&                 // 👈 sirf request wali
+                      it.IsDeleted === null &&                 // 👈 recycle bin nahi
+                      it.IsFavourite !== true &&               // 👈 favourite nahi
+                      !it.ShareWithMe                          // 👈 shared nahi
+                    )
+                    .map((it: any) => ({
+                      ...it,
+                      __siteUrl: siteUrl,
+                      __fileMasterList: config.FileMaster,
+                    }));
+                }
+
+                // 🔹 fallback (kuch bhi nahi)
+                return [];
+
+
+
+
+
+
+
               } catch (error) {
                 console.error(`Error fetching from ${config.FileMaster} in ${siteCollection}:`, error);
                 return [];
@@ -1313,9 +1620,21 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
         }
       }
 
-      return allData;
+  return allData;
     }
     return [];
+  };
+ 
+  // Helper function to update view counts
+  const updateViewCount = (viewType: ViewType, count: number) => {
+    const viewKey = viewType === "MyRequest" ? "My request" 
+                  : viewType === "MyFavourite" ? "My favourite"
+                  : viewType === "MyFolders" ? "My Folders"
+                  : viewType === "SharedWithMe" ? "Share with me"
+                  : viewType === "SharedWithOthers" ? "Share with other"
+                  : "Recycle bin";
+ 
+    setViewCounts(prev => ({...prev, [viewKey]: count}));
   };
   // #region Toggle IsFav List
   // const toggleFavourite = async (file: any) => {
@@ -1603,8 +1922,6 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
   //Helper function to get root site URL // 19/01/2026 //Ritik
 
-
-
   const getRootSiteUrl = (url: string): string => {
     const match = url.match(/^(https?:\/\/[^\/]+\/sites\/[^\/]+)/i);
     if (!match) {
@@ -1612,7 +1929,6 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
     }
     return match[1];
   };
-
 
   const formatFileSizeForMeta = (bytes: number): string => {
     if (!bytes || bytes === 0) return "0 KB";
@@ -1624,12 +1940,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-
-
-
-
   //Doc Lib upload function and metadata save to root site FileMaster list // 19/01/2026 // Ritik
-
   const uploadFiles = async () => {
     if (!currentSiteUrl || !currentFolderPath || selectedUploadFiles.length === 0) {
       return;
@@ -1841,23 +2152,6 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
       });
     }
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   /** --------------------------------------- render ------------------------------------------- */
   const renderTree = (nodes: TreeNode[]) => (
@@ -2579,6 +2873,10 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   //ritik 19/01/2026 for search input box value
   const [searchInput, setSearchInput] = useState("");
 
+
+
+
+
   // const filteredFiles = !searchTerm.trim()
   //   ? selectedFiles
   //   : selectedFiles.filter((file: any) => {
@@ -2742,6 +3040,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   // 🧩 ✅ Clear search when section changes
   useEffect(() => {
     setSearchTerm("");
+    setSearchInput("");
     setCurrentPage(1);
   }, [activeView]);
 
@@ -2797,19 +3096,136 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   };
 
 
-
-  const createFileExtensionHtml = (FileName: any, bgColor?: string) => {
-    const fileExtension = FileName?.split(".")?.pop()?.toLowerCase() || "file"; // Get the file extension with fallback
-
-    const finalColor = bgColor || extensionColors[fileExtension] || extensionColors.default;
-
-    const fileIconHtml = `<div class="file-extension-icon" style="background-color: ${finalColor}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-align: center; min-width: 40px; display: inline-block;">
-      ${fileExtension.toUpperCase()}
-  </div>`;
-    return fileIconHtml;
+const createFileExtensionHtml = (FileName: any, bgColor?: string, isListView: boolean = false) => {
+  const fileExtension = FileName?.split(".")?.pop()?.toLowerCase() || "file";
+  // Mapping icons dynamically to your extensions
+  let selectedIcon = faFile;
+  let iconColor = extensionColors.default;
+  switch (fileExtension) {
+    case "pdf": 
+      selectedIcon = faFilePdf; 
+      iconColor = extensionColors.pdf;
+      break;
+    case "doc":
+    case "docx": 
+      selectedIcon = faFileWord; 
+      iconColor = extensionColors.docx;
+      break;
+    case "xls":
+    case "xlsx": 
+      selectedIcon = faFileExcel; 
+      iconColor = extensionColors.xlsx;
+      break;
+    case "png":
+    case "jpg":
+    case "jpeg":
+    case "gif":
+    case "svg":
+    case "webp": 
+      selectedIcon = faFileImage; 
+      iconColor = extensionColors.jpg;
+      break;
+    case "mp4":
+    case "mov":
+    case "avi": 
+      selectedIcon = faFileVideo; 
+      iconColor = extensionColors.mp4;
+      break;
+    case "zip":
+    case "rar": 
+      selectedIcon = faFileArchive; 
+      iconColor = extensionColors.zip;
+      break;
+    case "txt": 
+      selectedIcon = faFileAlt; 
+      iconColor = extensionColors.txt;
+      break;
+    default: 
+      selectedIcon = faFile;
+      iconColor = extensionColors.default;
   }
+  const iconData = icon(selectedIcon).html[0];
+  const finalColor = bgColor || iconColor;
+  // ✅ LIST VIEW: Icon only (no background, no text)
+  if (isListView) {
+    return `<div class="newicon" style="
+      
+        height: 18px; 
+        display: flex; 
+        align-items: center; 
+        fill: ${finalColor};
+        color: ${finalColor};
+      ">
+        ${iconData}
+</div>`;
+  }
+  // ✅ GRID VIEW: Badge with background + icon + text (default behavior)
+  return ` <div class="file-extension-badge" style="
+      background-color: ${finalColor};
+      color: white;
+      padding: 6px 15px 5px 15px;;
+      border-radius: 30px;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 0px;
+      font-size: 11px;">
+<div style="width: 14px; margin-top:-2px; height: 14px; display: flex; align-items: center; fill: currentColor;">
+          ${iconData}
+</div>
+<span>${fileExtension.toUpperCase()}</span>
+</div>`;
+}
 
 
+
+
+
+  //Preview Header Resolver (Quick View vs Folder Hierarchy) Ritik 29/01/2026
+  // 🔹 Preview Header Resolver (Quick View vs Folder Hierarchy)
+  const getPreviewHeader = (file: any, activeView: string) => {
+    const fileName =
+      file.FileName ||
+      file.Name ||
+      file.Title ||
+      (file.FilePreviewURL ? file.FilePreviewURL.split("/").pop() : "") ||
+      "Untitled file";
+
+    // 🔹 Quick Views → ONLY file name
+    const quickViews = [
+      "My request",
+      "My favourite",
+      "Share with me",
+      "Share with other",
+      "Recycle bin",
+    ];
+
+    if (quickViews.includes(activeView)) {
+      return {
+        name: fileName,
+        path: "",
+      };
+    }
+
+    // 🔹 Folder Hierarchy → name + full path
+    let path = "";
+
+    if (file.CurrentFolderPath) {
+      path = file.CurrentFolderPath;
+    } else if (file.__folderPath) {
+      path = file.__folderPath;
+    } else if (file.ServerRelativeUrl) {
+      path = file.ServerRelativeUrl.substring(
+        0,
+        file.ServerRelativeUrl.lastIndexOf("/")
+      );
+    }
+
+    return {
+      name: fileName,
+      path,
+    };
+  };
 
 
 
@@ -2837,50 +3253,205 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
       <div className="content-page">
         <HorizontalNavbar _context={sp} />
         <div className="content" style={{ marginLeft: `${!useHide ? '240px' : '80px'}`, marginTop: '0.8rem' }}>
-          {/* <div className="content-page">
+          {/* 
       <HorizontalNavbar _context={sp}/>
       <div className="content" style={{marginLeft: `${!useHide ? '240px' : '80px'}`,marginTop:'0.8rem'}}> */}
           {/* Left Panel with Quick Views and Folder Hierarchy */}
-          <div style={{ display: 'flex' }}>
+          <div className="content-page">
+            <div className="" style={{ 
+    background: '#fff', 
+    borderBottom: '1px solid #eee', 
+    marginBottom: '10px', 
+    padding: '8px 10px', 
+    minHeight: '65px', 
+    display: 'flex',
+    alignItems: 'center'
+}}>
+  <div className="row w-100 align-items-center" style={{ margin: 0 }}>
+    <div className="col-md-3">
+ <h2 className="page-title fw-bold m-0 mb-0 pt-5 mt-0 font-20"> Quick Views</h2>
+    </div>
+    
+        
+    <div className="col-md-9 d-flex align-items-center gap-4 justify-content-end" style={{ padding: 0 }}>
+      
+      {/* Group 1: Create Group */}
+      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+
+        <div className="d-flex gap-3">
+          <button 
+            type="button"
+            onClick={() => setActiveComponent(true)}
+            disabled={!selectedCurrentNode || selectedCurrentNode.type === "site"}
+            style={{ background: 'none',   marginTop:'0px',  border: 'none', padding: 0, opacity: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 0.4 : 1, cursor: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 'not-allowed' : 'pointer' }}
+          >
+            <img src={require("../assets/createnew.png")} alt="Create" />
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => {setShowUploadPanel(true); setActiveComponent(false)}}
+            disabled={!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")}
+            style={{ background: 'none',  marginTop:'0px', border: 'none', padding: 0, opacity: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 0.4 : 1, cursor: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 'not-allowed' : 'pointer' }}
+          >
+            <img src={require("../assets/uploafnew.png")} alt="Upload" />
+          </button>
+        </div>
+                <span style={{ fontSize: '14px',  color: '#333', marginTop: '5px' }}>Create</span>
+      </div>
+
+      {/* Group 2: ASK AI */}
+      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+       
+        <div className="d-flex">
+          <button 
+            type="button"
+            onClick={() => { console.log("Ask AI clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0,  marginTop:'0px', cursor: 'pointer' }}
+          >
+            <img src={require("../assets/newr.png")} alt="Ask AI" />
+          </button>
+        </div>
+         <span style={{ fontSize: '14px', color: '#333', marginTop: '5px' }}>Ask AI</span>
+      </div>
+
+      {/* Group 3: NEW */}
+      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+      
+        <div className="d-flex gap-3">
+          <button 
+            type="button"
+            onClick={() => { console.log("New Request clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0,  marginTop:'0px', cursor: 'pointer' }}
+            title="New Request"
+          >
+            <img src={require("../assets/newr.png")} alt="New Request" />
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => { console.log("Select Template clicked"); }}
+            style={{ background: 'none', border: 'none',  marginTop:'0px',padding: 0, cursor: 'pointer' }}
+            title="Select Template"
+          >
+            <img src={require("../assets/newt.png")} alt="Select Template"  />
+          </button>
+        </div>
+
+          <span style={{ fontSize: '14px',  color: '#333',  marginTop: '5px' }}>New</span>
+      </div>
+
+      {/* Group 4: ACTION */}
+      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+      
+        <div className="d-flex gap-3">
+          <button 
+            type="button"
+            onClick={() => { console.log("Share clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0, marginTop:'0px', cursor: 'pointer' }}
+            title="Share"
+          >
+            <img src={require("../assets/listiconshare.png")} alt="Share"  />
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => { console.log("Delete clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0, marginTop:'0px', cursor: 'pointer' }}
+            title="Delete"
+          >
+            <img src={require("../assets/listicond.png")} alt="Delete" />
+          </button>
+        </div>
+          <span style={{ fontSize: '14px',color: '#333', marginTop: '5px' }}>Action</span>
+      </div>
+
+        <div className="d-flex flex-column align-items-center">
+     
+        <div className="">
+          <button 
+            type="button"
+            onClick={() => setActiveLayout('grid')}
+            title="Grid View"
+            style={{ 
+              background: activeLayout === 'grid' ? '#fff' : 'transparent', 
+              border: 'none', 
+              boxShadow: activeLayout === 'grid' ? '0 0px 0px rgba(0,0,0,0.1)' : 'none',
+              marginTop:'0px',
+             
+              cursor: 'pointer'
+            }}
+          >
+            <img src={require("../assets/gridview.png")} alt="Grid" style={{  opacity: activeLayout === 'grid' ? 1 : 0.6 }} />
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveLayout('list')}
+            title="List View"
+            style={{ 
+              background: activeLayout === 'list' ? '#fff' : 'transparent', 
+              border: 'none', 
+              boxShadow: activeLayout === 'list' ? '0 0px 0px rgba(0,0,0,0.1)' : 'none',
+          marginTop:'0px',
+              
+              cursor: 'pointer'
+            }}
+          >
+            <img src={require("../assets/listview.png")} alt="List" style={{  opacity: activeLayout === 'list' ? 1 : 0.6 }} />
+          </button>
+        </div>
+           <span style={{ fontSize: '14px',color: '#333', marginTop: '-1px' }}>View</span>
+      </div>
+
+    </div>
+
+    {/* View Switcher (Right Side) - Updated with Icons and "View" Label */}
+   
+  </div>
+</div>
+             
+          <div  className="main-content-new">
             <div className="inbox-leftbar">
               {/* Quick Views Panel */}
               <div
                 id="buttonpanel"
                 style={{
-                  padding: "0px 15px",
+                
 
 
                   flexShrink: 0,
                 }}
               >
-                <h2 className="page-title fw-bold mb-3 pt-5 mt-0 font-20"> Quick Views</h2>
-                {[
-                  "My request",
-                  "My favourite",
-                  "My Folders",
-                  "Share with me",
-                  "Share with other",
-                  "Recycle bin",
-                ].map((view) => (
+            
+              {[
+                  { originalKey: "My request", label: "My Requests", icon: faCloud },
+                  { originalKey: "My favourite", label: "My Favourite", icon: faHeart },
+                  { originalKey: "My Folders", label: "My Folders", icon: faFolder },
+                  { originalKey: "Share with me", label: "Shared with Me", icon: faShareAlt },
+                  { originalKey: "Share with other", label: "Shared with Other", icon: faPaperPlane},
+                  { originalKey: "Recycle bin", label: "Recycle Bin", icon: faTrashAlt },
+                ].map((item,view) => (
                   <button type="button"
-                    key={view}
-                    onClick={() => handleViewButtonClick(view)}
+                    key={item.originalKey}
+                    onClick={() => handleViewButtonClick(item.originalKey)}
                     style={{
-                      display: "block",
+                     
                       width: "100%",
                       padding: "8px 10px",
-                      marginBottom: "8px",
+                      marginBottom: "3px",
+                        marginTop: "0px",
                       textAlign: "left",
-                      backgroundColor: activeView === view ? "#0078d4" : "#f7fbfc ",
-                      color: activeView === view ? "white" : "#6c757d",
+                     backgroundColor: activeView === item.originalKey ? "#0078d4" : "#fff ",
+                      color: activeView === item.originalKey ? "white" : "#2c3e50",
                       border: "0px solid #ccc",
-                      borderRadius: "30px",
+                      borderRadius: "8px",
                       cursor: "pointer",
-                      fontSize: "14px",
+                      fontSize: "16px",
                       transition: "all 0.2s",
                     }}
                   >
-                    {view}
+                   {item.icon && <FontAwesomeIcon icon={item.icon} style={{ marginRight: "8px" }} />}
+                    {item.label} <span className="doc-count"> {viewCounts[item.originalKey] || 0}</span>
                   </button>
                 ))}
               </div>
@@ -2890,7 +3461,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                 id="folderhierarchycontainer"
                 style={{
                   flexGrow: 1,
-                  padding: "15px",
+                  padding: "0px 0px",
                   overflow: "auto",
 
                 }}
@@ -2899,10 +3470,11 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                   style={{
                     fontSize: "16px",
                     fontWeight: "600",
-                    marginBottom: "15px",
+                   
                     color: "#333",
+                         paddingTop: "10px",
                     paddingBottom: "5px",
-                    borderBottom: "1px solid #eee",
+                    borderTop: "1px solid #eee",
                   }}
                 >
                   Folder Hierarchy
@@ -2920,111 +3492,23 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
               id="filelistcontainer"
               className="inbox-rightbar">
               {/* ===== FILE LIST / UI ===== */}
-              {!showPreviewModal && (
-                <>
+              {/* srs 29/1/26 */}
+             {/* --- RIBBON TOOLBAR START: DMSMAIN STYLE --- */}
+{/* --- ICON-BASED RIBBON: NO DUPLICATION & NO IMPORT ERROR --- */}
+{/* --- ICON-BASED RIBBON: DMSMAIN STYLE WITH EXACT PATH --- */}
 
-                  {/* Upload File Button - Only shown when in a folder/library */}
-
-
-                  {/* sourish 3/10/25 */}
-                  <div className="newalignbutton">
-                    {
-                      selectedCurrentNode && (
-                        <div>
-                          <button type="button"
-                            className="mybutton2 mt-0 me-1"
-                            id="CreateFolder"
-                            onClick={() => setActiveComponent(true)}
-                            disabled={selectedCurrentNode.type === "site"}
-                          >
-                            + Create Folder
-                          </button>
-
-                          {                                          // Upload File Button Hide From Site collection and Subsites click by Aman
-                            selectedCurrentNode &&
-                            (
-                              <button
-                                type="button"
-                                className="mybutton2 mt-0"
-                                onClick={() => setShowUploadPanel(true)}
-                                disabled={
-                                  !(
-                                    selectedCurrentNode.type === "library" ||
-                                    selectedCurrentNode.type === "folder"
-                                  )
-                                }
-                              >
-                                Upload File
-                              </button>
-                            )
-                          }
-
-                        </div>
-
-                      )}
-
-                    {/* add this code here for create and upload button disable - add by addhyan 22-01-2026 */}
-                    {
-                      (activeView === "My request" || activeView === "My favourite" || activeView === "My Folders" || activeView === "Share with me" || activeView === "Share with other" || activeView === "Recycle bin") && (
-                        <div>
-                          <button type="button"
-                            className="mybutton2 mt-0 me-1"
-                            id="CreateFolder"
-                            disabled
-                          >
-                            + Create Folder
-                          </button>
-                          <button type="button"
-                            className="mybutton2 mt-0"
-                            disabled
-                          >
-                            Upload File
-                          </button>
-                        </div>
-                      )
-                    }
-
-                    {/* end add this code here for create and upload button disable - add by addhyan 22-01-2026 */}
-
-                    <button type="button"
-                      onClick={() => setActiveLayout('grid')}
-                      style={{
-                        background: activeLayout === 'grid' ? '#0078d4' : '#ffffff',
-                        color: activeLayout === 'grid' ? 'white' : '#6c757d',
-                        border: '0px solid #ddd',
-                        borderRadius: 4,
-                        padding: '6px 15px',
-                        fontWeight: 500,
-                        fontSize: "14px",
-                      }}
-                    >
-                      Grid View
-                    </button>
-                    <button type="button"
-                      onClick={() => setActiveLayout('list')}
-                      style={{
-                        background: activeLayout === 'list' ? '#0078d4' : '#ffffff',
-                        color: activeLayout === 'list' ? 'white' : '#333',
-                        border: '0px solid #ddd',
-                        borderRadius: 4,
-                        padding: '6px 15px',
-                        fontWeight: 500,
-                        fontSize: "14px",
-                      }}
-                    >
-                      List View
-                    </button>
-
-                  </div>
+{/* --- RIBBON TOOLBAR END --- */}
 
                   <h2
                     style={{
                       fontSize: "16px",
                       fontWeight: "600",
-                      marginBottom: "15px",
+                      marginBottom: "0px",
+                      paddingTop:'18px',
+                      paddingLeft:'10px',
                       color: "#333",
-                      paddingBottom: "5px",
-                      borderBottom: "1px solid #eee",
+                      paddingBottom: "4px",
+                      borderBottom: "0px solid #eee",
                       paddingRight: "100px", // Make space for upload button
                     }}
                   >
@@ -3071,8 +3555,87 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                     )}
                   </h2>
 
+ {activeComponent ? (
+    <div className="create-folder-section" style={{ padding: "20px", background: "#fff", borderRadius: "8px" }}>
+      {/* --- Path Display --- */}
+      <div style={{ marginBottom: "20px", padding: "10px", backgroundColor: "#f9f9f9", borderLeft: "4px solid #0078d4" }}>
+        <h4 className="font-16 text-dark fw-bold mb-2">This Folder will create under:</h4>
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", fontSize: "14px", color: "#333" }}>
+          {breadcrumbs.length > 0 ? (
+            breadcrumbs.map((item, index) => (
+              <React.Fragment key={item.key}>
+                {index > 0 && <span style={{ margin: "0 8px", color: "#999" }}>›</span>}
+                <span style={{ fontWeight: index === breadcrumbs.length - 1 ? "600" : "normal" }}>
+                  {item.title}
+                </span>
+              </React.Fragment>
+            ))
+          ) : (
+            <span>Root</span>
+          )}
+        </div>
+      </div>
+
+      {/* --- Create Folder Component --- */}
+      <CreateFolder
+        OthProps={{
+          "Entity": `${currentSiteUrl.split("/sites/")[1]?.split("/")[1] || ""}`,
+          "Entityurl": currentSiteUrl,
+          "siteID": currentSiteUrl,
+          "Devision": "",
+          "Department": "",
+          "DocumentLibrary": selectedCurrentNode?.type === "site" || selectedCurrentNode?.type === "subsite" ? "" : selectedCurrentNode?.title,
+          "Folder": currentFolderPath,
+          "folderpath": `/sites/${currentSiteUrl.split("/sites/")[1] || ""}/${currentFolderPath}`,
+          "IsFolderDeligationUser": "false",
+        }}
+        context={context}
+      />
+
+      {/* --- Back Button --- */}
+      <div style={{ marginTop: "20px" }}>
+        <button 
+          type="button"
+          className="btn btn-secondary btn-sm" 
+          onClick={() => setActiveComponent(false)}
+        >
+          Cancel and Return to Files
+        </button>
+      </div>
+    </div>
+  ) : showUploadPanel ? (
+    /* --- SECTION 2: UPLOAD FILE VIEW (Hides everything else) --- */
+    <UploadFile
+    // srs 30/1/26
+    sp={sp}
+      currentfolderpath={{
+        "Entity": `${currentSiteUrl.split("/sites/")[1]?.split("/")[1] || ""}`,
+        "Entityurl": currentSiteUrl,
+        "siteID": currentSiteUrl,
+        "Devision": "",
+        "Department": "",
+        "DocumentLibrary": selectedCurrentNode?.type === "site" || selectedCurrentNode?.type === "subsite" ? "" : selectedCurrentNode?.title,
+        "Folder": currentFolderPath,
+        "folderpath": `/sites/${currentSiteUrl.split("/sites/")[1] || ""}/${currentFolderPath}`,
+        "IsFolderDeligationUser": "false",
+      }}
+      onReturnToMain={() => setShowUploadPanel(false)} 
+    />
+  ) : (
+    <>
+      {/* srs 29/1/26 */}
+              {!showPreviewModal && (
+                <>
+
+                  {/* Upload File Button - Only shown when in a folder/library */}
+
+
+                  {/* sourish 3/10/25 */}
+                  {/* srs 29/1/26 moved the whole part on top*/}
+
                   {/* Upload Panel */}
-                  {showUploadPanel && (
+                   {/* srs 29/1/26 moved the whole part on top*/}
+                  {/* {showUploadPanel && (
                     <div
                       style={{
                         marginBottom: "20px",
@@ -3182,7 +3745,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                         </div>
                       )}
                     </div>
-                  )}
+                  )} */}
 
 
                   {/* File List - edited by ritik - 13/01/2026 - fixed Whenever we searched, the page would disappear if the file was not found.*/}
@@ -3311,7 +3874,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                         margin: "10px 0",
                                         display: "flex",
                                         alignItems: "center",
-                                        justifyContent: "center",
+                                        justifyContent: "end",
                                       }}
                                     >
                                       <button
@@ -3320,10 +3883,10 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                         disabled={currentPage === 1}
                                         style={{
                                           marginRight: "10px",
-                                          padding: "5px 12px",
+                                          padding: "5px 12px", marginTop:'0px',
                                           borderRadius: "4px",
                                           border: "1px solid #ccc",
-                                          background: currentPage === 1 ? "#eee" : "#fff",
+                                          background: currentPage === 1 ? "#eee" : "#1d4ed8",
                                           cursor: currentPage === 1 ? "not-allowed" : "pointer",
                                         }}
                                       >
@@ -3344,12 +3907,12 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                         style={{
                                           marginLeft: "10px",
                                           padding: "5px 12px",
-                                          borderRadius: "4px",
+                                          borderRadius: "4px", marginTop:'0px',
                                           border: "1px solid #ccc",
                                           background:
                                             currentPage === Math.ceil(browseFiltered.length / pageSize)
                                               ? "#eee"
-                                              : "#fff",
+                                              : "#1d4ed8",
                                           cursor:
                                             currentPage === Math.ceil(browseFiltered.length / pageSize)
                                               ? "not-allowed"
@@ -3411,14 +3974,15 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                           width: "300px",
                           border: "1px solid #dcdcdc",
                           borderRadius: "22px",
-                          padding: "6px 12px",
-                          backgroundColor: "#fff",
+                          padding: "7px 12px",
+                          position:'absolute',top:'8px',
+                          backgroundColor: "#fff", right:'12px'
                         }}
                       >
                         <input
                           type="text"
                           placeholder="Search files..."
-                          value={searchInput}
+                          value={searchInput} className="searc_global"
                           onChange={(e) => setSearchInput(e.target.value)}
                           style={{
                             border: "none",
@@ -3476,9 +4040,9 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                             <div
                               style={{
                                 display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                                gap: "18px",
-                                marginBottom: "20px",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(235px, 1fr))",
+                                gap: "10px", background:'#f1f1f194',
+                                marginBottom: "20px", padding:'12px'
                               }}
                             >
                               {filesLoadedfromnode && paginatedFiles.length > 0 ? (
@@ -3498,7 +4062,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                     />
 
                                     {/* File Name */}
-                                    <div style={{ fontWeight: 600, fontSize: "15px" }}>
+                                    <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">
                                       {getActualFileName(file)}
                                     </div>
 
@@ -3521,17 +4085,12 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
                                     {/* Three-dot menu button */}
                                     <div className="dotbutton">
-                                      <button type="button"
+                                      <button className="action-btn2" type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
                                         }}
-                                        style={{
-                                          background: "none",
-                                          border: "none",
-                                          fontSize: "20px",
-                                          cursor: "pointer",
-                                        }}
+                                       
                                       >
                                         ⋮
                                       </button>
@@ -3561,7 +4120,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                   setShowPreviewModal(true);
                                                 }}
                                               >
-                                                <span>👁️</span> Preview File
+                                                <span> <FontAwesomeIcon icon={faEye} /> </span> Preview File
                                               </button>
                                             </li>
                                             <li>
@@ -3573,7 +4132,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                   setMenuOpenIdx(null);
                                                 }}
                                               >
-                                                <span>📝</span> Audit History
+                                                <span> <FontAwesomeIcon icon={faFileAlt} /> </span> Audit History
                                               </button>
                                             </li>
                                             <li>
@@ -3586,7 +4145,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                   setMenuOpenIdx(null);
                                                 }}
                                               >
-                                                <span>🕰️</span> Version History
+                                                <span> <FontAwesomeIcon icon={faHistory} /> </span> Version History
                                               </button>
                                             </li>
                                             <li>
@@ -3602,7 +4161,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                 }}
 
                                               >
-                                                <span>🕰️</span> Delete File
+                                                <span> <FontAwesomeIcon icon={faTrashAlt} /> </span> Delete File
                                               </button>
                                             </li>
                                             <li>
@@ -3626,7 +4185,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                   );
                                                 }}
                                               >
-                                                <span>⭐</span>{" "}
+                                                <span> <FontAwesomeIcon icon={faHearts} />  </span>{" "}
                                                 {file.IsFavourite
                                                   ? "Unmark Favourite"
                                                   : "Mark as Favourite"}
@@ -3656,10 +4215,44 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                             <div dangerouslySetInnerHTML={{
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
-                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
-                                            <div className="text-muted font-12">{file.FileSize}</div>
-                                            <div className="text-muted font-12">{file.DocumentLibraryName}</div>
-                                            <div className="text-muted font-12">{file.Status}</div>
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }}className="mb-1 mt-1 onelinetrim">{file.FileName}</div>
+                                           <div className="d-flex align-items-center justify-content-start gap-3 mb-1">  <div className="text-muted font-12"> <FontAwesomeIcon icon={faShoppingBag}  className="me-1" /> {file.FileSize}</div>
+                                            <div className="text-muted font-12 gap-1"> <FontAwesomeIcon icon={faCalendar}  className="me-1"/> 
+    {new Date(file.Created).toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  })}
+</div></div>
+ 
+                                            <div style={{borderTop:'1px solid #f1f5f9', paddingTop:'10px'}} className="d-flex align-items-center justify-content-between">
+                                            <div className="text-muted font-12"><FontAwesomeIcon icon={faFolder} />  {file.DocumentLibraryName}</div>
+                                            {file.Status=== "Pending" && (
+                                              <div className=" font-12 status_new" style={{ backgroundColor: '#fffbeb', color:'#b45309', border:'1px solid #fde68a' }}><FontAwesomeIcon icon={faClock} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                            {file.Status=== "Auto Approved" && (
+                                              <div className="text-success font-12 status_new" style={{ backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                            {file.Status=== "Rejected" && (
+                                              <div className="text-danger font-12 status_new" style={{ backgroundColor: '#FDECEA', color:'#b45309', border:'1px solid #fde68a' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                             {file.Status=== "Rework" && (
+                                              <div className="text-danger font-12 status_new" style={{ backgroundColor: '#fef2f2', color:'#b91c1c', border:'1px solid #fecaca' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                            {file.Status=== "Approved" && (
+                                              <div className="text-success font-12 status_new" style={{ backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }  </div>
+                                            {/* <div className="text-muted font-12">{file.Status}</div> */}
                                           </>
                                         ) : activeView === "My favourite" ? (
                                           <>
@@ -3668,21 +4261,46 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                             }} />
 
 
-                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
                                             <div className="text-muted font-12">{file.FileSize}</div>
                                           </>
                                         ) : activeView === "My Folders" ? (
-                                          <>
-                                            <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.FolderName}</div>
-                                            <div className="text-muted font-12">{file.SiteTitle}</div>
+                                         <>
+                                          {console.log("Addhyan file in my folders",file)}
+                                          {file.IsLibrary ? <div style={{ fontWeight: 600, fontSize: "15px", display:'flex', alignItems:'center',gap:'10px' }}>
+                                           <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div> {file.DisplayName} <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-US", {
+                                                                        month: "short",
+                                                                     day: "2-digit",
+                                                                      year: "numeric",
+                                                                   })}</div></div></div> : <div style={{ fontWeight: 600, fontSize: "15px", display:'flex', alignItems:'center',gap:'10px'  }}> <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div>  {file.FolderName}   <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-US", {
+                                                                        month: "short",
+                                                                     day: "2-digit",
+                                                                      year: "numeric",
+                                                                   })}</div></div> </div>}
+                                            {/* <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.FolderName}</div> */}
+                                            {/* <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.documentLibraryName}</div> */}
+                                        
+ 
+                                        
+                                            <div  className="text-muted font-14 mt-1 mb-1">{file.SiteTitle}</div>
+                                             <div style={{ fontSize: "14px", display:'flex', alignItems:'center',gap:'10px', borderTop:'1px solid #f1f5f9', paddingTop:'10px',  justifyContent:'space-between' }}>  <div> <b>Type: </b> {file.IsFolder ? "subFolder" : "Root Folder"}</div>
+                                            <div className={file.IsPrivate ? "text-danger badge1" : "text-success badge1"} style={{
+    backgroundColor: file.IsPrivate ? "#FDECEA" : "#E6F4EA" }} ><FontAwesomeIcon
+                                                        icon={file.IsPrivate ? faLock : faGlobeAsia}
+                                                         className="me-1"
+                                                />{file.IsPrivate ? "Private" : "Public"}</div> </div> 
+                                         
+                                           
+ 
                                           </>
+
                                         ) : activeView === "Share with me" ? (
                                           <>
                                             <div dangerouslySetInnerHTML={{
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
 
-                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
                                             <div className="text-muted font-12">{file.FileSize}</div>
                                           </>
                                         ) : activeView === "Share with other" ? (
@@ -3690,7 +4308,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                             <div dangerouslySetInnerHTML={{
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
-                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
                                             <div className="text-muted font-12">{file.FileSize}</div>
                                           </>
                                         ) : activeView === "Recycle bin" ? (
@@ -3698,7 +4316,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                             <div dangerouslySetInnerHTML={{
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
-                                            <div style={{ fontWeight: 600, fontSize: "15px" }}>{file.FileName}</div>
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
                                             <div className="text-muted font-12">{file.FileSize}</div>
                                           </>
                                         ) : null
@@ -3706,17 +4324,12 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
                                       {/* Three-dot Menu */}
                                       <div className="dotbutton">
-                                        <button type="button"
+                                        <button className="" type="button"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
                                           }}
-                                          style={{
-                                            background: "none",
-                                            border: "none",
-                                            fontSize: "20px",
-                                            cursor: "pointer",
-                                          }}
+                                      
                                         >
                                           ⋮
                                         </button>
@@ -3728,13 +4341,13 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                             style={{
                                               position: "absolute",
                                               right: 0,
-                                              top: "28px",
+                                              top: "30px",
                                               background: "#fff",
                                               border: "1px solid #ddd",
                                               borderRadius: "4px",
                                               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                                               zIndex: 10,
-                                              minWidth: "160px",
+                                              minWidth: "180px",
                                             }}
                                           >
                                             <ul className="internalbutton">
@@ -3748,7 +4361,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setPreviewFile(file);
                                                     setShowPreviewModal(true);
-                                                  }}>👁️ Preview File</button></li>
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
                                                   <li><button onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
@@ -3756,14 +4369,18 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
                                                     handleAuditHistory(file);
                                                     setMenuOpenIdx(null);
-                                                  }}>📝 Audit History</button></li>
-                                                  <li><button type="button">↗️ Share</button></li>
+                                                  }}><FontAwesomeIcon icon={faFileAlt} /> Audit History</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareFile(file);
+                                                    setShowShareModal(true);
+                                                  }}><FontAwesomeIcon icon={faShareAlt} /> Share</button></li>
                                                   <li><button type="button" onClick={() => {
 
 
                                                     setDirectDownloadFile(file); // new state for direct downloader
                                                     setMenuOpenIdx(null);
-                                                  }}>⬇️ Download</button></li>
+                                                  }}><FontAwesomeIcon icon={faDownload} /> Download</button></li>
                                                   <li><button type="button" onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
@@ -3771,7 +4388,21 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     setModalFile(file);
                                                     setShowVersionModal(true);
                                                     setMenuOpenIdx(null);
-                                                  }}>🕰️ Version History</button></li>
+                                                  }}><FontAwesomeIcon icon={faHistory} /> Version History</button></li>
+
+                                                  <li>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        setMenuOpenIdx(null);
+                                                        handleRenameFile(file);
+                                                      }}
+                                                    >
+                                                      <FontAwesomeIcon icon={faEdit} /> Rename File
+                                                    </button>
+                                                  </li>
+
+
                                                 </>
                                               )}
 
@@ -3784,8 +4415,12 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setPreviewFile(file);
                                                     setShowPreviewModal(true);
-                                                  }}>👁️ Preview File</button></li>
-                                                  <li><button type="button">↗️ Share</button></li>
+                                                  }}><FontAwesomeIcon icon={faEye} />  Preview File</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareFile(file);
+                                                    setShowShareModal(true);
+                                                  }}><FontAwesomeIcon icon={faFileAlt} /> Share</button></li>
                                                   <li><button type="button" onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
@@ -3795,13 +4430,59 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     toggleFavourite(file);
 
                                                     setMenuOpenIdx(null);
-                                                  }}>⭐ Unmark as Favourite</button></li>
+                                                  }}><FontAwesomeIcon icon={faHearts} /> Unmark as Favourite</button></li>
                                                 </>
                                               )}
 
                                               {/* Menu for My Folders */}
                                               {activeView === "My Folders" && (
                                                 <>
+                                                  {
+                                                    !file.IsFolder && (
+                                                      <>
+                                                        {/* <li><button type="button" onClick={() => { }}
+                                                        >Manage WorkFlow </button></li> */}
+
+                                                        <li>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                              setSelectedWorkflowFolder({
+                                                                SiteID: file.SiteID,
+                                                                SiteTitle: file.SiteTitle,
+                                                                SiteUrl: file.SiteUrl,              // ✅ MUST
+                                                                DocumentLibraryName: file.DocumentLibraryName,
+                                                                file: file,                         // Add file object
+                                                              });
+                                                              setShowManageWorkflow(true);
+                                                            }}
+                                                          >
+                                                          <img src={require("../assets/managework.svg")} alt="userlock" />    Manage WorkFlow
+                                                          </button>
+                                                        </li>
+
+                                                        {/* Metadata Modal Trigger Ritik 29/01/2026 */}
+
+                                                        <li><button type="button" onClick={() => {
+                                                          setMenuOpenIdx(null);
+                                                          setSelectedFileForMetadata(file);
+                                                          setShowMetadataModal(true);
+                                                        }}>  <img src={require("../assets/metadata.svg")} alt="userlock" /> Add MetaData</button></li>
+
+                                                      </>
+                                                    )
+
+
+
+                                                  }
+
+
+
+
+
+
+
+
                                                   <li><button type="button" onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
@@ -3811,7 +4492,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
                                                     deleteFolder(file); // sourish 20/8/25
                                                   }}
-                                                  >🗑️ Delete Folder</button></li>
+                                                  ><img src={require("../assets/deletefile.svg")} alt="deletefile" /> Delete Folder</button></li>
                                                   <li><button type="button" onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
@@ -3820,7 +4501,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     setRenameValue(file?.FolderName || ""); // prefill with old name
                                                     setRenameModalOpen(true);
                                                     setMenuOpenIdx(null);
-                                                  }}>✏️ Rename Folder</button></li>
+                                                  }}> <img src={require("../assets/rename.svg")} alt="rename" /> Rename Folder</button></li>
                                                   <li>
                                                     <button type="button" onClick={() => {
                                                       const pageBefore = currentPage;
@@ -3828,7 +4509,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                       window.managePermission?.(file);
                                                       setCurrentPage(pageBefore);
                                                     }}>
-                                                      🔒 Manage Permission
+                                                      <img src={require("../assets/userlock.svg")} alt="userlock" />  Manage Permission
                                                     </button>
                                                   </li>
                                                 </>
@@ -3843,7 +4524,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setPreviewFile(file);
                                                     setShowPreviewModal(true);
-                                                  }}>👁️ Preview File</button></li>
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
                                                   <li><button type="button" onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
@@ -3851,7 +4532,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
                                                     setDirectDownloadFile(file); // new state for direct downloader
                                                     setMenuOpenIdx(null);
-                                                  }}>⬇️ Download File</button></li>
+                                                  }}><FontAwesomeIcon icon={faDownload} /> Download File</button></li>
                                                 </>
                                               )}
 
@@ -3864,7 +4545,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setPreviewFile(file);
                                                     setShowPreviewModal(true);
-                                                  }}>👁️ Preview File</button></li>
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
                                                   <li><Button
                                                     variant="warning"
                                                     onClick={() => {
@@ -3872,7 +4553,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                       setAcessFile(file); // file = your folder/file object
                                                     }}
                                                   >
-                                                    Revoke Access
+                                                     <img src={require("../assets/revokeacc.svg")} alt="revoke" /> Revoke Access
                                                   </Button></li>
                                                 </>
                                               )}
@@ -3886,14 +4567,14 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setPreviewFile(file);
                                                     setShowPreviewModal(true);
-                                                  }}>👁️ Preview File</button></li>
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
                                                   <li><button type="button" onClick={async () => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
                                                     // this is to hide li options in every tab (addhyan)
                                                     await handleUndoDelete(file); setMenuOpenIdx(null);
                                                   }}
-                                                  >↩️ Undo (Restore)</button></li>
+                                                  ><img src={require("../assets/undo.svg")} alt="rename" /> Undo (Restore)</button></li>
                                                 </>
                                               )}
                                             </ul>
@@ -3926,7 +4607,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                         : "Created Date"}
                                     </th>
                                     {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
-                                      <th style={{ minWidth: '80px', maxWidth: '80px', }}>Status</th>
+                                      <th style={{ minWidth: '113px', maxWidth: '113px', }}>Status</th>
                                     )}
                                     {/* <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th> */}
                                     <th style={{ textAlign: "center" }}>Action</th> {/* New column */}
@@ -3936,10 +4617,25 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                 <tbody>
                                   {paginatedFiles.map((file, idx) => (
                                     <tr key={file.Id || idx}>
-                                      <td style={{ minWidth: '50px', maxWidth: '50px', }}>{file.SNo || idx + 1}</td>
+                                      <td style={{ minWidth: '50px', maxWidth: '50px', }}> <span className="indexdesign">{file.SNo || idx + 1} </span> </td>
                                       {/* <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td> */}
-                                      <td style={{ minWidth: '250px', maxWidth: '250px', }}>{file.FileName || file.Name || file.FolderName}</td>
+                                      {/* <td style={{ minWidth: '250px', maxWidth: '250px', }}>{file.FileName || file.Name || file.FolderName}</td> */}
                                       {/* <td >{file.FileSize}</td> */}
+                                     
+<td style={{ minWidth: '250px', maxWidth: '250px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <div
+      dangerouslySetInnerHTML={{
+        __html: createFileExtensionHtml(
+          file.FileName || file.Name || file.FolderName || "",
+          undefined,  // bgColor parameter (optional)
+          true        // ✅ isListView = true
+        ),
+      }}
+    />
+    <span>{file.FileName || file.Name || file.FolderName}</span>
+  </div>
+</td>
                                       <td>
                                         {file.FileSize
                                           ? file.FileSize
@@ -3956,8 +4652,27 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                             : "-"}
                                       </td>
                                       {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
-                                      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
-                                        <td style={{ minWidth: '80px', maxWidth: '80px', }}>{file.Status || ""}</td>
+                                     {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+                                        <td style={{ minWidth: '113px', maxWidth: '113px', }}>
+                                          {file.Status === "Pending" && (
+                                            <div className="font-12 text-center" style={{ backgroundColor: '#fffbeb', color:'#b45309', border:'1px solid #fde68a', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faClock} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Auto Approved" && (
+                                            <div className="text-success text-center font-12" style={{backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Rejected" && (
+                                            <div className="text-danger text-center font-12" style={{ backgroundColor: 'rgb(253, 236, 234)', border:'1px solid rgb(253, 230, 138)', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Rework" && (
+                                            <div className="text-danger text-center font-12" style={{ backgroundColor: '#fef2f2',color:'#b91c1c', border:'1px solid #fecaca', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Approved" && (
+                                            <div className="text-success text-center font-12" style={{ backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>
+                                          )}
+                                          {!file.Status || (file.Status !== "Pending" && file.Status !== "Auto Approved" && file.Status !== "Rejected" && file.Status !== "Rework" && file.Status !== "Approved") && (
+                                            <div className="text-muted text-center font-12">{file.Status || ""}</div>
+                                          )}
+                                        </td>
                                       )}
                                       <td style={{ textAlign: "center" }}>
                                         <button type="button" className="dotbutton2"
@@ -3985,22 +4700,87 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                                             }}
                                           >
                                             <ul className="internalbutton">
-                                              <li>
-                                                <button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>
-                                                  👁️ Preview
-                                                </button>
-                                              </li>
-                                              <li>
-                                                <button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>
-                                                  ⬇️ Download
-                                                </button>
-                                              </li>
-                                              <li>
-                                                <button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}>
-                                                  🗑️ Delete
-                                                </button>
-                                              </li>
-                                            </ul>
+  {/* --- SYNCED DYNAMIC LOGIC FOR ALL MODULES --- */}
+  {filesLoadedfromnode && 
+   activeView !== "My request" && 
+   activeView !== "My favourite" && 
+   activeView !== "My Folders" && 
+   activeView !== "Share with me" && 
+   activeView !== "Share with other" && 
+   activeView !== "Recycle bin" ? (
+    <>
+      {/* Browsing Menu Logic (Map 1 Sync) */}
+      <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>👁️ Preview File</button></li>
+      <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}>📝 Audit History</button></li>
+      <li><button type="button" onClick={() => { setModalFile(file); setShowVersionModal(true); setMenuOpenIdx(null); }}>🕰️ Version History</button></li>
+      <li><button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}>🗑️ Delete File</button></li>
+      <li>
+        <button type="button" onClick={async () => { 
+          const newFav = await toggleFavouriteDoc(file, currentSiteUrl, context); 
+          setSelectedFiles((prev) => prev.map((f) => f.UniqueId === file.UniqueId ? { ...f, IsFavourite: newFav } : f));
+          setMenuOpenIdx(null);
+        }}>⭐ {file.IsFavourite ? "Unmark Favourite" : "Mark as Favourite"}</button>
+      </li>
+    </>
+  ) : (
+    <>
+      {/* Tab-Specific Menu Logic (Map 2 Sync) */}
+      {activeView === "My request" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>👁️ Preview File</button></li>
+          <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}>📝 Audit History</button></li>
+          <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}>↗️ Share</button></li>
+          <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>⬇️ Download</button></li>
+          <li><button type="button" onClick={() => { setModalFile(file); setShowVersionModal(true); setMenuOpenIdx(null); }}>🕰️ Version History</button></li>
+          <li><button type="button" onClick={() => { handleRenameFile(file); setMenuOpenIdx(null); }}>✏️ Rename File</button></li>
+        </>
+      )}
+
+      {activeView === "My favourite" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>👁️ Preview File</button></li>
+          <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}>↗️ Share</button></li>
+          <li><button type="button" onClick={() => { toggleFavourite(file); setMenuOpenIdx(null); }}>⭐ Unmark as Favourite</button></li>
+        </>
+      )}
+
+      {activeView === "My Folders" && (
+        <>
+          {!file.IsFolder && (
+            <>
+              <li><button type="button" onClick={() => { setSelectedWorkflowFolder({ SiteID: file.SiteID, SiteTitle: file.SiteTitle, SiteUrl: file.SiteUrl, DocumentLibraryName: file.DocumentLibraryName, file: file }); setShowManageWorkflow(true); setMenuOpenIdx(null); }}>Manage WorkFlow</button></li>
+              <li><button type="button" onClick={() => { setSelectedFileForMetadata(file); setShowMetadataModal(true); setMenuOpenIdx(null); }}>Add MetaData</button></li>
+            </>
+          )}
+          <li><button type="button" onClick={() => { setModalFile(file); deleteFolder(file); setMenuOpenIdx(null); }}>🗑️ Delete Folder</button></li>
+          <li><button type="button" onClick={() => { setModalFile(file); setRenameValue(file?.FolderName || ""); setRenameModalOpen(true); setMenuOpenIdx(null); }}>✏️ Rename Folder</button></li>
+          <li><button type="button" onClick={() => { window.managePermission?.(file); setMenuOpenIdx(null); }}>🔒 Manage Permission</button></li>
+        </>
+      )}
+
+      {activeView === "Share with me" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>👁️ Preview File</button></li>
+          <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}>⬇️ Download File</button></li>
+        </>
+      )}
+
+      {activeView === "Share with other" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>👁️ Preview File</button></li>
+          <li><Button variant="warning" size="sm" onClick={() => { setAcessFile(file); setShowRevokeModal(true); setMenuOpenIdx(null); }}>Revoke Access</Button></li>
+        </>
+      )}
+
+      {activeView === "Recycle bin" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}>👁️ Preview File</button></li>
+          <li><button type="button" onClick={async () => { await handleUndoDelete(file); setMenuOpenIdx(null); }}>↩️ Undo (Restore)</button></li>
+        </>
+      )}
+    </>
+  )}
+</ul>
                                           </div>
                                         )}
                                       </td>
@@ -4234,6 +5014,23 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                         onClose={() => setShowVersionModal(false)}
                       />
 
+                      {/* share modal */}
+                      <ShareModal
+                        show={showShareModal}
+                        file={shareFile}
+                        context={context}
+                        onClose={() => {
+                          setShowShareModal(false);
+                          setShareFile(null);
+                        }}
+                        currentUserEmail={(context.pageContext as any)?.user?.email || ""}
+                        currentUserTitle={context.pageContext.user.displayName || ""}
+                        currentSiteUrl={currentSiteUrl}
+                      />
+
+
+
+
                       {/* aman code manage folder permission */}
                       {/* === Step 1 Popup === */}
                       {showPermissionModal && (
@@ -4461,10 +5258,10 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                           .length > 0 && (
                           <div
                             style={{
-                              margin: "10px 0",
+                              margin: "10px 14px 10px 0",
                               display: "flex",
                               alignItems: "center",
-                              justifyContent: "center",
+                              justifyContent: "end",
                             }}
                           >
                             <button
@@ -4473,10 +5270,10 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                               disabled={currentPage === 1}
                               style={{
                                 marginRight: "10px",
-                                padding: "5px 12px",
+                                padding: "5px 12px",marginTop:'0px',
                                 borderRadius: "4px",
                                 border: "1px solid #ccc",
-                                background: currentPage === 1 ? "#eee" : "#fff",
+                                background: currentPage === 1 ? "#eee" : "#1d4ed8",
                                 cursor: currentPage === 1 ? "not-allowed" : "pointer",
                               }}
                             >
@@ -4499,13 +5296,13 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
                               disabled={currentPage === Math.ceil(filteredFiles.length / pageSize)}
                               style={{
                                 marginLeft: "10px",
-                                padding: "5px 12px",
+                                padding: "5px 12px", marginTop:'0px',
                                 borderRadius: "4px",
                                 border: "1px solid #ccc",
                                 background:
                                   currentPage === Math.ceil(filteredFiles.length / pageSize)
                                     ? "#eee"
-                                    : "#fff",
+                                    : "#1d4ed8",
                                 cursor:
                                   currentPage === Math.ceil(filteredFiles.length / pageSize)
                                     ? "not-allowed"
@@ -4522,51 +5319,310 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
                 </>
               )}
-              {/* ritik today */}
+          {/* srs 29/1/26 */}
+    </>
+  )}
+    {/* srs 29/1/26 */}
+
+              {/* //update by ritik 29/01/2026 for preview file title and path display */}
 
 
               {showPreviewModal && (
                 <PreviewModal
                   show={true}
                   fileUrl={previewFile}
-                  onClose={() => setShowPreviewModal(false)}
+                  fileName={previewFile?.FileName || previewFile?.Name}
+                  filePath={
+                    activeView
+                      ? undefined
+                      : (breadcrumbs.map(b => b.title).join(' › '))
+                  }
+                  viewName={
+                    activeView
+                      ? breadcrumbs[breadcrumbs.length - 1]?.title
+                      : undefined
+                  }
+                  onClose={() => {
+                    setShowPreviewModal(false);
+                    setPreviewFile(null);
+                  }}
                 />
               )}
 
-            </div></div>
-          {/* ---------------------------Audit History Modal ---------------------*/}
-          {showAuditModal && (
-            <Modal show={showAuditModal} onHide={() => setShowAuditModal(false)} size="lg">
-              <Modal.Header closeButton>
-                <Modal.Title>Audit History</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
-                {auditLoading ? (
-                  <div>Loading...</div>
-                ) : (
-                  <div>
-                    <h5>Metadata</h5>
-                    <ul>
-                      {Object.entries(auditVersions.Metadata || {}).map(([key, value]) => (
-                        <li key={key}><strong>{key}:</strong> {String(value)}</li>
-                      ))}
-                    </ul>
+              {/* meta data model Render Ritik 29/01/2026 */}
 
-                    <h5>Versions</h5>
-                    {auditVersions.Versions && auditVersions.Versions.length ? (
-                      <ul>
-                        {auditVersions.Versions.map((v: any, i: number) => (
-                          <li key={i}>{JSON.stringify(v)}</li>
-                        ))}
-                      </ul>
+              {/* Metadata Modal */}
+              {showMetadataModal && (
+                <MetadataModal
+                  show={showMetadataModal}
+                  file={selectedFileForMetadata}
+                  context={context}
+                  onClose={() => {
+                    setShowMetadataModal(false);
+                    setSelectedFileForMetadata(null);
+                  }}
+                />
+              )}
+
+              {showManageWorkflow && selectedWorkflowFolder && (
+                <ManageWorkflow
+                  context={context}
+                  siteUrl={selectedWorkflowFolder.SiteUrl}   // ✅ FIX
+                  siteTitle={selectedWorkflowFolder.SiteTitle}
+                  documentLibraryName={selectedWorkflowFolder.DocumentLibraryName}
+                  file={selectedWorkflowFolder.file}
+                  onClose={() => {
+                    setShowManageWorkflow(false);
+                    setSelectedWorkflowFolder(null);
+                  }}
+                />
+              )}
+
+
+            </div></div></div>
+          {/* ---------------------------Audit History Modal ---------------------*/}
+         {showAuditModal && (
+  <Modal show={showAuditModal} onHide={() => setShowAuditModal(false)} size="xl">
+    <Modal.Header closeButton>
+      <Modal.Title>Audit History</Modal.Title>
+    </Modal.Header>
+    <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+      {auditLoading ? (
+        <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>
+      ) : (
+        <div>
+          {/* Metadata Section */}
+          <div style={{ marginBottom: '25px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '15px',
+              padding: '20px',
+              backgroundColor: '#fff',
+              borderRadius: '0px',
+              border: '0px solid #dee2e6'
+            }}>
+              {Object.entries(auditVersions.Metadata || {}).map(([key, value]) => (
+                <div key={key}>
+                  <div style={{
+                    fontSize: '13px',
+                    color: '#6c757d',
+                    marginBottom: '4px',
+                    fontWeight: '400'
+                  }}>
+                    {key}:
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#212529',
+                    wordBreak: 'break-word'
+                  }}>
+                    {key === 'IsDeleted' ? (
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        backgroundColor: value === 'No' ? '#d4edda' : '#f8d7da',
+                        color: value === 'No' ? '#155724' : '#721c24',
+                        fontSize: '13px'
+                      }}>
+                        {String(value)}
+                      </span>
+                    ) : key === 'Status' ? (
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        backgroundColor:
+                          value === 'Pending' ? '#fff3cd' :
+                          value === 'Approved' ? '#d4edda' :
+                          value === 'Rejected' ? '#f8d7da' : '#e2e3e5',
+                        color:
+                          value === 'Pending' ? '#856404' :
+                          value === 'Approved' ? '#155724' :
+                          value === 'Rejected' ? '#721c24' : '#383d41',
+                        fontSize: '13px'
+                      }}>
+                        {String(value)}
+                      </span>
                     ) : (
-                      <div>No versions available</div>
+                      String(value || '-')
                     )}
                   </div>
-                )}
-              </Modal.Body>
-            </Modal>
-          )}
+                </div>
+              ))}
+            </div>
+          </div>
+ 
+          {/* Versions Section */}
+          <div>
+            <h6 style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              marginBottom: '15px',
+              paddingBottom: '8px',
+              borderBottom: '2px solid #0078d4'
+            }}>
+              Version History
+            </h6>
+            {auditVersions.Versions && auditVersions.Versions.length ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  border: '1px solid #dee2e6'
+                }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#0078d4', color: 'white' }}>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '2px solid #005a9e'
+                      }}>
+                        Version
+                      </th>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '2px solid #005a9e'
+                      }}>
+                        Created
+                      </th>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '2px solid #005a9e'
+                      }}>
+                        Modified By
+                      </th>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '2px solid #005a9e'
+                      }}>
+                        Email
+                      </th>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'right',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '2px solid #005a9e'
+                      }}>
+                        Size
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditVersions.Versions.map((v: any, i: number) => (
+                      <tr key={i} style={{
+                        borderBottom: '1px solid #dee2e6',
+                        backgroundColor: i % 2 === 0 ? '#ffffff' : '#f8f9fa'
+                      }}>
+                        <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          textAlign: 'center'
+                        }}>
+                          {v.VersionLabel || '-'}
+                        </td>
+                        <td style={{ padding: '10px', fontSize: '13px' }}>
+                          {v.Created || '-'}
+                        </td>
+                        <td style={{ padding: '10px', fontSize: '13px' }}>
+                          {v.ModifiedByName || '-'}
+                        </td>
+                        <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          color: '#6c757d'
+                        }}>
+                          {v.ModifiedByEmail || '-'}
+                        </td>
+                        <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          textAlign: 'right'
+                        }}>
+                          {v.SizeDisplay || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{
+                padding: '20px',
+                backgroundColor: '#d1ecf1',
+                border: '1px solid #bee5eb',
+                borderRadius: '4px',
+                color: '#0c5460',
+                fontSize: '14px'
+              }}>
+                No versions available
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </Modal.Body>
+    <Modal.Footer>
+      {/* <Button variant="secondary" onClick={() => setShowAuditModal(false)}>
+        Close
+      </Button> */}
+    </Modal.Footer>
+  </Modal>
+)}
+          {/* ================= RENAME FILE MODAL – ADD EXACTLY HERE ================= */}
+          <Modal
+            show={renameFileModalOpen}
+            onHide={() => setRenameFileModalOpen(false)}
+            backdrop="static"
+            centered
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Rename File</Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <input
+                type="text"
+                className="form-control"
+                value={renameFileValue}
+                onChange={(e) => setRenameFileValue(e.target.value)}
+                autoFocus
+              />
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                onClick={() => setRenameFileModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={submitRenameFile}
+                disabled={!renameFileValue?.trim()}
+              >
+                Rename
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          {/* ================= RENAME FILE MODAL END ================= */}
+
+
+
           {/* sourish 30/9/25 two div added*/}
         </div>
       </div>
