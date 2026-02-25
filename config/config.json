@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "essadms-main-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/essadmsMain/EssadmsMainWebPart.js",
+          "manifest": "./src/webparts/essadmsMain/EssadmsMainWebPart.manifest.json"
+        }
+      ]
+    },
+    "vertical-side-bar-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/verticalSideBar/VerticalSideBarWebPart.js",
+          "manifest": "./src/webparts/verticalSideBar/VerticalSideBarWebPart.manifest.json"
+        }
+      ]
+    },
+    "horizontal-nav-bar-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/horizontalNavBar/HorizontalNavBarWebPart.js",
+          "manifest": "./src/webparts/horizontalNavBar/HorizontalNavBarWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "EssadmsMainWebPartStrings": "lib/webparts/essadmsMain/loc/{locale}.js",
+    "VerticalSideBarWebPartStrings": "lib/webparts/verticalSideBar/loc/{locale}.js",
+    "HorizontalNavBarWebPartStrings": "lib/webparts/horizontalNavBar/loc/{locale}.js"
+  }
+}
