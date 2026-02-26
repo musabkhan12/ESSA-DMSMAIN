@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // .modal{
    
 //     padding-right: 15px;
@@ -13,4 +14,239 @@
 .modal-dialog {
   min-width: 75%;
 //   margin: 0 auto;
+=======
+/* ==========================================================================
+   MODAL POSITIONING - FILE CONTAINER AREA ONLY
+   ========================================================================== */
+
+/* Modal Wrapper - File container area tak hi restricted */
+.modal {
+  /* Sidebar (240px) aur header area (approx 140px) ko exclude karo */
+  left: 240px !important;
+  top: 140px !important;
+  
+  /* Remaining white area mein fit karo */
+  width: calc(100% - 240px) !important;
+  height: calc(100vh - 140px) !important;
+  
+  /* Center alignment */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  position: fixed !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  z-index: 1060 !important;
+}
+ .modal-title {
+     
+      font-size: 20px !important; font-weight: 600 !important;
+    }
+
+/* Backdrop - Sirf file area ko darken kare */
+.modal-backdrop {
+  left: 240px !important;
+  top: 140px !important;
+  width: calc(100% - 240px) !important;
+  height: calc(100vh - 140px) !important;
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  z-index: 1050 !important;
+}
+
+/* Modal Dialog Box */
+.modal-dialog {
+  margin: 0 !important;
+  position: relative !important;
+  width: 90% !important;
+  max-width: 700px !important;
+  max-height: 85% !important;
+  
+  .modal-content {
+    border-radius: 8px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  
+  /* Large modals ke liye */
+  &.modal-xl {
+    max-width: 1000px !important;
+    width: 95% !important;
+  }
+}
+
+/* ==========================================================================
+   SIDEBAR COLLAPSED STATE (80px width)
+   ========================================================================== */
+.content[style*="margin-left: 80px"] ~ .modal,
+body:has(.content[style*="margin-left: 80px"]) .modal {
+  left: 80px !important;
+  width: calc(100% - 80px) !important;
+}
+
+.content[style*="margin-left: 80px"] ~ .modal-backdrop,
+body:has(.content[style*="margin-left: 80px"]) .modal-backdrop {
+  left: 80px !important;
+  width: calc(100% - 80px) !important;
+}
+
+/* ==========================================================================
+   SHARE MODAL SPECIFIC STYLING
+   ========================================================================== */
+.sharemodal {
+  .modal-header {
+  
+    color: #000;
+    padding: 16px 20px;
+   
+    
+    .modal-title {
+      font-weight: 600;
+      font-size: 20px;
+    }
+    
+    .btn-close {
+      
+    }
+  }
+
+  .modal-body {
+    padding: 20px;
+    
+    label {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      
+      &:focus {
+        outline: none;
+        border-color: #0078d4;
+        box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+      }
+    }
+  }
+
+  .modal-footer {
+    background-color: #f8f9fa;
+    padding: 12px 20px;
+    border-top: 1px solid #dee2e6;
+    
+    .btn {
+      padding: 8px 20px;
+      border-radius: 4px;
+      font-weight: 500;
+      
+      &.btn-primary {
+        background-color: #0078d4;
+        border-color: #0078d4;
+        &:hover { background-color: #005a9e; }
+      }
+      
+      &.btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+      }
+    }
+  }
+}
+
+/* Audit History Modal */
+.modal:has(.modal-title:contains("Audit History")) {
+  .modal-dialog { 
+    max-width: 1100px !important; 
+    width: 95% !important;
+  }
+}
+
+/* Version History Modal */
+.modal:has(.modal-title:contains("Version History")) {
+  .modal-dialog { 
+    max-width: 900px !important; 
+  }
+}
+
+/* Body scroll lock jab modal open ho */
+body.modal-open {
+  overflow: hidden !important;
+  padding-right: 0 !important;
+}
+
+/* ========================================
+   MODAL RESTRICTION - FILE CONTAINER ONLY
+   ======================================== */
+
+#filelistcontainer {
+  position: relative !important;
+  isolation: isolate !important;
+  
+  /* All modals inside this container */
+  .modal {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1060 !important;
+  }
+
+  /* Modal backdrop */
+  .modal-backdrop {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    z-index: 1050 !important;
+  }
+
+  /* Modal dialog centering */
+  .modal-dialog {
+    position: relative !important;
+    margin: 0 auto !important;
+    max-width: 95% !important;
+    max-height: 85% !important;
+    width: 95% !important;
+    z-index: 1070 !important;
+  }
+
+  /* Large modals */
+  .modal-xl .modal-dialog {
+    max-width: 95% !important;
+    width: 1100px !important;
+  }
+
+  /* Modal content scrolling */
+  .modal-content {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+  }
+}
+
+/* Body scroll lock prevention */
+body.modal-open {
+  overflow: hidden !important;
+  padding-right: 0 !important;
+>>>>>>> ESSAMUSAIBUPDATED2
 }

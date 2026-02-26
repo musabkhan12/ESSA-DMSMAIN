@@ -1,35 +1,89 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> ESSAMUSAIBUPDATED2
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { spfi, SPFI, SPFx } from "@pnp/sp";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import type { IEssadmsMainProps } from "./IEssadmsMainProps";
 import PreviewModal from "./previewfile"; // import your modal\
+<<<<<<< HEAD
 import DirectDownloader from "./DownloadFile";
 import VersionHistoryModal from "./versionhistory"; // import version history modal
 import Swal from 'sweetalert2'
 import { Modal } from 'react-bootstrap';   
 import CreateFolder from "./CreateFolder";
+=======
+import MetadataModal from "./MetadataModal";
+import ManageWorkflow from "./ManageWorkflow";
+import DirectDownloader from "./DownloadFile";
+import VersionHistoryModal from "./versionhistory"; // import version history modal
+import ShareModal from "./ShareModal";
+import TemplateForm from "./TemplateForm";
+import Swal from 'sweetalert2'
+import { Button, Modal, Dropdown, ButtonGroup } from 'react-bootstrap';
+import CreateFolder from "./CreateFolder";
+import Revoke from "./revoke";
+>>>>>>> ESSAMUSAIBUPDATED2
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/folders";
 import "@pnp/sp/files";
 import "@pnp/sp/site-users/web";
+<<<<<<< HEAD
 import { useMemo } from "react";
 
 // sourish 30/9/25
 import "../../verticalSideBar/components/VerticalSidebar2.scss";
+=======
+// srs 20/2/26
+import { Web } from "@pnp/sp/webs";
+import { AssignFrom } from "@pnp/core";
+//aman changes for folder permission manage
+import { PermissionKind } from "@pnp/sp/security";
+import { ISiteUserInfo } from "@pnp/sp/site-users/types";
+//aman changes for folder permission manage
+
+import { useMemo } from "react";
+import UploadFile from "./UploadFile"; // srs 29/1/26
+// sourish 30/9/25
+import "../../verticalSideBar/components/VerticalSidebar.scss";
+>>>>>>> ESSAMUSAIBUPDATED2
 import VerticalSideBar from "../../verticalSideBar/components/VerticalSideBar";
 import HorizontalNavbar from "../../horizontalNavBar/components/HorizontalNavBar";
 import UserContext from "../../../GlobalContext/context";
 import Provider from "../../../GlobalContext/provider";
+<<<<<<< HEAD
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 // let loadfilefromnode = ''
+=======
+// Ritik 20/2/26 for manage permission folder
+import Select from "react-select";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { icon } from '@fortawesome/fontawesome-svg-core';
+import {faRedo, faUser,faFilePdf, faCloud,  faFolder as faFolders,  faGlobeAsia, faLock, faHeart as faHearts, faShareSquare,faTrash,faFile ,faDownload,faHistory,  faShareAlt, faCalendar, faClock, faCheckCircle, faFileWord, faFileExcel,faFileImage, faFileArchive, faFileVideo,faShoppingBag, } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faHeart, faCalendarAlt as faCalendars, faTrashAlt, faEye,  faFileAlt,faEdit, faPaperPlane  } from '@fortawesome/free-regular-svg-icons';
+ 
+
+
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// let loadfilefromnode = ''
+declare global {
+  interface Window {
+    managePermission?: (folder: any) => void;
+  }
+}
+>>>>>>> ESSAMUSAIBUPDATED2
 interface TreeNode {
   key: string;
   title: string;
   // type: "site" | "subsite" | "library" | "folder";
+<<<<<<< HEAD
   type: "site" | "function" | "subsite" | "library" | "folder"; 
+=======
+  type: "site" | "function" | "subsite" | "library" | "folder";
+>>>>>>> ESSAMUSAIBUPDATED2
   children?: TreeNode[];
   hasChildren?: boolean;
   isExpanded?: boolean;
@@ -38,6 +92,14 @@ interface TreeNode {
   folderPath?: string;
   parentKey?: string;
 }
+<<<<<<< HEAD
+=======
+// this was by om revoke user permission
+interface SharedUser {
+  userId: string;
+  permission: string;
+}
+>>>>>>> ESSAMUSAIBUPDATED2
 
 interface BreadcrumbItem {
   key: string;
@@ -49,6 +111,25 @@ interface BreadcrumbItem {
 }
 
 const ArgPoc = ({ context }: { context: WebPartContext }) => {
+<<<<<<< HEAD
+=======
+  // Template form state
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+
+  const handleSaveTemplate = (data?: { title: string; description: string; template: any }) => {
+    const tpl = data?.template || selectedTemplate;
+    const title = data?.title || tpl?.DocumentCategory || "";
+    Swal.fire('Saved', `${title} template selected`, 'success');
+    setShowTemplateForm(false);
+    setSelectedTemplate(null);
+  };
+
+  const handleCancelTemplate = () => {
+    setShowTemplateForm(false);
+    setSelectedTemplate(null);
+  };
+>>>>>>> ESSAMUSAIBUPDATED2
   const [sp] = useState(() => spfi().using(SPFx(context)));
   const [filesLoadedfromnode, setFilesLoadedloadedfromnode] = useState(false);
 
@@ -70,6 +151,11 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   // state variables for current folder path 
   const [currentFolderPath, setCurrentFolderPath] = useState<string>("");
+<<<<<<< HEAD
+=======
+
+    const [navItems, setNavItems] = useState<any[]>([]);
+>>>>>>> ESSAMUSAIBUPDATED2
   // state variables for current site URL
   const [currentSiteUrl, setCurrentSiteUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,11 +163,27 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [previewFileUrls, setPreviewFileUrls] = useState<string[]>([]);
   // modal state
   const [menuOpenIdx, setMenuOpenIdx] = useState<number | null>(null);
+<<<<<<< HEAD
 
   // state for selected node
   const [selectedCurrentNode, setSelectedCurrentNode] = useState<TreeNode | null>(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
    const [showShareModal, setShowShareModal] = useState(false);
+=======
+const [currentPage, setCurrentPage] = useState(1);
+  // state for selected node
+  const [selectedCurrentNode, setSelectedCurrentNode] = useState<TreeNode | null>(null);
+  const [showAuditModal, setShowAuditModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareFile, setShareFile] = useState<any>(null);
+  // this was by om revoke user permission
+  //revoke state
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [selectedFolderForRevoke, setSelectedFolderForRevoke] = useState<any>(null);
+  const [revoke, setAcessFile] = useState<any>(null);
+  const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
+
+>>>>>>> ESSAMUSAIBUPDATED2
   // version history modal state
   const [showVersionModal, setShowVersionModal] = useState(false);
   // modal file state
@@ -92,6 +194,7 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [previewFile, setPreviewFile] = useState<any>(null);
   // preview modal state
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+<<<<<<< HEAD
   
     //sourish 21/8/25
   const [renameModalOpen, setRenameModalOpen] = useState(false);
@@ -99,10 +202,39 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
 
 //  setting direct file download state
 const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(null);
+=======
+
+  const [previewKey, setPreviewKey] = useState(0);
+
+  //Metadata state Ritik 29/01/2026
+  const [showMetadataModal, setShowMetadataModal] = useState(false);
+  const [selectedFileForMetadata, setSelectedFileForMetadata] = useState<any>(null);
+
+  // srs 20/2/26
+  const [showRenameMetadataModal, setShowRenameMetadataModal] = useState(false);
+  const [selectedFileForRenameetadata, setSelectedFileForRenameMetadata] = useState<any>(null);
+  const [existingColumns, setExistingColumns] = useState<any[]>([]);
+const [loadingColumns, setLoadingColumns] = useState(false);
+
+  //sourish 21/8/25
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  // ===== File Rename specific state =====
+  const [renameFileModalOpen, setRenameFileModalOpen] = useState(false);
+  const [renameFileValue, setRenameFileValue] = useState("");
+
+  // ===== Manage Workflow (ROOT FOLDER ONLY) =====
+  const [showManageWorkflow, setShowManageWorkflow] = useState<boolean>(false);
+  const [selectedWorkflowFolder, setSelectedWorkflowFolder] = useState<any>(null);
+  //  setting direct file download state
+  const [directDownloadFile, setDirectDownloadFile] = React.useState<any | null>(null);
+>>>>>>> ESSAMUSAIBUPDATED2
 
   // ====== AUDIT HISTORY STATES (added) ======
   const [auditVersions, setAuditVersions] = useState<any>({ Metadata: {}, Versions: [] });
   const [auditLoading, setAuditLoading] = useState<boolean>(false);
+<<<<<<< HEAD
 
   {/* sourish 30/9/25 */}
   const { useHide }: any = React.useContext(UserContext);
@@ -174,6 +306,253 @@ const handleUndoDelete = async (file: any) => {
       console.error("Undo (restore) failed:", e);
     }
   }
+=======
+  //  manag folder permission state
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [showManagePermissionModal, setShowManagePermissionModal] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<any | null>(null);
+  const [permissionUsers, setPermissionUsers] = useState<{ principalId: number; principalTitle: string; roles: string[] }[]>([]);
+  const [newUser, setNewUser] = useState<string>("");
+  const [newPermission, setNewPermission] = useState<string>("Read");
+  const [mpHasUnique, setMpHasUnique] = useState<boolean>(false);
+  const [mpCanManage, setMpCanManage] = useState<boolean>(false);
+  const [mpLoading, setMpLoading] = useState<boolean>(false);
+  const [mpError, setMpError] = useState<string>("");
+  const [mpSiteUsers, setMpSiteUsers] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
+  
+// Ritik 20/2/26 for manage permission folder
+  const [rowsForPermission, setRowsForPermission] = useState<{id: number; selectedUserForPermission: any[]; selectedPermission: any}[]>([
+  { id: 0, selectedUserForPermission: [], selectedPermission: "" }
+]);
+const [folderPrivacyTableData, setFolderPrivacyTableData] = useState<any[]>([]);
+const [folderPrivacyUsers, setFolderPrivacyUsers] = useState<any[]>([]);
+const [togglePermission, setTogglePermission] = useState<string | undefined>();
+const [fpIsPrivateId, setFpIsPrivateId] = useState<number | null>(null);
+const [fpIsPrivateLibId, setFpIsPrivateLibId] = useState<number | null>(null);
+const [fpPathState, setFpPathState] = useState<string>('');
+const [fpErrors, setFpErrors] = useState<{[key: number]: any}>({});
+const fpCurrentUserEmail = useRef<string>('');
+const [fpCurrentPage, setFpCurrentPage] = useState(1);
+const fpItemsPerPage = 10;
+// Ritik 20/2/26
+
+const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
+  // ✅ Load all view counts on initial page load
+useEffect(() => {
+  const loadAllCounts = async () => {
+    const [myReq, myFav, myFol, sharedMe, sharedOther, recycle] = await Promise.all([
+      loadViewData("MyRequest"),
+      loadViewData("MyFavourite"),
+      loadViewData("MyFolders"),
+      loadViewData("SharedWithMe"),
+      loadViewData("SharedWithOthers"),
+      loadViewData("RecycleBin"),
+    ]);
+ 
+    setViewCounts({
+      "My request": myReq.length,
+      "My favourite": myFav.length,
+      "My Folders": myFol.length,
+      "Share with me": sharedMe.length,
+      "Share with other": sharedOther.length,
+      "Recycle bin": recycle.length,
+    });
+  };
+ 
+  loadAllCounts();
+}, []); // ✅ Empty array = runs once on mount
+
+ type ViewType = "MyRequest" | "MyFavourite" | "MyFolders" | "SharedWithMe" | "SharedWithOthers" | "RecycleBin";
+// Add type definition type ViewType = "MyRequest" | "MyFavourite" | "MyFolders" | "SharedWithMe" | "SharedWithOthers" | "RecycleBin";
+  
+  //Privew file tittle and path state declare Ritik 29/01/2026
+  //Aman Manage Permission Folder 
+  // simple typeahead states for Manage Permission user picker (no external libs)
+  const [mpUserSuggestions, setMpUserSuggestions] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
+  const [showUserSuggestions, setShowUserSuggestions] = useState<boolean>(false);
+  const [newUserDisplay, setNewUserDisplay] = useState<string>("");
+  const userSuggestRef = useRef<HTMLDivElement | null>(null);
+
+  // hide suggestions on outside click
+  useEffect(() => {
+    const handler = (ev: any) => {
+      if (userSuggestRef && userSuggestRef.current && !userSuggestRef.current.contains(ev.target)) {
+        setShowUserSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // 1. Add useEffect to close menu when switching sections/views
+useEffect(() => {
+  setMenuOpenIdx(null);
+}, [activeView, currentPage, selectedFiles]);
+ 
+// 2. Add click outside handler
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    // Check if click is outside three-dot menu
+    const isInsideMenu = target.closest('.dotbutton') || 
+                         target.closest('.dotbutton2') || 
+                         target.closest('.internalbutton');
+    if (!isInsideMenu && menuOpenIdx !== null) {
+      setMenuOpenIdx(null);
+    }
+  };
+ 
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, [menuOpenIdx]);
+
+  {/* sourish 30/9/25 */ }
+
+  const { useHide }: any = React.useContext(UserContext);
+  // sourish 3/10/25
+  const [activeLayout, setActiveLayout] = useState<'grid' | 'list'>('grid');
+  // Pagination state
+
+  // const pageSize = 12;
+
+  // abhay change for seach in all tabs
+  useEffect(() => {
+    setCurrentPage(1); // reset to page 1 whenever selectedFiles changes
+  }, [selectedFiles, activeView, activeLayout, currentFolderPath]);
+
+
+  //previous working code before add search on all tabs 
+  //   let location: string = "";
+  //   const paginatedFiles = useMemo(() => {
+  //   const start = (currentPage - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   return selectedFiles.slice(start, end);
+  // }, [selectedFiles, currentPage]);
+
+  //--------------undodelete function starts---------------
+  // const handleUndoDelete = async (file: any) => {
+  //   let undoFailed = false;
+  //     try {
+  //       const siteUrl: string = `${file.__siteUrl}/${file.SiteName}`; // here we are trying to get our subsite context
+  //       const listTitle: string = file.__fileMasterList || "FileMaster";
+  //       const id: number = file.Id || file.ID;
+  //       console.log("FILE TO DELETE:", file);
+  //       console.log("Undo Restore Triggered for");
+  //       console.log("Site URL ", siteUrl);
+  //       console.log("list title", listTitle);
+  //       console.log("item id", id);
+  //       debugger;
+  //       try {
+  //     const spnew = spfi(siteUrl).using(SPFx(context));
+  //     console.log("file.CurrentFolderPath", file.CurrentFolderPath);
+  //       const fileItem = await spnew.web.getFileByServerRelativePath(`${file.CurrentFolderPath}/${file.FileName}`).getItem();
+  //     let payload:any={
+  //       IsDeleted:null
+  //     }
+  //       const itemData = await fileItem.update(payload)
+  //     console.log("column updated successfully",itemData);
+  //      } catch (err) {
+  //     console.error("Error updating file in document library:", err);
+  //     Swal.fire({
+  //   title: 'Error!',
+  //   text: 'File restore failed. Please try again.' + err,
+  //   icon: 'error',
+  //   confirmButtonText: 'Cool'
+  //    })
+  //       }
+
+  //       try {
+  //         const siteurl = `${file.__siteUrl}`  // here we are trying to get our site collection context
+  //       const siteSP = spfi(siteurl).using(SPFx(context));
+  //       await siteSP.web.lists.getByTitle(listTitle).items.getById(id).update({ IsDeleted: null });
+
+  //         const refreshed = await loadViewData("RecycleBin");
+  //       if (refreshed) {
+  //         setSelectedFiles([...refreshed]); // spread → force re-render
+  //       }
+
+  //       } catch (err) {
+  //   console.error("Error updating file metadata:", err);
+  //     Swal.fire({
+  //   title: 'Error!',
+  //   text: 'File restore failed. Please try again.' + err,
+  //   icon: 'error',
+  //   confirmButtonText: 'Cool'
+  //    })
+  //       }
+
+
+  //     } catch (e) {
+  //       console.error("Undo (restore) failed:", e);
+  //     }
+  //   }
+
+  // Undo delete function revised by Aman 
+  const handleUndoDelete = async (file: any) => {
+    let undoFailed = false;
+
+    try {
+      const siteUrl: string = `${file.__siteUrl}/${file.SiteName}`;
+      const listTitle: string = file.__fileMasterList || "FileMaster";
+      const id: number = file.Id || file.ID;
+
+      console.log("Undo Restore Triggered for:", file);
+
+      //  Restore in Document Library
+      try {
+        const spnew = spfi(siteUrl).using(SPFx(context));
+        const fileItem = await spnew.web
+          .getFileByServerRelativePath(`${file.CurrentFolderPath}/${file.FileName}`)
+          .getItem();
+
+        await fileItem.update({ IsDeleted: null });
+        console.log("Document library restored");
+      } catch (err) {
+        console.error("Error restoring file in document library:", err);
+        undoFailed = true;
+      }
+
+      //  Restore in FileMaster list
+      try {
+        const siteSP = spfi(file.__siteUrl).using(SPFx(context));
+        await siteSP.web.lists
+          .getByTitle(listTitle)
+          .items.getById(id)
+          .update({ IsDeleted: null });
+
+        const refreshed = await loadViewData("RecycleBin");
+        if (refreshed) {
+          setSelectedFiles([...refreshed]);
+        }
+
+        console.log("FileMaster restored");
+      } catch (err) {
+        console.error("Error restoring file metadata:", err);
+        undoFailed = true;
+      }
+
+      // Show error ONLY if undo actually failed
+      if (undoFailed) {
+        Swal.fire({
+          title: "Error!",
+          text: "File restore failed. Please try again.",
+          icon: "error",
+          confirmButtonText: "OK"
+        });
+      }
+
+    } catch (e) {
+      console.error("Undo (restore) failed:", e);
+      Swal.fire({
+        title: "Error!",
+        text: "File restore failed. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
+    }
+  };
+
+>>>>>>> ESSAMUSAIBUPDATED2
 
   //-----------------Audit History function -----------------
 
@@ -202,6 +581,66 @@ const handleUndoDelete = async (file: any) => {
 
   //-----------------Audit History function ends---------------
 
+<<<<<<< HEAD
+=======
+  const handleRenameFile = (file: any) => {
+    setRenameFileValue(file.FileName);
+    setModalFile(file);
+    setRenameFileModalOpen(true);
+  };
+
+  // ----- Rename File Submit Handler -----
+  const submitRenameFile = async () => {
+    if (!modalFile || !renameFileValue) return;
+
+    try {
+      // 1. Rename in document library
+      const siteUrl = `${modalFile.__siteUrl}/${modalFile.SiteName}`;
+      const spSubsite = spfi(siteUrl).using(SPFx(context));
+
+      const oldPath =
+        `${modalFile.CurrentFolderPath}/${modalFile.FileName}`;
+
+      const newPath =
+        `${modalFile.CurrentFolderPath}/${renameFileValue}`;
+
+      await spSubsite.web
+        .getFileByServerRelativePath(oldPath)
+        .moveByPath(newPath, true);
+
+      // 2. Update ONLY FileName in FileMaster
+
+      const rootSP = spfi(modalFile.__siteUrl).using(SPFx(context));
+      await rootSP.web.lists
+        .getByTitle(modalFile.__fileMasterList)
+        .items.getById(modalFile.Id)
+        .update({
+          FileName: renameFileValue,
+        });
+
+      // 3. Refresh list
+      const refreshed = await loadViewData("MyRequest");
+      if (refreshed) {
+        setSelectedFiles([...refreshed]);
+      }
+
+      // 4. Reset preview state (important)
+      setShowPreviewModal(false);
+      setPreviewFile(null);
+      setPreviewKey(prev => prev + 1);
+
+      // 5. Close modal
+      setRenameFileModalOpen(false);
+      setRenameFileValue("");
+      setModalFile(null);
+
+      Swal.fire("Success", "File renamed successfully", "success");
+    } catch (err) {
+      console.error("Rename File failed:", err);
+      Swal.fire("Error", "Rename File failed", "error");
+    }
+  };
+>>>>>>> ESSAMUSAIBUPDATED2
 
 
 
@@ -224,6 +663,7 @@ const handleUndoDelete = async (file: any) => {
   };
 
   /** ---------------------------------- effect: initial load ---------------------------------- */
+<<<<<<< HEAD
 const [pendingPath, setPendingPath] = useState<string[] | null>(null);
  
 
@@ -349,6 +789,186 @@ const loadRootSites = async () => {
     console.error("[loadRootSites] Error:", error);
   }
 };
+=======
+  const [pendingPath, setPendingPath] = useState<string[] | null>(null);
+
+
+
+  useEffect(() => {
+    const initialize = async () => {
+      console.log("[initialize] Start");
+      await loadRootSites();
+
+      // Check URL hash on initial load
+      const rawHash = window.location.hash.substring(1);
+      const hash = decodeURIComponent(rawHash || "");
+      console.log("[initialize] Hash:", rawHash, "decoded:", hash);
+
+      if (hash) {
+        setPendingPath(hash.split("/"));
+      } else {
+        handleViewButtonClick("My request");
+      }
+      setIsInitialLoad(false);
+      console.log("[initialize] Complete");
+    };
+
+    initialize();
+
+    // Listen for browser hash changes
+    const handleHashChange = () => {
+      const rawHash = window.location.hash.substring(1);
+      const hash = decodeURIComponent(rawHash || "");
+      console.log("[hashchange] New hash:", rawHash, "decoded:", hash);
+      if (hash) {
+        setPendingPath(hash.split("/"));
+      } else {
+        handleViewButtonClick("My request");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    if (pendingPath && treeData.length) {
+      console.log("[pendingPath effect] Navigating to:", pendingPath);
+      navigateToPath(pendingPath);
+      setPendingPath(null); // prevent repeat
+    }
+  }, [pendingPath, treeData]);
+
+  // aman changes for folder permission manage 
+  // useEffect(() => {
+  //   window.managePermission = (folder: any) => {
+  //     setSelectedFolder(folder);
+  //     setShowPermissionModal(true);
+  //   };
+  //   return () => {
+  //     if (window.managePermission) window.managePermission = undefined;
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
+
+// Ritik 20/2/26 for manage permission folder
+    useEffect(() => {
+    window.managePermission = (folder: any) => {
+      fpOpenPermission(folder);
+    };
+    return () => {
+      if (window.managePermission) window.managePermission = undefined;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  //addhyan chanes on three dot should hide on click anywhere outside oif screen
+  // three dot menu 
+
+  //   useEffect(() => {
+  //   if (menuOpenIdx !== null) {
+  //     const handleClickOutside = (event: MouseEvent) => {
+  //       // Only close if the click is outside any menu
+  //       const menus = document.querySelectorAll('.three-dot-menu');
+  //       let clickedInside = false;
+  //       menus.forEach(menu => {
+  //         if (menu.contains(event.target as Node)) {
+  //           clickedInside = true;
+  //         }
+  //       });
+  //       if (!clickedInside) {
+  //         setMenuOpenIdx(null);
+  //       }
+  //     };
+  //     document.addEventListener('mousedown', handleClickOutside);
+  //     return () => {
+  //       document.removeEventListener('mousedown', handleClickOutside);
+  //     };
+  //   }
+  // }, [menuOpenIdx]);
+
+
+
+  const loadRootSites = async () => {
+    try {
+      console.log("[loadRootSites] Fetching master lists...");
+      const [siteList, subsiteList] = await Promise.all([
+        sp.web.lists.getByTitle("MasterSiteCollection").items.select("Id", "Title", "SiteURL").top(5000)(),
+        // sp.web.lists.getByTitle("MasterSiteURL").items.select("Id", "Description", "Title", "SiteURL", "Active", "SiteID", "FileMasterList", "Function").top(5000)(),
+      sp.web.lists.getByTitle("MasterSiteURL").items
+  .select("Id", "Description", "Title", "SiteURL", "Active", "SiteID", "FileMasterList", "Function")
+  .filter("Active eq 'Yes'")
+  .top(5000)(),
+      ]);
+
+      const nodes: TreeNode[] = siteList.map((site: any) => {
+        const siteUrl = site.SiteURL?.trim();
+        const siteSubs = subsiteList.filter((s: any) => {
+          const subUrl = s.SiteURL?.trim().toLowerCase();
+          const parentUrl = siteUrl?.toLowerCase();
+          if (!subUrl || !parentUrl) return false;
+          return subUrl === parentUrl || subUrl.startsWith(parentUrl + "/");
+        });
+
+        // Group subsites by function, but only include subsites that have a function
+        const subsitesWithFunctions = siteSubs.filter(sub => sub.Function);
+        const subsitesWithoutFunctions = siteSubs.filter(sub => !sub.Function);
+
+        const groupedByFunction = subsitesWithFunctions.reduce((acc: any, sub: any) => {
+          const func = sub.Function;
+          if (!acc[func]) acc[func] = [];
+          acc[func].push(sub);
+          return acc;
+        }, {});
+
+        const functionNodes: TreeNode[] = Object.entries(groupedByFunction).map(([funcName, subs]: [string, any[]]) => ({
+          key: `func-${site.Id}-${funcName}`,
+          title: funcName,
+          type: "function",
+          siteUrl: siteUrl,
+          hasChildren: true,
+          parentKey: `site-${site.Id}`,
+          children: (subs as any[]).map((sub: any) => ({
+            key: `subsite-${sub.Id}`,
+            title: sub.Title,
+            type: "subsite",
+            siteUrl: sub.SiteURL?.trim(),
+            hasChildren: true,
+            parentKey: `func-${site.Id}-${funcName}`,
+          })),
+        }));
+
+        // Create the site node with both function nodes and direct subsites
+        const siteNode: TreeNode = {
+          key: `site-${site.Id}`,
+          title: site.Title,
+          type: "site",
+          siteUrl: siteUrl,
+          hasChildren: functionNodes.length > 0 || subsitesWithoutFunctions.length > 0,
+          children: [
+            ...functionNodes,
+            ...subsitesWithoutFunctions.map((sub: any) => ({
+              key: `subsite-${sub.Id}`,
+              title: sub.Title,
+              type: "subsite" as TreeNode["type"], // Add type guard here
+              siteUrl: sub.SiteURL?.trim(),
+              hasChildren: true,
+              parentKey: `site-${site.Id}`,
+            }))
+          ],
+        };
+
+        return siteNode;
+      });
+
+      console.log("[loadRootSites] Root sites loaded:", nodes);
+      setTreeData(nodes);
+      buildNodeMap(nodes);
+    } catch (error) {
+      console.error("[loadRootSites] Error:", error);
+    }
+  };
+>>>>>>> ESSAMUSAIBUPDATED2
   /** -------------------------------- build node map (same) ----------------------------------- */
   const buildNodeMap = (nodes: TreeNode[], map: Record<string, TreeNode> = {}) => {
     nodes.forEach((node) => {
@@ -391,6 +1011,7 @@ const loadRootSites = async () => {
     console.log("[updateUrl] ->", `#${path}`);
     window.history.pushState(null, "", `#${path}`);
   };
+<<<<<<< HEAD
 const navigateToPath = async (pathTitles: string[]) => {
   console.log("[navigateToPath] raw segments:", pathTitles);
   if (pathTitles.length === 0 || !treeData.length) return;
@@ -458,6 +1079,75 @@ const navigateToPath = async (pathTitles: string[]) => {
     await loadFilesForNode(currentNode);
   }
 };
+=======
+  const navigateToPath = async (pathTitles: string[]) => {
+    console.log("[navigateToPath] raw segments:", pathTitles);
+    if (pathTitles.length === 0 || !treeData.length) return;
+
+    const decodedTitles = pathTitles.map((t) => decodeURIComponent(t)).filter((t) => t.trim() !== "");
+    let currentNode = treeData.find((n) => (n.title || "").toLowerCase() === decodedTitles[0].toLowerCase()) || undefined;
+
+    if (!currentNode) return;
+
+    await ensureExpanded(currentNode);
+    const pathNodes: TreeNode[] = [currentNode];
+
+    for (let i = 1; i < decodedTitles.length; i++) {
+      const seg = decodedTitles[i];
+      await ensureExpanded(currentNode);
+
+      let nextNode = findChildByTitleCI(currentNode, seg);
+
+      // If we can't find the next node, check if we're at a site/subsite and look for "Documents"
+      if (!nextNode && (currentNode.type === "site" || currentNode.type === "subsite")) {
+        const docsNode = findChildByTitleCI(currentNode, "Documents");
+        if (docsNode) {
+          await ensureExpanded(docsNode);
+          nextNode = findChildByTitleCI(docsNode, seg);
+          if (nextNode) {
+            currentNode = nextNode;
+            pathNodes.push(currentNode);
+            continue;
+          } else {
+            currentNode = docsNode;
+            pathNodes.push(currentNode);
+            i--; // Retry the same segment with the documents node as current
+            continue;
+          }
+        }
+      }
+
+      if (!nextNode && currentNode.type === "library") {
+        await ensureExpanded(currentNode);
+        nextNode = findChildByTitleCI(currentNode, seg);
+      }
+
+      if (!nextNode) break;
+
+      currentNode = nextNode;
+      pathNodes.push(currentNode);
+    }
+
+    console.log("[navigateToPath] Final path:", pathNodes.map(n => n.title));
+
+    // Update breadcrumbs based on the full path we navigated
+    const breadcrumbPath = pathNodes.map(node => ({
+      key: node.key,
+      title: node.title,
+      type: node.type,
+      siteUrl: node.siteUrl,
+      libraryTitle: node.libraryTitle,
+      folderPath: node.folderPath
+    }));
+
+    setBreadcrumbs(breadcrumbPath);
+
+    // If we ended on a library or folder, load its files
+    if (currentNode.type === "library" || currentNode.type === "folder") {
+      await loadFilesForNode(currentNode);
+    }
+  };
+>>>>>>> ESSAMUSAIBUPDATED2
   /** --------------------------------------- clicking ----------------------------------------- */
   // const handleNodeClick = async (node: TreeNode) => {
   //   console.log("[handleNodeClick] node clicked:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
@@ -486,6 +1176,7 @@ const navigateToPath = async (pathTitles: string[]) => {
   //     }
   //   }
   // };
+<<<<<<< HEAD
 const handleNodeClick = async (node: TreeNode) => {
   console.log("[handleNodeClick] node clicked:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
   location = node.siteUrl;
@@ -516,11 +1207,56 @@ const handleNodeClick = async (node: TreeNode) => {
 
   }
 };
+=======
+  const handleNodeClick = async (node: TreeNode) => {
+    setShowUploadPanel(false);    // Upload File Button Hide From Site collection and Subsites click by Aman
+
+    // this below lines will close preview modal  (addhyan work on this )
+    setShowPreviewModal(false); // <-- Close preview modal
+    setPreviewFile(null);       // <-- Clear preview file
+    // hide template form when clicking folder/site nodes
+    setShowTemplateForm(false);
+    // this below lines will close preview modal (addhyan work on this )
+    console.log("[handleNodeClick] node clicked:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
+    location = node.siteUrl;
+    updateUrl(node);
+    setActiveView("");
+    setSelectedCurrentNode(node);
+    // Always update breadcrumbs first
+    const breadcrumbPath = getNodePath(node.key);
+    setBreadcrumbs(breadcrumbPath);
+
+    if (node.type === "library" || node.type === "folder") {
+      await loadFilesForNode(node);
+      return;
+    }
+
+    if (node.type === "site" || node.type === "subsite") {
+      await ensureExpanded(node);
+      setSelectedFiles([]);    //Addhyan 14/01/2026 Clear files when clicking on site/subsite - show only tree structure
+      // i have commented this below code it was previous working code but it was auto selecting document library 
+      // console.log("[handleNodeClick] Site/Subsite: ensuring libraries are expanded");
+      // await ensureExpanded(node);
+      // const documentsNode = findChildByTitleCI(node, "Documents") || (node.children && node.children[0]);
+      // if (documentsNode) {
+      //   console.log("[handleNodeClick] Will load files for library:", documentsNode.title);
+      //   await loadFilesForNode(documentsNode);
+      // } else {
+      //   console.log("[handleNodeClick] No libraries found under this site/subsite.");
+      // }
+
+    }
+  };
+>>>>>>> ESSAMUSAIBUPDATED2
   /** ------------------------------------ load files (same) ----------------------------------- */
   const loadFilesForNode = async (node: TreeNode) => {
     try {
       setFilesLoadedloadedfromnode(true);
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> ESSAMUSAIBUPDATED2
       console.log("[loadFilesForNode] Start:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
       const siteSP = spfi(node.siteUrl).using(SPFx(context));
       let folderPath = "";
@@ -541,13 +1277,117 @@ const handleNodeClick = async (node: TreeNode) => {
         const files = await siteSP.web.getFolderByServerRelativePath(serverRel).files();
         console.log("[loadFilesForNode] Files fetched:", files);
         console.log("[loadFilesForNode] Files loaded:", files?.length || 0);
+<<<<<<< HEAD
         setSelectedFiles(files);
         
+=======
+        // setSelectedFiles(files);
+
+        const baseSiteUrl = node.siteUrl.split("/sites/")[0] + "/sites/";
+        const siteCollection = node.siteUrl.split("/sites/")[1].split("/")[0];
+        const entityName = node.siteUrl.split("/").pop();
+
+        const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
+
+      //  const fmItems  = await spRoot.web.lists
+      //     .getByTitle(`DMS${entityName}FileMaster`)
+      //     .items.select("FileName", "IsDeleted")
+      //     .top(5000)();
+
+      //   const deletedSet = new Set(
+      //     fmItems
+      //       .filter(i => i.IsDeleted !== null && i.IsDeleted !== undefined)
+      //       .map(i => i.FileName)
+      //   );
+
+      //   const visibleFiles = (files || []).filter(
+      //     (f: any) => !deletedSet.has(f.Name)
+      //   );
+
+      //   setSelectedFiles(visibleFiles);
+
+//       const fmItems = await spRoot.web.lists
+//   .getByTitle(`DMS${entityName}FileMaster`)
+//   .items.select("FileName", "IsDeleted", "Status")
+//   .top(5000)();
+ 
+// // 2. Build the "Allowed" Set
+// const allowedSet = new Set(
+//   fmItems
+//     .filter(i => {
+//       // Must NOT be deleted
+//       const isNotDeleted = !i.IsDeleted;
+//       // Must be Approved, Auto Approved, or Null/Empty
+//       const hasValidStatus = i.Status === "Approved" ||
+//                              i.Status === "Auto Approved" ||
+//                              i.Status === null ||
+//                              i.Status === "";
+ 
+//       return isNotDeleted && hasValidStatus;
+//     })
+//     .map(i => i.FileName)
+// );
+ 
+// // 3. Filter your folder files based on the allowedSet
+// const visibleFiles = (files || []).filter(
+//   (f: any) => allowedSet.has(f.Name)
+// );
+ 
+// setSelectedFiles(visibleFiles);
+ 
+ // 1. Fetch the Master List data
+const currentFolder = node.title;
+const fmItems = await spRoot.web.lists
+  .getByTitle(`DMS${entityName}FileMaster`)
+  .items.select("ID", "FileName", "IsDeleted", "Status") // Included ID and Status
+  .filter(`DocumentLibraryName eq '${currentFolder}'`)
+  .top(5000)();
+
+// 2. Create a Map for quick lookup (Key: FileName, Value: {ID, Status})
+const masterDataMap = new Map();
+
+fmItems.forEach(i => {
+  // Logic: Only add to the map if it meets your requirements
+  const hasValidStatus = i.Status === "Approved" || 
+                         i.Status === "Auto Approved" || 
+                         i.Status === null || 
+                         i.Status === "";
+                         
+  const isNotDeleted = !i.IsDeleted; // Adjust if IsDeleted is "Yes"/1
+
+  if (hasValidStatus && isNotDeleted) {
+    masterDataMap.set(i.FileName, {
+      id: i.ID,
+      status: i.Status
+    });
+  }
+});
+
+// 3. Filter and Enrich the files array
+const visibleFiles = (files || [])
+  .filter((f: any) => masterDataMap.has(f.Name)) // Only keep if in the "allowed" map
+  .map((f: any) => {
+    const extraData = masterDataMap.get(f.Name);
+    return {
+      ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
+      ID: extraData.id, // Inject the List ID
+      Status: extraData.status // Inject the Status
+    };
+  });
+
+setSelectedFiles(visibleFiles);
+console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
+
+>>>>>>> ESSAMUSAIBUPDATED2
         console.log("[loadFilesForNode] Selected files set:", selectedFiles);
         setBreadcrumbs(getNodePath(node.key));
 
         console.log("Breadcrumbs updated:", breadcrumbs);
+<<<<<<< HEAD
         console.log("Breadcrumbs updated 2:" +JSON.stringify(getNodePath(node.key)) )
+=======
+        console.log("Breadcrumbs updated 2:" + JSON.stringify(getNodePath(node.key)))
+>>>>>>> ESSAMUSAIBUPDATED2
       } else {
         console.log("[loadFilesForNode] No folderPath computed for node; skipping files fetch.");
       }
@@ -557,6 +1397,7 @@ const handleNodeClick = async (node: TreeNode) => {
     }
   };
 
+<<<<<<< HEAD
 const toggleNode = async (node: TreeNode) => {
   if (node.type === "function") {
     console.log("[toggleNode] Expanding function:", node.title);
@@ -641,6 +1482,95 @@ const toggleNode = async (node: TreeNode) => {
 };
   /** -------------------------------- breadcrumb click (same) --------------------------------- */
   const handleBreadcrumbClick = async (item: BreadcrumbItem) => {
+=======
+  const toggleNode = async (node: TreeNode) => {
+    if (node.type === "function") {
+      console.log("[toggleNode] Expanding function:", node.title);
+      node.isExpanded = !node.isExpanded;
+      setTreeData([...treeData]);
+      buildNodeMap(treeData);
+      return;
+    }
+
+    if (!node.isExpanded && node.hasChildren) {
+      const siteSP = spfi(node.siteUrl).using(SPFx(context));
+      console.log("[toggleNode] Expanding:", { title: node.title, type: node.type, site: node.siteUrl });
+      try {
+        console.log("[toggleNode] Fetching node type:", node.type);
+        console.log("[toggleNode] Fetching node type:", node.type, "for node:", node.title);
+
+        if (node.type === "subsite") {
+          // i am adding this here set currrent site url because when we click on subsite it will set current site url for upload file / or create fodler it pass as props
+          setCurrentSiteUrl(node.siteUrl);
+          console.log("[toggleNode] Loading libraries for subsite:", node.title);
+          const libs = await siteSP.web.lists.filter("BaseTemplate eq 101 and Hidden eq false").select("Title")();
+          node.children = libs.map((lib: any) => ({
+            key: `lib-${node.key}-${lib.Title}`,
+            title: lib.Title,
+            type: "library",
+            siteUrl: node.siteUrl,
+            libraryTitle: lib.Title,
+            hasChildren: true,
+            parentKey: node.key,
+          }));
+          console.log("[toggleNode] Libraries loaded:", node.children?.map((c) => c.title));
+        }
+
+        if (node.type === "library") {
+
+          const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${node.libraryTitle}`;
+          console.log("[toggleNode] Loading folders for library:", node.title, "path:", serverRel);
+          const folders = await siteSP.web.getFolderByServerRelativePath(serverRel).folders();
+          node.children = folders
+            .filter((f: any) => !f.Name.startsWith("Forms"))
+            .map((f: any) => ({
+              key: `folder-${node.key}-${f.Name}`,
+              title: f.Name,
+              type: "folder",
+              siteUrl: node.siteUrl,
+              libraryTitle: node.libraryTitle,
+              folderPath: `${node.libraryTitle}/${f.Name}`,
+              hasChildren: true,
+              parentKey: node.key,
+            }));
+          console.log("[toggleNode] Folders loaded:", node.children?.map((c) => c.title));
+        }
+
+        if (node.type === "folder") {
+          const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${node.folderPath}`;
+          console.log("[toggleNode] Loading subfolders for folder:", node.title, "path:", serverRel);
+          const subFolders = await siteSP.web.getFolderByServerRelativePath(serverRel).folders();
+          node.children = subFolders
+            .filter((f: any) => !f.Name.startsWith("Forms"))
+            .map((f: any) => ({
+              key: `subfolder-${node.key}-${f.Name}`,
+              title: f.Name,
+              type: "folder",
+              siteUrl: node.siteUrl,
+              libraryTitle: node.libraryTitle,
+              folderPath: `${node.folderPath}/${f.Name}`,
+              hasChildren: true,
+              parentKey: node.key,
+            }));
+          console.log("[toggleNode] Subfolders loaded:", node.children?.map((c) => c.title));
+        }
+
+        node.isExpanded = true;
+        setTreeData([...treeData]);
+        buildNodeMap(treeData);
+      } catch (error) {
+        console.error("[toggleNode] Error expanding node:", error);
+      }
+    } else {
+      node.isExpanded = !node.isExpanded;
+      console.log("[toggleNode] Toggled to", node.isExpanded ? "expanded" : "collapsed", "for:", node.title);
+      setTreeData([...treeData]);
+    }
+  };
+  /** -------------------------------- breadcrumb click (same) --------------------------------- */
+  const handleBreadcrumbClick = async (item: BreadcrumbItem) => {
+    setShowUploadPanel(false);                  // Upload File Button Hide From Site collection and Subsites click by Aman
+>>>>>>> ESSAMUSAIBUPDATED2
     console.log("[breadcrumb] Clicked:", item);
     if (item.type === "view") {
       handleViewButtonClick(item.title);
@@ -687,6 +1617,15 @@ const toggleNode = async (node: TreeNode) => {
   /** ------------------------------------ quick views (same) ---------------------------------- */
   const handleViewButtonClick = async (viewName: string) => {
     setFilesLoadedloadedfromnode(false);
+<<<<<<< HEAD
+=======
+    setActiveComponent(false);   // srs 29/1/26
+    setShowUploadPanel(false);   // srs 29/1/26
+    setMenuOpenIdx(null);
+    setSelectedCurrentNode(null);
+    // hide template form when switching views
+    setShowTemplateForm(false);
+>>>>>>> ESSAMUSAIBUPDATED2
     console.log("[view] button clicked:", viewName);
     setActiveView(viewName);
     setBreadcrumbs([
@@ -701,6 +1640,7 @@ const toggleNode = async (node: TreeNode) => {
     // Clear any URL hash when switching to a view
     window.history.pushState(null, "", window.location.pathname);
 
+<<<<<<< HEAD
     try {
       let files: any[] = [];
       switch (viewName) {
@@ -729,13 +1669,179 @@ const toggleNode = async (node: TreeNode) => {
       setCurrentFolderPath("");
       setCurrentSiteUrl("");
     } catch (error) {
+=======
+//     try {
+//     let files: any[] = [];
+//     let viewType: ViewType;
+//     switch (viewName) {
+//       case "My request":
+//         viewType = "MyRequest";
+//         break;
+//       case "My favourite":
+//         viewType = "MyFavourite";
+//         break;
+//       case "My Folders":
+//         viewType = "MyFolders";
+//         break;
+//       case "Share with me":
+//         viewType = "SharedWithMe";
+//         break;
+//       case "Share with other":
+//         viewType = "SharedWithOthers";
+//         break;
+//       case "Recycle bin":
+//         viewType = "RecycleBin";
+//         break;
+//       default:
+//         viewType = "MyRequest";
+//     }
+//     // ritik 19/02/2026 (remove duplicate files from view data i have added FileUID, UniqueId, Id in view data reason is when we share file with other user it will show duplicate files in view data)
+//     files = await loadViewData(viewType);
+//     const seen = new Set();
+//     const uniqueFiles = files.filter((item: any) => {
+//       const uid = item.FileUID || item.UniqueId || item.Id;
+//       if (seen.has(uid)) return false;
+//       seen.add(uid);
+//       return true;
+//       });
+// updateViewCount(viewType, uniqueFiles.length);
+// setSelectedFiles(uniqueFiles);
+//   // end here
+//     files = await loadViewData(viewType);
+//     updateViewCount(viewType, files.length);
+//     console.log(`[view] Loaded ${viewName} data:`, files);
+//     setSelectedFiles(files);
+//     console.log("[loadFilesForNode] Selected files set:", selectedFiles);
+//     setCurrentFolderPath("");
+//     setCurrentSiteUrl("");
+//   } // ritik 24/2/26 for handle view button click
+try {
+  let viewType: ViewType;
+  switch (viewName) {
+    case "My request":       viewType = "MyRequest"; break;
+    case "My favourite":     viewType = "MyFavourite"; break;
+    case "My Folders":       viewType = "MyFolders"; break;
+    case "Share with me":    viewType = "SharedWithMe"; break;
+    case "Share with other": viewType = "SharedWithOthers"; break;
+    case "Recycle bin":      viewType = "RecycleBin"; break;
+    default:                 viewType = "MyRequest";
+  }
+ 
+  const files = await loadViewData(viewType);
+ 
+  const seen = new Set();
+  const uniqueFiles = files.filter((item: any) => {
+    const uid = item.FileUID || item.UniqueId || item.Id;
+    if (seen.has(uid)) return false;
+    seen.add(uid);
+    return true;
+  });
+ 
+  console.log(`[view] Loaded ${viewName} data:`, uniqueFiles);
+  updateViewCount(viewType, uniqueFiles.length);
+  setSelectedFiles(uniqueFiles);
+  setCurrentFolderPath("");
+  setCurrentSiteUrl("");
+ 
+} catch (error) {
+>>>>>>> ESSAMUSAIBUPDATED2
       console.error(`[view] Error loading ${viewName} data:`, error);
       setSelectedFiles([]);
     }
   };
 
+<<<<<<< HEAD
   const loadViewData = async (viewType: string): Promise<any[]> => {
        // sourish 20/8/25
+=======
+  //Ritik 28/01/2026
+  // 🔹 Safe field reader (case / internal name safe)
+  const readField = (obj: any, keys: string[]): string => {
+    if (!obj) return "";
+    const map: any = {};
+    Object.keys(obj).forEach(k => (map[k.toLowerCase()] = k));
+
+    for (const k of keys) {
+      const real = map[k.toLowerCase()];
+      if (real) return obj[real] || "";
+    }
+    return "";
+  };
+const loadViewData = async (viewType: ViewType): Promise<any[]> => {
+    setShowPreviewModal(false)
+    // sourish 20/8/25 previous wworking code 
+    // if (viewType === "MyFolders") {
+    //   try {
+    //     const meEmail =
+    //       (context.pageContext as any)?.user?.email ||
+    //       (context.pageContext as any)?.user?.loginName ||
+    //       "";
+
+    //     const masterSites = await sp.web.lists
+    //       .getByTitle("MasterSiteCollection")
+    //       .items.select("Id", "Title", "SiteURL", "SharewithOtherMeMasterSite")
+    //       .top(5000)();
+
+    //     const allMyFoldersData: any[] = [];
+
+    //     for (const ms of masterSites) {
+    //       try {
+    //         // Always target "DMSFolderMaster" list from SiteURL
+    //         const siteSP = spfi(ms.SiteURL).using(SPFx(context));
+    //         const listItems = await siteSP.web.lists
+    //           .getByTitle("DMSFolderMaster")
+    //           .items.select(
+    //             "Id",
+    //             "Title",
+    //             "FolderPath",
+    //             "SiteTitle",
+    //             "DocumentLibraryName",
+    //             "FolderName",
+    //             "CurrentUser",
+    //             "Modified",
+    //             "Author/Id",
+    //             "Author/Title",
+    //             "Author/EMail"
+    //           )
+    //           .expand("Author") // 🔹 expand ModifiedBy lookup
+    //           .top(5000)();
+
+    //         const normalizedItems = listItems.map((it: any) => ({
+    //           ...it,
+    //           ParentFolder: it.ParentFolder || it.ParentFolderId || "", // normalize
+    //         }));
+
+    //         // 🔹 Filter by CurrentUser column
+    //         const filtered = (listItems || []).filter(
+    //           (it: any) =>
+    //             (it.Author.EMail || "").toLowerCase() === meEmail.toLowerCase()
+    //         );
+
+    //         allMyFoldersData.push(
+    //           ...filtered.map((it: any) => ({
+    //             ...it,
+    //             __source: "MyFolders",
+    //             __siteUrl: ms.SiteURL,
+    //             __listName: "DMSFolderMaster",
+    //             __CreatedBy: it.Author?.Title || it.Author?.EMail || "",
+    //           }))
+    //         );
+    //       } catch (err) {
+    //         console.error(
+    //           `Error fetching list DMSFolderMaster from ${ms.SiteURL}:`,
+    //           err
+    //         );
+    //       }
+    //     }
+
+    //     return allMyFoldersData;
+    //   } catch (e) {
+    //     console.error("Error fetching MasterSiteCollection:", e);
+    //     return [];
+    //   }
+    // }
+    //updated code by aman after manage folder permission
+>>>>>>> ESSAMUSAIBUPDATED2
     if (viewType === "MyFolders") {
       try {
         const meEmail =
@@ -743,6 +1849,7 @@ const toggleNode = async (node: TreeNode) => {
           (context.pageContext as any)?.user?.loginName ||
           "";
 
+<<<<<<< HEAD
         const masterSites = await sp.web.lists
           .getByTitle("MasterSiteCollection")
           .items.select("Id", "Title", "SiteURL", "SharewithOtherMeMasterSite")
@@ -797,6 +1904,123 @@ const toggleNode = async (node: TreeNode) => {
               `Error fetching list DMSFolderMaster from ${ms.SiteURL}:`,
               err
             );
+=======
+
+        const masterSites = await sp.web.lists
+          .getByTitle("MasterSiteCollection")
+          .items.select("Id", "Title", "SiteURL")
+          .top(5000)();
+
+        // i commented this because it was fetching only records from spfx2site Dmsfodlermaster list
+        // const rootSiteUrl = "https://officeindia.sharepoint.com/sites/AlRostmaniSpfx2";
+
+        // const scopedSites = (masterSites || []).filter((ms: any) =>
+        //   (ms.SiteURL || "").toLowerCase().startsWith(rootSiteUrl.toLowerCase())
+        // );
+
+        const allMyFoldersData: any[] = [];
+
+        // for (const ms of scopedSites) {
+        for (const ms of masterSites) {
+          try {
+            const siteSP = spfi(ms.SiteURL).using(SPFx(context));
+            const listItems = await siteSP.web.lists
+              .getByTitle("DMSFolderMaster")
+              .items.select("*", "Author/Id", "Author/Title", "Author/EMail")
+              .expand("Author")
+              .top(5000)();
+
+            let __webId = "";
+            try {
+              const webMeta: any = await siteSP.web.select("Id")();
+              __webId = webMeta?.Id || "";
+            } catch { }
+
+            const mine = (listItems || []).filter(
+              (it: any) => ((it?.Author?.EMail || "") as string).toLowerCase() === meEmail.toLowerCase()
+            );
+
+            const readBool = (obj: any, keys: string[]): boolean => {
+              if (!obj) return false;
+              const lowerMap: Record<string, string> = {};
+              Object.keys(obj).forEach((k) => (lowerMap[k.toLowerCase()] = k));
+              for (const k of keys) {
+                const real = lowerMap[k.toLowerCase()];
+                if (real !== undefined) return !!obj[real];
+              }
+              return false;
+            };
+
+            const normalized = mine.map((it: any) => {
+              const isLibrary = readBool(it, ["IsLibrary", "Library", "islibrary", "islib"]);
+              const isFolder = readBool(it, ["IsFolder", "Folder", "isfolder", "issubfolder"]);
+              const isPrivate = readBool(it, ["IsPrivate", "Private", "isprivate"]);
+              const isPublic = readBool(it, ["IsPublic", "Public", "ispublic"]);
+              return {
+                ...it,
+                 DisplayName:
+    it.FolderName ||
+    it.Title ||
+    it.DocumentLibraryName || "",
+                __source: "MyFolders",
+                __siteUrl: ms.SiteURL,
+                __listName: "DMSFolderMaster",
+                __CreatedBy: it?.Author?.Title || it?.Author?.EMail || "",
+                __webId,
+                __flags: { isLibrary, isFolder, isPrivate, isPublic },
+                __scopeLabel: isLibrary ? "Root folder" : isFolder ? "Sub folder" : "",
+                __visibilityLabel: isPrivate ? "Private" : isPublic ? "Public" : "",
+              };
+            });
+
+            // Remove system Forms & dedupe, keep roots and folders
+            // const cleaned = normalized.filter((row: any) => {
+            //   const isLibrary = row.__flags?.isLibrary === true;
+            //   const name = row.FolderName || row.Title || "";
+            //   const path = row.FolderPath || row.folderpath || row.ServerRelativeUrl || "";
+            //   const lowerPath = (path || "").toLowerCase().replace(/\/+$/, "");
+            //   const isForms = /\/forms(\/|$)/i.test(lowerPath);
+            //   return !!name && !!path && !isForms;
+            // });
+
+            const cleaned = normalized.filter((row: any) => {
+
+  const isLibrary = row.__flags?.isLibrary === true;
+ 
+
+  const name =
+    row.FolderName || row.Title ||
+    row.Title ||
+    row.DocumentLibraryName || "";
+
+  const path =
+    row.FolderPath ||
+    row.folderpath ||
+    row.ServerRelativeUrl || "";
+
+  const lowerPath = (path || "").toLowerCase().replace(/\/+$/, "");
+  const isForms = /\/forms(\/|$)/i.test(lowerPath);
+
+  // ⭐ Library ko force allow karo
+  if (isLibrary) return !!path && !isForms;
+
+  return !!name && !!path && !isForms;
+});
+
+
+            const unique: any[] = [];
+            const seen = new Set<string>();
+            for (const r of cleaned) {
+              const key = (r.FolderPath || r.folderpath || r.ServerRelativeUrl || String(r.ID || r.Id || "")).toLowerCase();
+              if (!key || seen.has(key)) continue;
+              seen.add(key);
+              unique.push(r);
+            }
+
+            allMyFoldersData.push(...unique);
+          } catch (err) {
+            console.error(`Error fetching list DMSFolderMaster from ${ms.SiteURL}:`, err);
+>>>>>>> ESSAMUSAIBUPDATED2
           }
         }
 
@@ -839,6 +2063,7 @@ const toggleNode = async (node: TreeNode) => {
               const listItems = await siteSP.web.lists
                 .getByTitle(listName)
                 .items.top(5000)();
+<<<<<<< HEAD
 
               const filtered = (listItems || []).filter(
                 (it: any) =>
@@ -847,6 +2072,33 @@ const toggleNode = async (node: TreeNode) => {
               );
 
 
+=======
+              // 🔹 Filter by CurrentUser
+              //Ritik 28/01/2026
+              const filtered = (listItems || []).filter((it: any) => {
+                const owner = readField(it, ["CurrentUser", "Owner", "CreatedBy"]);
+                const sharedTo = readField(it, ["ShareWithMe", "SharedTo", "SharedWith"]);
+                const isDeleted = it.IsDeleted !== null && it.IsDeleted !== undefined;
+
+                return (
+                  owner.toLowerCase() === meEmail.toLowerCase() &&
+                  sharedTo &&
+                  !sharedTo.toLowerCase().includes(meEmail.toLowerCase()) &&
+                  !isDeleted &&
+                  it.IsFavourite !== true
+                );
+              });
+
+              //debugging console table Ritik 28/01/2026
+              console.table(
+                filtered.map(f => ({
+                  File: f.FileName || f.Title,
+                  Owner: readField(f, ["CurrentUser", "Owner", "CreatedBy"]),
+                  SharedTo: readField(f, ["ShareWithMe", "SharedTo", "SharedWith"])
+                }))
+              );
+
+>>>>>>> ESSAMUSAIBUPDATED2
               allSharedOtherData.push(
                 ...filtered.map((it: any) => ({
                   ...it,
@@ -905,11 +2157,47 @@ const toggleNode = async (node: TreeNode) => {
                 .items.top(5000)();
 
               // 🔹 Filter by CurrentUser
+<<<<<<< HEAD
               const filtered = (listItems || []).filter(
                 (it: any) =>
                   (it.CurrentUser || "").toLowerCase() === meEmail.toLowerCase()
               );
 
+=======
+              // const filtered = (listItems || []).filter(
+              //   (it: any) =>
+              //     (it.CurrentUser || "").toLowerCase() === meEmail.toLowerCase()
+              // );
+
+
+
+              // 🔹 Shared WITH ME = kisi aur ne mujhe share kiya - Ritik Today 29/01/2026
+              const filtered = (listItems || []).filter((it: any) => {
+                const owner = readField(it, ["CurrentUser", "Owner", "CreatedBy"]);
+                const sharedTo = readField(it, ["ShareWithMe", "SharedTo", "SharedWith"]);
+
+                return (
+                  sharedTo.toLowerCase().includes(meEmail.toLowerCase()) && // 👈 mujhe mila
+                  owner.toLowerCase() !== meEmail.toLowerCase()             // 👈 maine create/share nahi ki
+                );
+              });
+
+
+
+              //Debugging console table Ritik 28/01/2026
+              console.table(
+                filtered.map(f => ({
+                  File: f.FileName || f.Title,
+                  Owner: readField(f, ["CurrentUser", "Owner", "CreatedBy"]),
+                  SharedTo: readField(f, ["ShareWithMe", "SharedTo", "SharedWith"])
+                }))
+              );
+
+
+
+
+
+>>>>>>> ESSAMUSAIBUPDATED2
               allSharedData.push(
                 ...filtered.map((it: any) => ({
                   ...it,
@@ -933,6 +2221,7 @@ const toggleNode = async (node: TreeNode) => {
         return [];
       }
     }
+<<<<<<< HEAD
      if (viewType === "MyRequest" || viewType === "MyFavourite" || viewType === "RecycleBin") {
     
     // 🔹 Step 1: Get all site + list mappings from master config
@@ -1046,6 +2335,447 @@ const toggleNode = async (node: TreeNode) => {
     } catch (error) {
       console.error("Error toggling favourite:", error);
     }
+=======
+    if (viewType === "MyRequest" || viewType === "MyFavourite" || viewType === "RecycleBin") {
+
+      // 🔹 Step 1: Get all site + list mappings from master config
+      // const configItems = await sp.web.lists
+      //   .getByTitle("Allsitesfilemaster")
+      //   .items.select("FileMaster", "sitecollection")
+      //   .top(5000)();
+
+       const configItems = await sp.web.lists
+        .getByTitle("Allsitesfilemaster")
+        .items.select("FileMaster", "sitecollection").filter("Isactive eq 1")
+        .top(5000)();
+        console.log("configItems" ,configItems)
+
+      const groupedBySite = configItems.reduce((acc, config) => {
+        (acc[config.sitecollection] ||= []).push(config);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      const allData: any[] = [];
+      const currentUrl = new URL(context.pageContext.web.absoluteUrl);
+
+      // Current user info (for filtering RecycleBin items)
+      const meName = context.pageContext.user.displayName || "";
+      const meEmail =
+        (context.pageContext as any)?.user?.email ||
+        (context.pageContext as any)?.user?.loginName ||
+        "";
+
+      // 🔹 Step 2: Process each site collection
+      for (const [siteCollection, siteConfigs] of Object.entries(groupedBySite)) {
+        try {
+          const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${siteCollection}`;
+          const siteSP = spfi(siteUrl).using(SPFx(context));
+
+          // Process each FileMaster list inside this site collection
+          const siteData = await Promise.all(
+            (siteConfigs as any[]).map(async (config: any) => {
+              try {
+                console.log(`Fetching from ${config.FileMaster} in ${siteCollection}`);
+                const items = await siteSP.web.lists
+                  .getByTitle(config.FileMaster)
+                  .items.top(1000)();
+
+                // if (viewType === "MyFavourite") {
+                //   // 🔹 Filter favourites // ritik 29/01/2026
+                //   return items.filter((item: any) =>
+                //     item.IsFavourite === true &&
+                //     item.IsDeleted === null &&          // 🔴
+                //     item.MyRequest !== true &&          // 🔴
+                //     !item.ShareWithMe                   // 🔴
+                //   );
+
+                // }
+                if (viewType === "MyFavourite") {
+  return (items || [])
+    .filter((item: any) => {
+ 
+      const owner =
+        (item.CurrentUser ||
+          item.Owner ||
+          item.CreatedBy ||
+          "").toLowerCase();
+ 
+      return (
+        item.IsFavourite === true &&
+        item.IsDeleted === null &&
+        !item.ShareWithMe &&
+        (
+          owner === meEmail.toLowerCase() ||
+          owner === meName.toLowerCase()
+        )
+      );
+    })
+    .map((it: any) => ({
+      ...it,
+      __siteUrl: siteUrl,
+      __fileMasterList: config.FileMaster,
+    }));
+}
+
+                if (viewType === "RecycleBin") {
+                  // 🔹 Only items deleted by current user
+                  return (items || [])
+                    .filter((it: any) => {
+                      const cu = it?.CurrentUser || "";
+                      const isDel = it?.IsDeleted;
+                      return isDel !== null && isDel !== undefined && (cu === meName || cu === meEmail);
+                    })
+                    .map((it: any) => ({
+                      ...it,
+                      __siteUrl: siteUrl,
+                      __fileMasterList: config.FileMaster,
+                      __libraryTitle: (it as any).DocumentLibraryName || (it as any).LibraryName || (it as any).DocumentLibrary || (it as any).DocLibName || "",
+                      __folderPath: (it as any).FolderPath || (it as any).FilePath || (it as any).RelativeFolderPath || "",
+                    }));
+                }
+
+                // 🔹 Default: MyRequest (no filter, just tag for traceability)
+                //Ritik 29/01/2026 added isdeleted filter
+
+                // 🔹 MyRequest ONLY
+                // if (viewType === "MyRequest") {
+                //   return (items || [])
+                //     .filter((it: any) =>
+                //       it.MyRequest === true &&                 // 👈 sirf request wali
+                //       it.IsDeleted === null &&                 // 👈 recycle bin nahi
+                //       it.IsFavourite !== true &&               // 👈 favourite nahi
+                //       !it.ShareWithMe                          // 👈 shared nahi
+                //     )
+                //     .map((it: any) => ({
+                //       ...it,
+                //       __siteUrl: siteUrl,
+                //       __fileMasterList: config.FileMaster,
+                //     }));
+                // }
+
+                // Aman 24/2/26
+                 if (viewType === "MyRequest") {
+                  return (items || [])
+    .filter((item: any) => {
+ 
+      const owner =
+        (item.CurrentUser ||
+          item.Owner ||
+          item.CreatedBy ||
+          "").toLowerCase();
+ 
+      return (
+        item.MyRequest === true &&
+        item.IsDeleted === null &&
+        item.IsFavourite !== true &&
+        !item.ShareWithMe &&
+        (
+          owner === meEmail.toLowerCase() ||
+          owner === meName.toLowerCase()
+        )
+      );
+    })
+    .map((it: any) => ({
+      ...it,
+      __siteUrl: siteUrl,
+      __fileMasterList: config.FileMaster,
+    }));
+                }
+
+                // 🔹 fallback (kuch bhi nahi)
+                return [];
+
+
+
+
+
+
+
+              } catch (error) {
+                console.error(`Error fetching from ${config.FileMaster} in ${siteCollection}:`, error);
+                return [];
+              }
+            })
+          );
+
+          allData.push(...siteData.flat());
+        } catch (error) {
+          console.error(`Error processing site collection ${siteCollection}:`, error);
+        }
+      }
+
+  return allData;
+    }
+    return [];
+  };
+ 
+  // Helper function to update view counts
+  const updateViewCount = (viewType: ViewType, count: number) => {
+    const viewKey = viewType === "MyRequest" ? "My request" 
+                  : viewType === "MyFavourite" ? "My favourite"
+                  : viewType === "MyFolders" ? "My Folders"
+                  : viewType === "SharedWithMe" ? "Share with me"
+                  : viewType === "SharedWithOthers" ? "Share with other"
+                  : "Recycle bin";
+ 
+    setViewCounts(prev => ({...prev, [viewKey]: count}));
+  };
+  // #region Toggle IsFav List
+  // const toggleFavourite = async (file: any) => {
+  //   try {
+  //     // Build site URL dynamically
+  //     const currentUrl = new URL(context.pageContext.web.absoluteUrl);
+  //     const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${file.SiteCollection}`;
+  //     const siteSP = spfi(siteUrl).using(SPFx(context));
+
+  //     // Update SharePoint item
+  //     await siteSP.web.lists
+  //       .getByTitle(file.ListName)
+  //       .items.getById(file.Id)
+  //       .update({
+  //         IsFavourite: !file.IsFavourite, // flip value
+  //       });
+
+  //     console.log(
+  //       `Updated favourite for ${
+  //         file.Title || file.FileName
+  //       } → ${!file.IsFavourite}`
+  //     );
+
+  //     // Refresh current view (example: MyFavourite)
+  //     await loadViewData("MyFavourite");
+  //     alert("Done!");
+  //     // Close modal if you want
+  //     // setIsModalOpen(null);
+  //   } catch (error) {
+  //     console.error("Error toggling favourite:", error);
+  //   }
+  // };
+
+  // const toggleFavourite = async (file: any
+  // ) => {
+
+
+  //   let isFav = false;
+
+  //   try {
+
+  //     console.log("Toggling favourite for file:", file);
+  //     const siteurl = file.FilePreviewURL;
+  //     console.log("siteurl", siteurl)
+
+  //     const fileUniqueId = file.FileUID;
+  //     console.log("File UniqueId:", fileUniqueId);
+
+
+  //     const meName = context.pageContext.user.displayName || "";
+  //     const meEmail =
+  //       (context.pageContext as any)?.user?.email ||
+  //       (context.pageContext as any)?.user?.loginName ||
+  //       "";
+
+
+
+
+
+  //     const baseSiteUrl = siteurl.split("/sites/")[0] + "/sites/";
+  //     const siteCollectionName = siteurl.split("/sites/")[1].split("/")[0];
+
+
+  //     // const subSiteName = siteurl.split("/").pop(); // TestHub1
+  //     const subSiteName = siteurl.split("/sites/")[1].split("/")[1];
+
+
+  //     const siteSP = spfi(`${baseSiteUrl}${siteCollectionName}`).using(
+  //       SPFx(context)
+  //     );
+
+  //     const listName = `DMS${subSiteName}FileMaster`;
+
+
+
+
+
+  //     console.log("BaseSiteUrl:", baseSiteUrl);
+  //     console.log("Site Collection:", siteCollectionName);
+  //     console.log("Sub Site:", subSiteName);
+
+
+
+
+  //     const items = await siteSP.web.lists
+  //       .getByTitle(listName)
+  //       .items
+  //       .select("Id", "FileUID", "IsFavourite", "CurrentUser")
+  //       .filter(
+  //         `FileUID eq '${fileUniqueId}'`
+  //       ).top(1)();
+
+  //     console.log("items Name:", items);
+
+  //     console.log("Matched Items:", items);
+  //     if (items.length === 0) {
+  //       console.log("❌ No matching record found for this user & file");
+  //       return;
+  //     }
+  //     const item = items[0];
+  //     const newFavouriteValue = !item.IsFavourite;
+
+  //     console.log("Old IsFavourite:", item.IsFavourite);
+  //     console.log("New IsFavourite:", newFavouriteValue);
+
+  //     await siteSP.web.lists
+  //       .getByTitle(listName)
+  //       .items
+  //       .getById(item.Id)
+  //       .update({
+  //         IsFavourite: newFavouriteValue
+  //       });
+
+  //     console.log("✅ Favourite status updated successfully");
+  //     const refreshed = await loadViewData("MyFavourite");
+  //     if (refreshed) {
+  //       setSelectedFiles([...refreshed]);
+  //     }
+  //     console.log("remove favorate marke  for:", file);
+  //     return newFavouriteValue;
+
+
+  //   } catch (e) {
+
+  //   }
+  //   // try {
+
+
+
+
+
+  //   //   // // Build site URL dynamically
+  //   //   // const currentUrl = new URL(context.pageContext.web.absoluteUrl);
+  //   //   // const siteUrl = `${currentUrl.protocol}//${currentUrl.hostname}/sites/${file.SiteCollection}`;
+  //   //   // const siteSP = spfi(siteUrl).using(SPFx(context));
+
+  //   //   // console.log("Addhyan  kumar ->>>[toggleFavourite] siteUrl:", siteUrl);
+
+
+  //   //   // // Update SharePoint item
+  //   //   // await siteSP.web.lists
+  //   //   //   .getByTitle(file.ListName)
+  //   //   //   .items.getById(file.Id)
+  //   //   //   .update({
+  //   //   //     IsFavourite: !file.IsFavourite, // flip value
+  //   //   //   });
+
+  //   //   //   console.log("Addhyan   ->>>[toggleFavourite] siteUrl:", siteUrl);
+
+  //   //   // console.log(
+  //   //   //   `Updated favourite for ${
+  //   //   //     file.Title || file.FileName
+  //   //   //   } → ${!file.IsFavourite}`
+  //   //   // );
+
+  //   //   // // Refresh current view (example: MyFavourite)
+  //   //   // await loadViewData("MyFavourite");
+  //   //   // alert("Done!");
+
+  //   // } catch (error) {
+
+
+
+  //   //   console.error("Error toggling favourite:", error);
+  //   // }
+  // };
+
+
+  // Addhyan 19/2/26
+   const toggleFavourite = async (file: any,  siteUrl: string,
+  context: any) => {
+ 
+ 
+ 
+ 
+ 
+    console.log("File Object:", file);
+ 
+    const siteUrls = file.SiteID || file.SiteID || siteUrl;
+    console.log("Determined Site URL:", siteUrls);
+ 
+ 
+ 
+ 
+ 
+ 
+  const fileUniqueId = file.FileUID;
+ 
+  const meEmail =
+    (context.pageContext as any)?.user?.email ||
+    (context.pageContext as any)?.user?.loginName ||
+    "";
+ 
+  const baseSiteUrl = siteUrls.split("/sites/")[0] + "/sites/";
+  const siteCollectionName = siteUrls.split("/sites/")[1].split("/")[0];
+  const subSiteName = siteUrls.split("/").pop();
+ 
+  const siteSP = spfi(`${baseSiteUrl}${siteCollectionName}`).using(
+    SPFx(context)
+  );
+ 
+  const listName = `DMS${subSiteName}FileMaster`;
+ 
+  // ✅ Important Fix: User-wise filter
+  const items = await siteSP.web.lists
+    .getByTitle(listName)
+    .items
+    .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest", )
+    .filter(
+      `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 0`
+    )();
+ 
+  console.log("Matched Items:", items);
+ 
+  // 🔥 CASE 1: Record not found → Add new
+  if (items.length === 0) {
+ 
+    console.log("No record found → Adding new item");
+ 
+   
+ 
+    console.log("✅ New favourite added");
+    const refreshed = await loadViewData("MyFavourite");
+if (refreshed) {
+  setSelectedFiles([...refreshed]);
+} // Refresh the page to reflect changes
+``
+    return true;
+  }
+ 
+  // 🔥 CASE 2: Record exists → Toggle
+  const item = items[0];
+  const newFavouriteValue = !item.IsFavourite;
+ 
+  await siteSP.web.lists
+    .getByTitle(listName)
+    .items
+    .getById(item.Id)
+    .update({
+      IsFavourite: newFavouriteValue,
+      // MyRequest: false
+    });
+ 
+  console.log("✅ Favourite status updated:", newFavouriteValue);
+ 
+    //  window.location.reload(); // Refresh the page to reflect changes
+     const refreshed = await loadViewData("MyFavourite");
+if (refreshed) {
+  setSelectedFiles([...refreshed]);
+}
+     
+  return newFavouriteValue;
+ 
+ 
+   
+   
+>>>>>>> ESSAMUSAIBUPDATED2
   };
   /** ----------------------------------- uploads (same) --------------------------------------- */
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1054,10 +2784,17 @@ const toggleNode = async (node: TreeNode) => {
       setSelectedUploadFiles(files);
 
       try {
+<<<<<<< HEAD
               const getSiteCollectionUrl = (fullUrl: any): any => {
         const pattern = /^(https?:\/\/[^\/]+\/sites\/[^\/]+)/i;
         const match = fullUrl.match(pattern);
         return match ? match[1] : fullUrl;
+=======
+        const getSiteCollectionUrl = (fullUrl: any): any => {
+          const pattern = /^(https?:\/\/[^\/]+\/sites\/[^\/]+)/i;
+          const match = fullUrl.match(pattern);
+          return match ? match[1] : fullUrl;
+>>>>>>> ESSAMUSAIBUPDATED2
         }
         console.log(
           "[upload] getSiteCollectionUrl Uploading files to preview location...",
@@ -1093,16 +2830,182 @@ const toggleNode = async (node: TreeNode) => {
     }
   };
 
+<<<<<<< HEAD
   const uploadFiles = async () => {
     if (!currentSiteUrl || !currentFolderPath || selectedUploadFiles.length === 0) return;
 
     try {
       const siteSP = spfi(currentSiteUrl).using(SPFx(context));
+=======
+  // const uploadFiles = async () => {
+  //   if (!currentSiteUrl || !currentFolderPath || selectedUploadFiles.length === 0) return;
+
+  //   try {
+  //     const siteSP = spfi(currentSiteUrl).using(SPFx(context));
+
+  //     for (let i = 0; i < selectedUploadFiles.length; i++) {
+  //       const file = selectedUploadFiles[i];
+  //       setUploadProgress(((i + 1) / selectedUploadFiles.length) * 100);
+
+  //       const uplaodfile = await siteSP.web
+  //         .getFolderByServerRelativePath(
+  //           `/sites/${currentSiteUrl.split("/sites/")[1]}/${currentFolderPath}`
+  //         )
+  //         .files.addChunked(file.name, file);
+  //       console.log("[upload] File uploaded:", uplaodfile.data, JSON.stringify(uplaodfile.data));
+
+  //       const encodeSharePointPath = (path: string): string => {
+  //         return encodeURIComponent(path)
+  //           .replace(/'/g, "%27")
+  //           .replace(/\(/g, "%28")
+  //           .replace(/\)/g, "%29")
+  //           .replace(/\*/g, "%2A")
+  //           .replace(/!/g, "%21")
+  //           .replace(/#/g, "%23")
+  //           .replace(/\$/g, "%24")
+  //           .replace(/&/g, "%26")
+  //           .replace(/\+/g, "%2B")
+  //           .replace(/,/g, "%2C")
+  //           .replace(/;/g, "%3B")
+  //           .replace(/=/g, "%3D")
+  //           .replace(/\?/g, "%3F")
+  //           .replace(/\[/g, "%5B")
+  //           .replace(/\]/g, "%5D")
+  //           .replace(/_/g, "%5F")
+  //           .replace(/\./g, "%2E")
+  //           .replace(/-/g, "%2D");
+  //       };
+
+  //       const getSharePointPreviewUrl = (siteUrl: string, serverRelativePath: string): string => {
+  //         const parentFolder = serverRelativePath.substring(0, serverRelativePath.lastIndexOf("/"));
+  //         const encodedFilePath = encodeSharePointPath(serverRelativePath);
+  //         const encodedParentPath = encodeSharePointPath(parentFolder);
+
+  //         return `${siteUrl}${parentFolder.replace(/ /g, "%20")}/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodedParentPath}`;
+  //       };
+
+  //       const siteUrl = "https://officeindia.sharepoint.com";
+  //       const filePath = uplaodfile.data.ServerRelativeUrl;
+  //       const previewUrl = getSharePointPreviewUrl(siteUrl, filePath);
+  //       console.log("[upload] Preview URL:", previewUrl);
+  //     }
+
+  //     // Refresh the file list
+  //     if (breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1].type !== "view") {
+  //       const lastNode = nodeMap[breadcrumbs[breadcrumbs.length - 1].key];
+  //       if (lastNode) {
+  //         await loadFilesForNode(lastNode);
+  //       }
+  //     }
+
+  //     setSelectedUploadFiles([]);
+  //     setPreviewFileUrls([]);
+  //     setShowUploadPanel(false);
+  //     setUploadProgress(0);
+  //   } catch (error) {
+  //     console.error("[upload] Error uploading files:", error);
+  //   }
+  // }; hide it updated with new function by ritik 
+
+
+
+
+  //Helper function to get root site URL // 19/01/2026 //Ritik
+
+  const getRootSiteUrl = (url: string): string => {
+    const match = url.match(/^(https?:\/\/[^\/]+\/sites\/[^\/]+)/i);
+    if (!match) {
+      throw new Error("Invalid SharePoint site URL");
+    }
+    return match[1];
+  };
+
+  const formatFileSizeForMeta = (bytes: number): string => {
+    if (!bytes || bytes === 0) return "0 KB";
+
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  //Doc Lib upload function and metadata save to root site FileMaster list // 19/01/2026 // Ritik
+  const uploadFiles = async () => {
+    if (!currentSiteUrl || !currentFolderPath || selectedUploadFiles.length === 0) {
+      return;
+    }
+
+    try {
+      /* ===============================
+         STEP 1: Contexts
+         =============================== */
+
+      const spSubsite = spfi(currentSiteUrl).using(SPFx(context)); // upload
+      const rootSiteUrl = getRootSiteUrl(currentSiteUrl);
+      const spRoot = spfi(rootSiteUrl).using(SPFx(context)); // metadata
+
+      /* ===============================
+         STEP 2: Resolve FileMaster List Name Dynamically
+         =============================== */
+
+      // Extract subsite name from currentSiteUrl
+      // Example: https://officeindia.sharepoint.com/sites/edcspfx/Test%20Entity
+
+      const urlParts = currentSiteUrl.split('/sites/')[1]?.split('/');
+      const rootSiteName = urlParts?.[0]; // e.g., "edcspfx", "Intranetdemos", "AlRostmaniSpfx2"
+
+      // Decode URL-encoded subsite name (Test%20Entity → Test Entity)
+      let subsiteName = urlParts?.[1];
+      if (subsiteName) {
+        subsiteName = decodeURIComponent(subsiteName);
+      }
+
+      if (!subsiteName) {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid Context",
+          text: "Cannot determine subsite. Please ensure you're uploading to a subsite document library.",
+        });
+        return;
+      }
+
+      // Construct FileMaster list name using naming convention
+      // Pattern: DMS{SubsiteName}FileMaster
+      // **KEEP SPACES** - SharePoint list names can have spaces
+      const fileMasterListName = `DMS${subsiteName}FileMaster`;
+
+      console.log("🔍 Derived FileMaster List:", fileMasterListName);
+      console.log("📍 Root Site:", rootSiteUrl);
+      console.log("📍 Subsite:", currentSiteUrl);
+      console.log("📍 Subsite Name:", subsiteName);
+
+      // Validate that the list exists on root site
+      try {
+        await spRoot.web.lists
+          .getByTitle(fileMasterListName)
+          .select("Title")();
+        console.log("✅ FileMaster list found:", fileMasterListName);
+      } catch (error) {
+        console.error("❌ FileMaster list not found:", fileMasterListName, error);
+        Swal.fire({
+          icon: "error",
+          title: "Configuration Error",
+          html: `FileMaster list "<strong>${fileMasterListName}</strong>" not found on root site "${rootSiteName}".<br><br>Expected list: <strong>${fileMasterListName}</strong><br>Subsite: <strong>${subsiteName}</strong><br><br>Please contact administrator.`,
+        });
+        return;
+      }
+
+      /* ===============================
+         STEP 3: Upload Loop (SUBSITE)
+         =============================== */
+>>>>>>> ESSAMUSAIBUPDATED2
 
       for (let i = 0; i < selectedUploadFiles.length; i++) {
         const file = selectedUploadFiles[i];
         setUploadProgress(((i + 1) / selectedUploadFiles.length) * 100);
 
+<<<<<<< HEAD
         const uplaodfile = await siteSP.web
           .getFolderByServerRelativePath(
             `/sites/${currentSiteUrl.split("/sites/")[1]}/${currentFolderPath}`
@@ -1154,22 +3057,164 @@ const toggleNode = async (node: TreeNode) => {
         }
       }
 
+=======
+        const siteRelativePath = currentSiteUrl.replace(window.location.origin, "");
+        const serverRelativePath =
+          siteRelativePath +
+          (currentFolderPath.startsWith("/") ? "" : "/") +
+          currentFolderPath;
+
+        console.log("📤 Uploading to:", serverRelativePath);
+
+        const uploadResult = await spSubsite.web
+          .getFolderByServerRelativePath(serverRelativePath)
+          .files.addChunked(file.name, file);
+
+        const uploadedFile = uploadResult.data;
+        console.log("✅ File uploaded:", uploadedFile.Name);
+
+        /* ===============================
+           STEP 4: Dynamic metadata (ROOT)
+           =============================== */
+
+        const fields = await spRoot.web.lists
+          .getByTitle(fileMasterListName)
+          .fields.select("InternalName")();
+
+        const allowed = fields.map(f => f.InternalName);
+
+
+
+        // 🔹 STEP: Build full site-relative folder path (NO hard-code)
+        const siteRelativeUrl = currentSiteUrl.replace(window.location.origin, "");
+
+        const fullFolderPath =
+          siteRelativeUrl +
+          (currentFolderPath.startsWith("/") ? "" : "/") +
+          currentFolderPath;
+
+
+
+        // ✅ ALWAYS use serverRelativePath / fullFolderPath to extract folder
+        let folderName = "";
+
+        const normalizedFullPath = fullFolderPath.replace(/^\/+/, "");
+        const pathParts = normalizedFullPath.split("/");
+
+        // example:
+        // sites / AlRostmaniSpfx2 / TestHub1 / Approval Temp Lib / Test8
+        // index 0   1               2          3                4
+
+        if (pathParts.length > 4) {
+          folderName = pathParts[pathParts.length - 1];
+        }
+
+
+
+
+
+
+        const rawPayload: Record<string, any> = {
+          Title: uploadedFile.Name,
+          FileName: uploadedFile.Name,
+          FileUID: uploadedFile.UniqueId,
+
+          FileVersion: "1",
+          FileSize: formatFileSizeForMeta(file.size),
+
+          IsFavourite: false,     // Yes/No → boolean
+          MyRequest: true,       // Yes/No → boolean
+          IsDeleted: null,       // ✅ DateTime column FIX
+
+          CurrentUser: context.pageContext.user.email,
+
+          DocumentLibraryName: selectedCurrentNode?.libraryTitle || "",
+          FolderName: folderName,
+          CurrentFolderPath: fullFolderPath,
+
+          ShareWithMe: "",
+          ShareWithOthers: "",
+
+          Status: "Pending",
+
+          SiteID: context.pageContext.site.id.toString(),
+          SiteName: subsiteName,
+
+          FilePreviewURL: `${window.location.origin}${uploadedFile.ServerRelativeUrl}`,
+
+          Processname: "New File Request",
+          RequestNo: uploadedFile.Name.split(".")[0],
+        };
+
+
+
+
+
+        const safePayload: Record<string, any> = {};
+        for (const key in rawPayload) {
+          if (allowed.includes(key)) {
+            safePayload[key] = rawPayload[key];
+          }
+        }
+
+        console.log("💾 Saving metadata to:", fileMasterListName);
+        console.log("📝 Payload:", safePayload);
+
+        await spRoot.web.lists
+          .getByTitle(fileMasterListName)
+          .items.add(safePayload);
+
+        console.log("✅ Metadata saved for:", uploadedFile.Name);
+      }
+
+      /* ===============================
+         STEP 5: UI reset
+         =============================== */
+
+>>>>>>> ESSAMUSAIBUPDATED2
       setSelectedUploadFiles([]);
       setPreviewFileUrls([]);
       setShowUploadPanel(false);
       setUploadProgress(0);
+<<<<<<< HEAD
     } catch (error) {
       console.error("[upload] Error uploading files:", error);
+=======
+
+      Swal.fire({
+        icon: "success",
+        title: "Upload Successful",
+        text: `File(s) uploaded to ${subsiteName} and metadata saved to ${fileMasterListName}.`,
+      });
+
+      // Refresh file list
+      if (selectedCurrentNode) {
+        await loadFilesForNode(selectedCurrentNode);
+      }
+
+    } catch (err) {
+      console.error("❌ uploadFiles failed:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: err?.message || "Please check console for details.",
+      });
+>>>>>>> ESSAMUSAIBUPDATED2
     }
   };
 
   /** --------------------------------------- render ------------------------------------------- */
   const renderTree = (nodes: TreeNode[]) => (
+<<<<<<< HEAD
     <ul style={{ listStyleType: "none", paddingLeft: "20px" }}>
+=======
+    <ul style={{ listStyleType: "none", paddingLeft: "5px" }}>
+>>>>>>> ESSAMUSAIBUPDATED2
       {nodes.map((node) => (
         <li key={node.key}>
           <div style={{ display: "flex", alignItems: "center" }}>
             {node.hasChildren && (
+<<<<<<< HEAD
               <button
                 onClick={() => toggleNode(node)}
                 style={{
@@ -1184,6 +3229,11 @@ const toggleNode = async (node: TreeNode) => {
                   alignItems: "center",
                   justifyContent: "center",
                 }}
+=======
+              <button type="button"
+                onClick={() => toggleNode(node)}
+                className="arrowdesign"
+>>>>>>> ESSAMUSAIBUPDATED2
               >
                 {node.isExpanded ? "−" : "+"}
               </button>
@@ -1194,7 +3244,11 @@ const toggleNode = async (node: TreeNode) => {
               style={{
                 cursor: "pointer",
                 fontWeight: breadcrumbs.some((b) => b.key === node.key) ? "bold" : "normal",
+<<<<<<< HEAD
                 backgroundColor: breadcrumbs.some((b) => b.key === node.key) ? "#f0f0f0" : "transparent",
+=======
+                color: breadcrumbs.some((b) => b.key === node.key) ? "#fa901d" : "#000  ",
+>>>>>>> ESSAMUSAIBUPDATED2
                 padding: "2px 5px",
                 borderRadius: "3px",
                 fontSize: "14px",
@@ -1209,6 +3263,7 @@ const toggleNode = async (node: TreeNode) => {
     </ul>
   );
 
+<<<<<<< HEAD
   
   /* ----------------- AUDIT HISTORY FUNCTION------------------ */
 const handleAuditHistory = async (file: any) => {
@@ -1496,6 +3551,1959 @@ const handleAuditHistory = async (file: any) => {
   };
 
 return (
+=======
+
+  /* ----------------- AUDIT HISTORY FUNCTION------------------ */
+  // const handleAuditHistory = async (file: any) => {
+  //   try {
+  //     setAuditLoading(true);
+  //     setModalFile(file);
+  //     setShowAuditModal(true);
+
+  //     /*---------------build siteUrl for handleAuditHistory---------------*/
+  //     let siteUrl: string = (file && (file.__siteUrl || file.SiteUrl || file.SiteURL)) || currentSiteUrl || context.pageContext?.site?.absoluteUrl;
+  //     if (file && file.SiteName) {
+  //       siteUrl = `${siteUrl.replace(/\/$/, '')}/${file.SiteName.replace(/^\//, '')}`;
+  //     }
+
+  //     const spnew = spfi(siteUrl).using(SPFx(context));
+
+  //     console.log('Audit history (File)');
+  //     console.log('fileUID', file?.FileUID || file?.fileUID || file?.UniqueId || file?.Id || file?.ID);
+  //     console.log('siteUrl', siteUrl);
+
+  //     // determine server relative path robustly
+  //     const srCandidates = [
+  //       file?.ServerRelativeUrl,
+  //       file?.ServerRelativeUrlDecoded,
+  //       (file?.ServerRelativePath && file.ServerRelativePath.DecodedUrl) ? file.ServerRelativePath.DecodedUrl : null,
+  //       file?.FileRef,
+  //       file?.FileLeafRef ? (file.FileRef ? file.FileRef : null) : null,
+  //       (file?.CurrentFolderPath && file?.FileName) ? `${file.CurrentFolderPath}/${file.FileName}` : null,
+  //       file?.ServerRelativePath
+  //     ].filter(x => x !== undefined && x !== null);
+
+  //     let serverRel: any = null;
+  //     if (srCandidates.length > 0) {
+  //       serverRel = srCandidates.find(s => !!s) || null;
+  //       if (serverRel && typeof serverRel === 'string' && !serverRel.startsWith('/')) {
+  //         serverRel = '/' + serverRel;
+  //       }
+  //     }
+
+  //     console.log('serverRel candidate', serverRel);
+
+  //     let fileItem: any = null;
+  //     let listItem: any = null;
+  //     let versions: any[] = [];
+
+  //     if (serverRel) {
+  //       try {
+  //         fileItem = await spnew.web.getFileByServerRelativePath(serverRel).getItem();
+  //         console.log('fileItem from getFileByServerRelativePath', fileItem);
+  //       } catch (e) {
+  //         console.warn('getFileByServerRelativePath.getItem() failed', e);
+  //       }
+
+  //       try {
+  //         const fileObj = spnew.web.getFileByServerRelativePath(serverRel);
+  //         const vers = await fileObj.versions();
+  //         versions = (vers || []).map((v: any) => ({
+  //           VersionLabel: v?.VersionLabel || v?.Version || '',
+  //           Created: v?.Created ? new Date(v.Created).toLocaleString() : '',
+  //           ModifiedByName: v?.CreatedBy?.Title || v?.CreatedBy?.Name || '',
+  //           ModifiedByEmail: v?.CreatedBy?.Email || v?.CreatedBy?.LoginName || '',
+  //           SizeDisplay: (v?.Size ? (v.Size / 1024) : v?.Length ? (v.Length / 1024) : 0).toFixed(2) + ' KB'
+  //         }));
+  //       } catch (e) {
+  //         console.warn('versions() fetch failed', e);
+  //       }
+  //     }
+
+  //     // if fileItem not found, try to get list item from FileMaster list using Id
+  //     const listTitle = file.__fileMasterList || file.FileMaster || 'FileMaster';
+  //     const id = file.Id || file.ID;
+  //     if ((!fileItem || (Object.keys(fileItem || {}).length === 0)) && listTitle && id) {
+  //       try {
+  //         listItem = await spnew.web.lists.getByTitle(listTitle).items.getById(id).select('*', 'Editor/Title', 'Editor/Email').expand('Editor')();
+  //         console.log('list item from FileMaster list', listItem);
+  //       } catch (e) {
+  //         console.warn('fetch FileMaster list item failed', e);
+  //       }
+  //     }
+
+  //     // Compose metadata using fileItem, listItem, or the file object
+  //     const src = fileItem || listItem || file || {};
+  //     console.log('source for metadata', src);
+  //     const metadata: any = {
+  //       Title: src?.Title || file?.Title || file?.FileName || '',
+  //       FileName: src?.FileLeafRef || file?.FileName || '',
+  //       FileUID: file?.FileUID || file?.UniqueId || file?.GUID || '',
+  //       Status: src?.Status || file?.Status || '',
+  //       IsDeleted: (src?.IsDeleted ?? file?.IsDeleted ?? listItem?.IsDeleted) ? 'Yes' : 'No',
+  //       Modified: src?.Modified ? new Date(src.Modified).toLocaleString() : (file?.Modified ? new Date(file.Modified).toLocaleString() : ''),
+  //       ModifiedBy: (src?.Editor?.Title || src?.Editor?.Name || file?.ModifiedBy || '')
+  //     };
+  //     console.log('composed metadata', metadata);
+  //     // If no versions found, try to synthesize single current entry
+  //     if ((!versions || versions.length === 0) && (fileItem || listItem)) {
+  //       const s = fileItem || listItem;
+  //       versions = [{
+  //         VersionLabel: s?.OData__UIVersionString || s?.VersionLabel || '1.0',
+  //         Created: s?.Modified ? new Date(s.Modified).toLocaleString() : '',
+  //         ModifiedByName: s?.Editor?.Title || '',
+  //         ModifiedByEmail: s?.Editor?.Email || '',
+  //         SizeDisplay: s?.Length ? (s.Length / 1024).toFixed(2) + ' KB' : ''
+  //       }];
+  //     }
+
+  //     setAuditVersions({ Metadata: metadata, Versions: versions });
+  //   } catch (err) {
+  //     console.error('Audit history fetch error:', err);
+  //     setAuditVersions({ Metadata: {}, Versions: [] });
+  //   } finally {
+  //     setAuditLoading(false);
+  //   }
+  // }
+
+
+
+
+  // Aman 19/2/26
+
+  
+const handleAuditHistory = async (file: any) => {
+  try {
+    setAuditLoading(true);
+    setModalFile(file);
+    setShowAuditModal(true);
+ 
+    /* ---------- Path & Subsite Resolution (LOGIC FROM WORKING VERSION HISTORY) ---------- */
+    const folderPath = file.CurrentFolderPath || file.ServerRelativeUrl || "";
+    const fileName = file.FileName || file.Name;
+ 
+    let serverRelativePath = "";
+    if (file.ServerRelativeUrl) {
+      serverRelativePath = file.ServerRelativeUrl;
+    } else {
+      serverRelativePath = folderPath.endsWith("/")
+        ? `${folderPath}${fileName}`
+        : `${folderPath}/${fileName}`;
+    }
+    const tenantUrl = context.pageContext.web.absoluteUrl.split("/sites/")[0];
+    const parts = folderPath.split("/").filter(Boolean);
+    const subsitePath = "/" + parts.slice(0, 3).join("/");
+    const subsiteUrl = `${tenantUrl}${subsitePath}`;
+ 
+    // Initialize SP using the calculated subsite URL
+    const siteSP = spfi(subsiteUrl).using(SPFx(context));
+ 
+    let fetchedFileItem: any = null;
+    let fetchedListItem: any = null;
+    let fileProps: any = null;
+    let versions: any[] = [];
+ 
+    /* ---------- Fetch Data (Same logic as VersionHistory) ---------- */
+    if (serverRelativePath) {
+      try {
+        const fileItemObj = siteSP.web.getFileByServerRelativePath(serverRelativePath);
+ 
+        // 1. Fetch File Props
+        fileProps = await fileItemObj
+          .select(
+            "TimeLastModified",
+            "Length",
+            "Name",
+            "ServerRelativeUrl",
+            "UIVersionLabel",
+            "ModifiedBy/Title",
+            "ModifiedBy/UserPrincipalName"
+          )
+          .expand("ModifiedBy")();
+ 
+        // 2. Fetch Version Data
+        const versionData = await fileItemObj.versions
+          .select("ID,VersionLabel,Created,Size,Url,CreatedBy/Title,CreatedBy/UserPrincipalName")
+          .expand("CreatedBy")();
+ 
+        // 3. Metadata (detailedItem)
+        const itemQuery = await fileItemObj.getItem();
+        const detailedItem = await itemQuery
+          .select("*", "Editor/Title")
+          .expand("Editor")();
+ 
+        fetchedFileItem = { ...fileProps, ...detailedItem };
+ 
+        // 4. Combine and Sort Versions (Matching your working logic)
+        const allVersions = [
+          ...versionData.map((v: any) => ({
+            VersionLabel: v.VersionLabel,
+            Created: new Date(v.Created).toLocaleString(),
+            ModifiedByName: v.CreatedBy?.Title || "-",
+            SizeDisplay: (v.Size / 1024).toFixed(2) + " KB"
+          })),
+          {
+            VersionLabel: fileProps.UIVersionLabel,
+            Created: new Date(fileProps.TimeLastModified).toLocaleString(),
+            ModifiedByName: fileProps.ModifiedBy?.Title || "-",
+            SizeDisplay: (fileProps.Length / 1024).toFixed(2) + " KB"
+          }
+        ];
+ 
+        // Sort descending to show latest first in Audit
+        versions = allVersions.reverse();
+ 
+      } catch (e) {
+        console.warn("Audit: Data fetch failed", e);
+      }
+    }
+ 
+    /* ---------- Fallback for Metadata List ---------- */
+    const listTitle = file.__fileMasterList || file.FileMaster || "FileMaster";
+    const id = file.Id || file.ID;
+ 
+    if (!fetchedFileItem && listTitle && id) {
+      try {
+        fetchedListItem = await siteSP.web.lists
+          .getByTitle(listTitle)
+          .items.getById(id)
+          .select("*", "Editor/Title")
+          .expand("Editor")();
+      } catch (e) {
+        console.warn("Audit: List fallback failed", e);
+      }
+    }
+ 
+    /* ---------- Final Metadata Mapping ---------- */
+    const src = fetchedFileItem || fetchedListItem || file || {};
+    const metadata: any = {
+      Title: src?.Title || src?.Name || file?.Title || file?.FileName || file?.Name || "",
+      FileName: src?.FileLeafRef || src?.Name || file?.FileName || file?.Name || "",
+      FileUID: file?.FileUID || file?.UniqueId || file?.GUID || "",
+      Status: src?.Status || file?.Status || "",
+      IsDeleted: (src?.IsDeleted ?? file?.IsDeleted ?? fetchedListItem?.IsDeleted) ? "Yes" : "No",
+      Modified: src?.Modified ? new Date(src.Modified).toLocaleString() :
+                src?.TimeLastModified ? new Date(src.TimeLastModified).toLocaleString() :
+                fileProps?.TimeLastModified ? new Date(fileProps.TimeLastModified).toLocaleString() :
+                file?.Modified ? new Date(file.Modified).toLocaleString() : "-",
+      ModifiedBy: src?.Editor?.Title || src?.ModifiedBy?.Title || fileProps?.ModifiedBy?.Title || file?.ModifiedBy || "-"
+    };
+ 
+    setAuditVersions({
+      Metadata: metadata,
+      Versions: versions
+    });
+ 
+  } catch (err) {
+    console.error("Audit history error:", err);
+    setAuditVersions({ Metadata: {}, Versions: [] });
+  } finally {
+    setAuditLoading(false);
+  }
+};
+ 
+  /* ----------------- end handleAuditHistory ------------------ */
+
+
+  // sourish 20/8/25
+  const deleteFolder = async (file: any) => {
+    try {
+      if (!file?.FolderPath || !file?.__siteUrl) {
+        console.error("Missing folder path or site URL");
+        return;
+      }
+
+      // Delete Folder
+
+      // Build correct web URL for the subsite
+      const fullWebUrl = `${file.__siteUrl}/${encodeURIComponent(file.SiteTitle)}`;
+      const sp = spfi(fullWebUrl).using(SPFx(context));
+
+      // FolderPath is already server-relative, so just use it directly
+      const finalPath = file.FolderPath;
+
+      console.log("Deleting from:", fullWebUrl);
+      console.log("Final server-relative path:", finalPath);
+
+      await sp.web.getFolderByServerRelativePath(finalPath).delete();
+
+
+      // Delete corresponding item from list in site collection root
+      const spRoot = spfi(file.__siteUrl).using(SPFx(context));
+
+      console.log("Deleting list item from site:", file.__siteUrl, " List: DMSFolderMaster, ID:", file.ID);
+
+      await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(file.ID).delete();
+
+      const refreshed = await loadViewData("MyFolders");
+      setSelectedFiles(refreshed);
+      setActiveView("My Folders");
+      setBreadcrumbs([
+        { key: "my-folders", title: "My Folders", type: "view", siteUrl: "" },
+      ]);
+      setCurrentPage(1);
+
+
+    } catch (err) {
+      console.error("Error deleting folder:", err);
+    }
+  };
+
+  // sourish 21/8/25
+  const renameFolder = async () => {
+    try {
+      if (!modalFile?.FolderPath || !modalFile?.__siteUrl) {
+        console.error("Missing folder path or site URL");
+        return;
+      }
+
+      const fullWebUrl = `${modalFile.__siteUrl}/${encodeURIComponent(modalFile.SiteTitle)}`;
+      const sp = spfi(fullWebUrl).using(SPFx(context));
+
+      const folder = sp.web.getFolderByServerRelativePath(modalFile.FolderPath);
+
+      // Build new path with the renamed folder name
+      const parentPath = modalFile.FolderPath.substring(0, modalFile.FolderPath.lastIndexOf("/"));
+      const newPath = `${parentPath}/${renameValue}`;
+
+      console.log("Renaming folder:", modalFile.FolderPath, " → ", newPath);
+
+      // ✅ Use moveByPath instead of moveTo
+      await folder.moveByPath(newPath);
+
+      // Update item in DMSFolderMaster list
+      const spRoot = spfi(modalFile.__siteUrl).using(SPFx(context));
+      await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(modalFile.ID).update({
+        FolderName: renameValue,
+        FolderPath: newPath,
+      });
+
+      // Refresh view
+      const refreshed = await loadViewData("MyFolders");
+      setSelectedFiles(refreshed);
+      setActiveView("My Folders");
+      setBreadcrumbs([{ key: "my-folders", title: "My Folders", type: "view", siteUrl: "" }]);
+      setCurrentPage(1);
+
+      // Close modal
+      setRenameModalOpen(false);
+      setModalFile(null);
+      setRenameValue("");
+
+    } catch (err) {
+      console.error("Error renaming folder:", err);
+    }
+  };
+
+  // aman code manage folder permission
+  // === Manage Permission helpers ===
+  const deriveFolderContext = (folder: any) => {
+    const rootSite = folder?.__siteUrl || context.pageContext.web.absoluteUrl;
+    const siteTitle = folder?.SiteTitle || folder?.SiteName || "";
+    const webUrl = siteTitle ? `${rootSite}/${encodeURIComponent(siteTitle)}` : rootSite;
+    const serverRel =
+      folder?.ServerRelativeUrl ||
+      folder?.FolderPath ||
+      folder?.folderpath ||
+      "";
+    const deriveLibrary = (sr: string): string => {
+      const parts = (sr || "").split("/").filter(Boolean);
+      const idxSites = parts.indexOf("sites");
+      if (idxSites >= 0 && parts.length > idxSites + 2) return parts[idxSites + 2];
+      return parts[2] || "";
+    };
+    const documentLibraryName =
+      folder?.DocumentLibraryName ||
+      folder?.DocumentLibrary ||
+      folder?.LibraryName ||
+      deriveLibrary(serverRel);
+    return { webUrl, serverRel, documentLibraryName };
+  };
+
+  const getFolderApi = (webUrl: string, serverRel: string) => {
+    const w: any = spfi(webUrl).using(SPFx(context)).web;
+    if ((w as any).getFolderByServerRelativeUrl) {
+      return (w as any).getFolderByServerRelativeUrl(serverRel);
+    }
+    return w.getFolderByServerRelativePath(serverRel);
+  };
+
+  const loadAndOpenManagePermission = async () => {
+    if (!selectedFolder) return;
+    setMpLoading(true);
+    setMpError("");
+    try {
+      const { webUrl, serverRel } = deriveFolderContext(selectedFolder);
+      const web = spfi(webUrl).using(SPFx(context));
+      const folderApi = getFolderApi(webUrl, serverRel);
+      const item = await folderApi.getItem();
+      const itemInfo: any = await item.select("HasUniqueRoleAssignments")();
+      setMpHasUnique(!!itemInfo?.HasUniqueRoleAssignments);
+      let can = false;
+      try {
+        can = await web.web.currentUserHasPermissions(PermissionKind.ManagePermissions);
+      } catch { }
+      setMpCanManage(!!can);
+      let ras: any[] = [];
+      try {
+        ras = await item.roleAssignments.expand("Member", "RoleDefinitionBindings")();
+      } catch (e) {
+        console.warn("[ManagePermission] roleAssignments read failed:", e);
+        ras = [];
+      }
+      const mapped = (ras || []).map((ra: any) => ({
+        principalId: ra?.Member?.Id,
+        principalTitle: ra?.Member?.Title,
+        roles: (ra?.RoleDefinitionBindings || []).map((r: any) => r?.Name).filter(Boolean),
+      }));
+      setPermissionUsers(mapped);
+
+      // People picker users
+      try {
+        const rawUsers: ISiteUserInfo[] = await web.web.siteUsers();
+        const mappedUsers = (rawUsers || [])
+          .map((u) => ({
+            id: u.Id || 0,
+            title: u.Title || u.LoginName || "",
+            email: u.Email || "",
+            loginName: u.LoginName || u.Email || "",
+          }))
+          .filter((u) => !!u.loginName);
+        setMpSiteUsers(mappedUsers);
+      } catch (e) {
+        console.warn("[ManagePermission] siteUsers fetch failed:", e);
+        setMpSiteUsers([]);
+      }
+
+      setShowManagePermissionModal(true);
+    } catch (e: any) {
+      setMpError(e?.message || String(e));
+    } finally {
+      setMpLoading(false);
+    }
+  };
+
+  const addUserToSelectedFolder = async () => {
+    if (!selectedFolder || !newUser || !newPermission) return;
+    setMpLoading(true);
+    setMpError("");
+    try {
+      const { webUrl, serverRel } = deriveFolderContext(selectedFolder);
+      const web = spfi(webUrl).using(SPFx(context));
+      const folderApi = getFolderApi(webUrl, serverRel);
+      const item = await folderApi.getItem();
+
+      if (!mpHasUnique) {
+        try {
+          await item.breakRoleInheritance(true, false);
+          setMpHasUnique(true);
+        } catch (e) {
+          console.warn("[ManagePermission] breakRoleInheritance failed:", e);
+        }
+      }
+
+      let userId: number | null = null;
+      try {
+        const ensured = await web.web.ensureUser(newUser.trim());
+        userId = ensured?.data?.Id;
+      } catch (e) {
+        console.error("[ManagePermission] ensureUser failed:", e);
+        throw e;
+      }
+      if (!userId) throw new Error("Could not resolve user/group.");
+
+      const roleDef = await web.web.roleDefinitions.getByName(newPermission)();
+      await item.roleAssignments.add(userId, roleDef.Id);
+
+      const picked = mpSiteUsers.find((u) => u.loginName === newUser.trim());
+      const displayTitle = picked?.title || newUser.trim();
+
+      setPermissionUsers((prev) => {
+        const idx = prev.findIndex((p) => p.principalId === userId);
+        if (idx >= 0) {
+          const setRoles = new Set([...(prev[idx].roles || []), newPermission]);
+          const updated = [...prev];
+          updated[idx] = { ...prev[idx], roles: Array.from(setRoles) };
+          return updated;
+        }
+        return [...prev, { principalId: userId, principalTitle: displayTitle, roles: [newPermission] }];
+      });
+
+      setNewUser("");
+      setNewPermission("Read");
+    } catch (e: any) {
+      setMpError(e?.message || String(e));
+    } finally {
+      setMpLoading(false);
+    }
+  };
+
+  const removeUserFromSelectedFolder = async (principalId: number) => {
+    if (!selectedFolder || !principalId) return;
+    setMpLoading(true);
+    setMpError("");
+    try {
+      const { webUrl, serverRel } = deriveFolderContext(selectedFolder);
+      const item = await getFolderApi(webUrl, serverRel).getItem();
+      await item.roleAssignments.getById(principalId).delete();
+      setPermissionUsers((prev) => prev.filter((p) => p.principalId !== principalId));
+    } catch (e: any) {
+      setMpError(e?.message || String(e));
+    } finally {
+      setMpLoading(false);
+    }
+  };
+
+  //abhay delete file from folder
+  // const deleteFileFolder = async (file: any, siteUrl: string, context: any) => {
+  // try {
+  //   const siteSP = spfi(siteUrl).using(SPFx(context));
+
+  //   if (!file?.ServerRelativeUrl) {
+  //     console.error("[deleteFile] No ServerRelativeUrl found on file:", file);
+  //     return;
+  //   }
+
+  //   console.log("[deleteFile] Deleting:", file.ServerRelativeUrl);
+
+  //   await siteSP.web
+  //     .getFileByServerRelativePath(file.ServerRelativeUrl)
+  //     .delete();
+  //     // UI update just after deletion of files from Document libraries fix by aman 15/01/26
+  //      if (selectedCurrentNode) {
+  //     await loadFilesForNode(selectedCurrentNode);
+  //     }
+
+
+  //   console.log("[deleteFile] File deleted successfully:", file.Name);
+  //   alert("File Deleted");
+
+  //   // Optionally, refresh your list after delete
+  //   // await loadFilesForNode(currentNode);
+  // } catch (err) {
+  //   console.error("[deleteFile] Error deleting file:", err);
+  // } 
+  // }
+useEffect(() => {
+  getdocumentcategory();
+}, []);
+
+//addhyan 24/2/26
+ const ArchivedFile = async (file: any, siteUrl: string, context: any) => {
+    try {
+      Swal.fire({
+        title: 'Archiving File',
+        html: 'Please wait while we archive this file...',
+        allowOutsideClick: false,
+        didOpen: async () => {
+          Swal.showLoading();
+          try {
+            console.log("[ArchivedFile] file:", file);
+            const isoDate = new Date().toISOString();
+            const targetLibraryName = "ArchivedDocuments";
+            const listName  = "EssaArchivallist"
+ 
+ 
+            const siteSP = spfi(siteUrl).using(SPFx(context));
+            const fileItem = await siteSP.web
+              .getFileByServerRelativePath(file.ServerRelativeUrl)
+              .getItem();
+ 
+            // Get root web and destination path
+            const rootWeb = await sp.site.getRootWeb();
+            const rootSiteData = await rootWeb.select("ServerRelativeUrl")();
+            const rootSiteRelativeUrl = rootSiteData.ServerRelativeUrl;
+           
+            const destinationFolderPath = `${rootSiteRelativeUrl.replace(/\/$/, "")}/${targetLibraryName}`;
+           
+            const filedetails = file.ServerRelativeUrl.split("/");
+            const siteCollection = filedetails[2];
+const subSite = filedetails[3];
+const documentLibrary = filedetails[4];
+ 
+const folderPath = file.ServerRelativeUrl.substring(0, file.ServerRelativeUrl.lastIndexOf("/") + 1);
+ 
+const segments = file.ServerRelativeUrl.split("/").filter(Boolean);
+const folderName = segments[segments.length - 2];
+console.log("folderName:", folderName);
+ 
+ 
+ 
+console.log("siteCollection:", siteCollection);
+console.log("subSite:", subSite);
+console.log("documentLibrary:", documentLibrary);
+console.log("folderPath:", folderPath);
+ 
+const finalFolderName =
+  folderName !== documentLibrary ? folderName : "";
+ 
+            const filedestination  = `${rootSiteRelativeUrl.replace(/\/$/, "")}/${listName}`;
+             await sp.web.lists.getByTitle("EssaArchivallist").items.add({
+              filename: file.Name,
+              fileuid: file.UniqueId,
+              sitenamae : subSite,
+              sitecollectionname : siteCollection,
+              documentlibraryName: documentLibrary,
+              folderPath: folderPath,
+              folderNames: finalFolderName,
+             
+ 
+ 
+       
+      });
+ 
+           
+ 
+           
+ 
+           
+ 
+ 
+           
+            console.log("Archiving file:", file.Name);
+            console.log("From path:", file.ServerRelativeUrl);
+            console.log("To path:", destinationFolderPath);
+            console.log("List url :", filedestination);
+ 
+            // Create destination file path with original filename
+            const destinationFilePath = `${destinationFolderPath}/${file.Name}`;
+ 
+            // Copy the file to ArchivedDocuments library
+            const sourceFile = siteSP.web.getFileByServerRelativePath(file.ServerRelativeUrl);
+            await sourceFile.copyByPath(destinationFilePath, true, false);
+ 
+            // Update the file item metadata to mark as deleted
+            await fileItem.update({
+              IsDeleted: isoDate,
+            });
+ 
+            console.log("File successfully archived:", file.Name);
+ 
+ 
+             const destFile = await rootWeb.getFileByServerRelativePath(destinationFilePath);
+        const destItem = await destFile.getItem();
+   
+    await destItem.update({
+      Status: "Complete"
+    });
+ 
+            // Remove from selected files
+            setSelectedFiles((prev: any[]) =>
+              prev.filter(
+                (f) => f.ServerRelativeUrl !== file.ServerRelativeUrl
+              )
+            );
+ 
+            Swal.fire({
+              icon: 'success',
+              title: 'Success!',
+              text: `File '${file.Name}' has been archived successfully.`,
+              timer: 2000
+            });
+ 
+          } catch (err) {
+            console.error("Archive failed:", err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: `Failed to archive file: ${err instanceof Error ? err.message : 'Unknown error'}`
+            });
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Archive function error:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: `An error occurred: ${err instanceof Error ? err.message : 'Unknown error'}`
+      });
+    }
+  };
+ 
+  const getdocumentcategory = async ()=>{
+
+  const arr:any = [];
+  const navItem = await sp.web.lists.getByTitle("TemplateDocumentCategory").items.select("DocumentCategory").getAll();
+
+  // alert("navItem" + JSON.stringify(navItem))
+
+  console.log("Addhyan navItem", navItem);
+    setNavItems(navItem);
+
+  // setNavItems(navItem)
+}
+
+// Ritik 20/2/26 for manage permission folder
+// ===== ManageFolderPermission Inline Logic =====
+const fpMapRoleAssignments = (roleAssignments: any[]) => {
+  return (roleAssignments || [])
+    .filter((ra: any) => {
+      const member = ra?.Member;
+      if (!member) return false;
+      if (member.IsHiddenInUI) return false;
+      const title = (member.Title || "").toLowerCase();
+      if (title.includes("system account")) return false;
+      if (title.includes("everyone")) return false;
+      if (title.includes("all users")) return false;
+      if (title.includes("limited access")) return false;
+      return true;
+    })
+    .flatMap((ra: any) => {
+      // ✅ Har permission ke liye alag row
+      const permissions = (ra.RoleDefinitionBindings || [])
+        .map((r: any) => r.Name)
+        .filter((name: string) => name !== "Limited Access"); // ✅ Sirf Limited Access hatao, baaki sab dikho
+ 
+      return permissions.map((permName: string) => ({
+        itemId: `${ra.Member.Id}_${permName}`, // unique key per permission
+        userId: ra.Member.Id,
+        value: ra.Member.Title || ra.Member.LoginName || "",
+        label: ra.Member.Title || "",
+        Permission: permName, // ✅ Sirf ek permission per row
+      }));
+    })
+    .filter((item: any) => item.Permission !== "");
+};
+ 
+// ✅ SHARED FETCH ROLE ASSIGNMENTS - teeno jagah same logic
+const fpFetchRoleAssignments = async (spSubsite: any, folderName: string, folderPath: string, docLibName: string) => {
+  try {
+    if (folderName !== "null") {
+      const folderItem = await spSubsite.web
+        .getFolderByServerRelativePath(folderPath)
+        .getItem();
+      return await folderItem.roleAssignments
+        .expand("Member", "RoleDefinitionBindings")();
+    } else {
+      const lib = spSubsite.web.lists.getByTitle(docLibName);
+      return await lib.roleAssignments
+        .expand("Member", "RoleDefinitionBindings")();
+    }
+  } catch (e) {
+    console.warn("Role assignments fetch failed", e);
+    return [];
+  }
+};
+ 
+const fpLoadDefaultValue = async (flag: string | null, folder: any) => {
+  try {
+    const siteTitle = folder.SiteTitle || folder.Title || "";
+    const folderName = folder.FolderName || "null";
+    const folderPath = folder.FolderPath || folder.folderpath || "";
+    const docLibName = folder.DocumentLibraryName || "";
+ 
+    const spRoot = spfi(folder.__siteUrl).using(SPFx(context));
+ 
+    // ===== STEP 1: IsPrivate check =====
+    let isPrivate = false;
+ 
+    try {
+      if (folderName !== "null") {
+        const folderItems = await spRoot.web.lists
+          .getByTitle("DMSFolderMaster")
+          .items
+          .select("Id", "IsPrivate", "FolderPath")
+          .filter(`FolderPath eq '${folderPath}'`)
+          .top(1)();
+ 
+        if (folderItems && folderItems.length > 0) {
+          isPrivate = !!folderItems[0].IsPrivate;
+          setFpIsPrivateId(folderItems[0].Id);
+        }
+      } else {
+        const libItems = await spRoot.web.lists
+          .getByTitle("DMSPreviewFormMaster")
+          .items
+          .select("Id", "IsPrivate", "DocumentLibraryName")
+          .filter(`DocumentLibraryName eq '${docLibName}' and IsDocumentLibrary eq 1`)
+          .top(1)();
+ 
+        if (libItems && libItems.length > 0) {
+          isPrivate = !!libItems[0].IsPrivate;
+          setFpIsPrivateLibId(libItems[0].Id);
+        }
+      }
+    } catch (e) {
+      console.warn("IsPrivate check failed", e);
+    }
+ 
+    // ===== STEP 2: Public hai to "No" set karo =====
+    if (!isPrivate && flag !== "force") {
+      setTogglePermission("No");
+     // ✅ Pura hierarchical path build karo
+let path = siteTitle;
+if (docLibName) path += ` > ${docLibName}`;
+ 
+// FolderPath se saare nested folders nikalo
+// FolderPath example: /sites/Intranetdemos/ESSADMS3/DocumentLibraryName/ParentFolder/SubFolder/CurrentFolder
+if (folderName !== "null" && folderPath) {
+  const spSiteUrl = folder.__siteUrl || selectedFolder?.__siteUrl || "";
+  const siteRelativePath = `${spSiteUrl}/${siteTitle}`.replace(/https?:\/\/[^/]+/, "");
+  
+  // FolderPath se site-relative prefix hatao
+  let relativePath = folderPath;
+  if (relativePath.startsWith(siteRelativePath)) {
+    relativePath = relativePath.slice(siteRelativePath.length);
+  }
+  
+  // "/" se split karo aur docLibName ke baad ke saare parts lo
+  const parts = relativePath.split("/").filter(Boolean);
+  const libIndex = parts.findIndex(
+    (p: string) => p.toLowerCase() === docLibName.toLowerCase()
+  );
+  const folderParts = libIndex >= 0 ? parts.slice(libIndex + 1) : parts;
+  
+  // Har folder level " > " se join karo
+  if (folderParts.length > 0) {
+    path += ` > ${folderParts.join(" > ")}`;
+  }
+}
+ 
+setFpPathState(path);
+      return;
+    }
+ 
+    // ===== STEP 3: Role assignments load karo =====
+    const spSubsite = spfi(`${folder.__siteUrl}/${siteTitle}`).using(SPFx(context));
+    const roleAssignments = await fpFetchRoleAssignments(spSubsite, folderName, folderPath, docLibName);
+ 
+    // ✅ Shared mapping function use karo
+    const mapped = fpMapRoleAssignments(roleAssignments);
+    setFolderPrivacyTableData(mapped);
+    setTogglePermission("Yes");
+ 
+    // ✅ Pura hierarchical path build karo
+let path = siteTitle;
+if (docLibName) path += ` > ${docLibName}`;
+ 
+// FolderPath se saare nested folders nikalo
+// FolderPath example: /sites/Intranetdemos/ESSADMS3/DocumentLibraryName/ParentFolder/SubFolder/CurrentFolder
+if (folderName !== "null" && folderPath) {
+  const spSiteUrl = folder.__siteUrl || selectedFolder?.__siteUrl || "";
+  const siteRelativePath = `${spSiteUrl}/${siteTitle}`.replace(/https?:\/\/[^/]+/, "");
+  
+  // FolderPath se site-relative prefix hatao
+  let relativePath = folderPath;
+  if (relativePath.startsWith(siteRelativePath)) {
+    relativePath = relativePath.slice(siteRelativePath.length);
+  }
+  
+  // "/" se split karo aur docLibName ke baad ke saare parts lo
+  const parts = relativePath.split("/").filter(Boolean);
+  const libIndex = parts.findIndex(
+    (p: string) => p.toLowerCase() === docLibName.toLowerCase()
+  );
+  const folderParts = libIndex >= 0 ? parts.slice(libIndex + 1) : parts;
+  
+  // Har folder level " > " se join karo
+  if (folderParts.length > 0) {
+    path += ` > ${folderParts.join(" > ")}`;
+  }
+}
+ 
+setFpPathState(path);
+ 
+  } catch (e) {
+    console.error("fpLoadDefaultValue error", e);
+    setTogglePermission("Yes");
+  }
+};
+ 
+const fpFetchUsers = async (folder: any) => {
+  try {
+    const spRoot = spfi(folder.__siteUrl).using(SPFx(context));
+    const allUsers = await spRoot.web.siteUsers();
+ 
+    console.table(allUsers.map((u: any) => ({
+      Id: u.Id,
+      Title: u.Title,
+      Email: u.Email,
+      LoginName: u.LoginName,
+      Source: folder.__siteUrl
+    })));
+ 
+    setFolderPrivacyUsers(
+      (allUsers || [])
+        .filter((u: any) => u.Email && !u.IsHiddenInUI)
+        .map((u: any) => ({
+          userId: u.Id,
+          value: u.Title,
+          label: `${u.Title} (${u.Email})`,
+          email: u.Email,
+        }))
+    );
+  } catch (e) {
+    console.error("fpFetchUsers error", e);
+    setFolderPrivacyUsers([]);
+  }
+};
+ 
+const fpOpenPermission = async (folder: any) => {
+  setSelectedFolder(folder);
+  setTogglePermission(undefined);
+  setRowsForPermission([{ id: 0, selectedUserForPermission: [], selectedPermission: "" }]);
+  setFolderPrivacyTableData([]);
+  setFpErrors({});
+  setFpCurrentPage(1);
+  setFpIsPrivateId(null);
+  setFpIsPrivateLibId(null);
+ 
+  try {
+    const userdata = await spfi(folder.__siteUrl).using(SPFx(context)).web.currentUser();
+    fpCurrentUserEmail.current = userdata.Email;
+  } catch (e) { console.warn("currentUser fetch failed", e); }
+ 
+  await fpLoadDefaultValue(null, folder);
+  await fpFetchUsers(folder);
+  setShowPermissionModal(true);
+};
+ 
+const fpSetPrivate = async () => {
+  if (!selectedFolder) return;
+  try {
+    const siteTitle = selectedFolder.SiteTitle || selectedFolder.Title || "";
+    const folderName = selectedFolder.FolderName || "null";
+    const folderPath = selectedFolder.FolderPath || selectedFolder.folderpath || "";
+    const docLibName = selectedFolder.DocumentLibraryName || "";
+ 
+    const spRoot = spfi(selectedFolder.__siteUrl).using(SPFx(context));
+    const spSubsite = spfi(`${selectedFolder.__siteUrl}/${siteTitle}`).using(SPFx(context));
+ 
+    const loggedInUserEmail = context.pageContext.user.email;
+    console.log("=== LOGGED IN USER ===", loggedInUserEmail);
+ 
+    if (folderName === "null") {
+      if (fpIsPrivateLibId !== null) {
+        await spRoot.web.lists.getByTitle("DMSPreviewFormMaster")
+          .items.getById(fpIsPrivateLibId).update({ IsPrivate: true });
+      }
+    } else {
+      if (fpIsPrivateId !== null) {
+        await spRoot.web.lists.getByTitle("DMSFolderMaster")
+          .items.getById(fpIsPrivateId).update({ IsPrivate: true });
+      }
+    }
+ 
+    if (folderName !== "null") {
+      const folderItem = await spSubsite.web
+        .getFolderByServerRelativePath(folderPath).getItem();
+      const data = await folderItem.select("HasUniqueRoleAssignments")();
+      if (!data.HasUniqueRoleAssignments) {
+        await folderItem.breakRoleInheritance(true);
+      }
+      const ensured = await spSubsite.web.ensureUser(loggedInUserEmail);
+      const fullControlDef = await spSubsite.web.roleDefinitions.getByName("Full Control")();
+      await folderItem.roleAssignments.add(ensured.data.Id, fullControlDef.Id);
+    } else {
+      const lib = spSubsite.web.lists.getByTitle(docLibName);
+      const data = await lib.select("HasUniqueRoleAssignments")();
+      if (!(data as any).HasUniqueRoleAssignments) {
+        await lib.breakRoleInheritance(true);
+      }
+      const ensured = await spSubsite.web.ensureUser(loggedInUserEmail);
+      const fullControlDef = await spSubsite.web.roleDefinitions.getByName("Full Control")();
+      await lib.roleAssignments.add(ensured.data.Id, fullControlDef.Id);
+    }
+ 
+    await fpLoadDefaultValue("force", selectedFolder);
+ 
+  } catch (e) {
+    console.error("fpSetPrivate error", e);
+    Swal.fire('Error', 'Failed to set private permission.', 'error');
+  }
+};
+ 
+const fpValidate = (): boolean => {
+  let isValid = true;
+  const newErrors: any = {};
+  rowsForPermission.forEach((row) => {
+    if (!row.selectedUserForPermission?.length) {
+      newErrors[row.id] = { ...newErrors[row.id], userSelect: "Please select at least one user." };
+      isValid = false;
+    }
+    if (!row.selectedPermission) {
+      newErrors[row.id] = { ...newErrors[row.id], permissionSelect: "Please select a permission." };
+      isValid = false;
+    }
+  });
+  setFpErrors(newErrors);
+  return isValid;
+};
+ 
+const fpHandleCreate = async () => {
+  if (!fpValidate() || !selectedFolder) return;
+  try {
+    const siteTitle = selectedFolder.SiteTitle || selectedFolder.Title || "";
+    const folderName = selectedFolder.FolderName || "null";
+    const folderPath = selectedFolder.FolderPath || selectedFolder.folderpath || "";
+    const docLibName = selectedFolder.DocumentLibraryName || "";
+ 
+    const spSubsite = spfi(`${selectedFolder.__siteUrl}/${siteTitle}`).using(SPFx(context));
+ 
+    let securableObject: any;
+    if (folderName !== "null") {
+      const folderItem = await spSubsite.web
+        .getFolderByServerRelativePath(folderPath)
+        .getItem();
+      const data = await folderItem.select("HasUniqueRoleAssignments")();
+      if (!data.HasUniqueRoleAssignments) {
+        await folderItem.breakRoleInheritance(true);
+      }
+      securableObject = folderItem;
+    } else {
+      const lib = spSubsite.web.lists.getByTitle(docLibName);
+      const data = await lib.select("HasUniqueRoleAssignments")();
+      if (!(data as any).HasUniqueRoleAssignments) {
+        await lib.breakRoleInheritance(true);
+      }
+      securableObject = lib;
+    }
+ 
+    // ✅ STEP 1: Pehle saare duplicate check karo - koi bhi duplicate mila to rok do
+    for (const row of rowsForPermission) {
+      for (const user of row.selectedUserForPermission) {
+        const ensured = await spSubsite.web.ensureUser(user.email || user.value);
+        const subsiteUserId = ensured.data.Id;
+ 
+        // ✅ folderPrivacyTableData me har row ek permission hai (flatMap ki wajah se)
+        const duplicate = folderPrivacyTableData.find(
+          (item: any) => item.userId === subsiteUserId && item.Permission === row.selectedPermission.value
+        );
+ 
+        if (duplicate) {
+          setFpErrors((prev: any) => ({
+            ...prev,
+            [row.id]: {
+              ...prev[row.id],
+              userSelect: `"${user.value}" already has "${row.selectedPermission.value}" permission`,
+            }
+          }));
+          return; // ✅ Poora function rok do
+        }
+      }
+    }
+ 
+    // ✅ STEP 2: Koi duplicate nahi - sab add karo
+    let anyAdded = false;
+    for (const row of rowsForPermission) {
+      for (const user of row.selectedUserForPermission) {
+        try {
+          const ensured = await spSubsite.web.ensureUser(user.email || user.value);
+          const subsiteUserId = ensured.data.Id;
+          const roleDef = await spSubsite.web.roleDefinitions
+            .getByName(row.selectedPermission.value)();
+          await securableObject.roleAssignments.add(subsiteUserId, roleDef.Id);
+          anyAdded = true;
+        } catch (e) {
+          console.warn(`Permission add failed for ${user.value}`, e);
+        }
+      }
+    }
+ 
+    if (!anyAdded) return;
+ 
+    // ✅ STEP 3: Backend se fresh data lo aur shared mapping use karo
+    const roleAssignments = await fpFetchRoleAssignments(spSubsite, folderName, folderPath, docLibName);
+    const mapped = fpMapRoleAssignments(roleAssignments);
+ 
+    setFolderPrivacyTableData(mapped);
+    setRowsForPermission([{ id: 0, selectedUserForPermission: [], selectedPermission: "" }]);
+    setFpErrors({});
+ 
+    Swal.fire("Success", "Permissions added successfully.", "success");
+ 
+  } catch (e) {
+    Swal.fire("Error", "An error occurred.", "error");
+  }
+};
+ 
+const fpHandleDeleteUser = async (userId: number, itemId: number, permission: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, remove it!",
+  });
+  if (!result.isConfirmed || !selectedFolder) return;
+ 
+  try {
+    const siteTitle = selectedFolder.SiteTitle || selectedFolder.Title || "";
+    const folderName = selectedFolder.FolderName || "null";
+    const folderPath = selectedFolder.FolderPath || selectedFolder.folderpath || "";
+    const docLibName = selectedFolder.DocumentLibraryName || "";
+ 
+    const spSubsite = spfi(`${selectedFolder.__siteUrl}/${siteTitle}`).using(SPFx(context));
+ 
+    let securableObject: any;
+    if (folderName !== "null") {
+      securableObject = await spSubsite.web
+        .getFolderByServerRelativePath(folderPath)
+        .getItem();
+    } else {
+      securableObject = spSubsite.web.lists.getByTitle(docLibName);
+    }
+ 
+    // ✅ Sirf ek permission remove karo jo delete button pe click hua
+    try {
+      const roleDef = await spSubsite.web.roleDefinitions.getByName(permission)();
+      await securableObject.roleAssignments.remove(userId, roleDef.Id);
+    } catch (e) {
+      console.warn(`Role remove failed for "${permission}"`, e);
+    }
+ 
+    // ✅ Backend se fresh data lo aur shared mapping use karo
+    const roleAssignments = await fpFetchRoleAssignments(spSubsite, folderName, folderPath, docLibName);
+    const mapped = fpMapRoleAssignments(roleAssignments);
+ 
+    setFolderPrivacyTableData(mapped);
+    Swal.fire({ title: "Removed!", text: "Permission removed successfully.", icon: "success" });
+ 
+  } catch (e) {
+    Swal.fire("Error", "An error occurred while removing permission.", "error");
+  }
+};
+ 
+// ===== ManageFolderPermission Inline Logic END =====
+// Ritik 20/2/26 for manage permission folder
+
+  const deleteFileFolder = async (file: any, siteUrl: string, context: any) => {
+    try {
+      console.log("[deleteFileFolder] file:", file);
+      console.log("[deleteFileFolder] siteUrl:", siteUrl);
+
+      const isoDate = new Date().toISOString();
+
+
+      const siteSP = spfi(siteUrl).using(SPFx(context));
+      const fileItem = await siteSP.web
+        .getFileByServerRelativePath(file.ServerRelativeUrl)
+        .getItem();
+
+      await fileItem.update({
+        IsDeleted: isoDate,
+      });
+
+
+      const baseSiteUrl = siteUrl.split("/sites/")[0] + "/sites/";
+      const siteCollection = siteUrl.split("/sites/")[1].split("/")[0]; // AlRostmaniSpfx2
+      const entityName = siteUrl.split("/").pop(); // Rohittest
+
+      console.log("[deleteFileFolder] entityName:", entityName);
+
+      const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
+
+
+      const fmItems = await spRoot.web.lists
+        .getByTitle(`DMS${entityName}FileMaster`)
+        .items.filter(`FileName eq '${file.Name}' and IsDeleted eq null`)();
+
+      if (!fmItems.length) {
+        console.warn("FileMaster item not found:", file.Name);
+        return;
+      }
+
+      await spRoot.web.lists
+        .getByTitle(`DMS${entityName}FileMaster`)
+        .items.getById(fmItems[0].Id)
+        .update({
+          IsDeleted: isoDate,
+        });
+
+      setSelectedFiles((prev: any[]) =>
+        prev.filter(
+          (f) => f.ServerRelativeUrl !== file.ServerRelativeUrl
+        )
+      );
+
+      console.log("File soft deleted and FileMaster updated");
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+
+
+
+
+  // toggle favourite in my folder
+  //   const toggleFavouriteDoc = async (
+  //   file: any,
+  //   siteUrl: string,
+  //   context: any
+  // ) => {
+  //   try {
+  //     const siteSP = spfi(siteUrl).using(SPFx(context));
+
+  //     if (!file?.ServerRelativeUrl) {
+  //       console.error(
+  //         "[toggleFavourite] No ServerRelativeUrl found on file:",
+  //         file
+  //       );
+  //       return;
+  //     }
+
+  //     // Get the list item backing this file
+  //     const item = await siteSP.web
+  //       .getFileByServerRelativePath(file.ServerRelativeUrl)
+  //       .getItem();
+
+  //     // Read current favourite value
+  //     const currentItem = await item.select("Id", "IsFavourite")();
+  //     const currentFav = currentItem?.IsFavourite || false;
+
+  //     console.log(`[toggleFavourite] Current favourite: ${currentFav}`);
+
+  //     // Toggle
+  //     await item.update({
+  //       IsFavourite: !currentFav,
+  //     });
+
+  //     console.log(
+  //       `[toggleFavourite] File ${file.Name} is now ${
+  //         !currentFav ? "marked as favourite" : "unmarked as favourite"
+  //       }`
+  //     );
+
+  //     alert(
+  //       ` File ${file.Name} is now ${
+  //         !currentFav ? "marked as favourite" : "unmarked as favourite"
+  //       }`
+  //     );
+
+  //     // Optional: return new status
+  //     return !currentFav;
+  //   } catch (err) {
+  //     console.error("[toggleFavourite] Error toggling favourite:", err);
+  //   }
+  // };
+
+
+  // const toggleFavouriteDoc = async (
+
+
+
+
+
+  //   file: any,
+  //   siteUrl: string,
+  //   context: any
+  // ) => {
+  //   //       console.log("  Addhyan [toggleFavourite] Toggling favourite for:");
+  //   //       console.log("this is file value:",    file);
+  //   //       console.log("this is siteUrl value:",    siteUrl);
+  //   //       console.log("this is context value:",    context);
+
+  //   //       const siteurl = siteUrl;
+  //   //       const urlsss = siteUrl.split("/sites/")[1].split("/")[0];
+
+  //   //       console.log("this is urlsss value:",    urlsss);
+  //   //       const baseSiteUrl = siteUrl.split("/sites/")[0] + "/sites/";
+  //   //       console.log("this is baseSiteUrl value:",    baseSiteUrl);
+
+  //   //       const test = siteurl.split("/").pop();
+  //   //       console.log("this is test value:",    test);
+  //   // //addhyan fav
+  //   //        const meName = context.pageContext.user.displayName || "";
+  //   //     const meEmail =
+  //   //       (context.pageContext as any)?.user?.email ||
+  //   //       (context.pageContext as any)?.user?.loginName ||
+  //   //       "";
+
+
+  //   //       console.log("Addhyan   ->>>[toggleFavourite] meName:", meName);
+  //   //       console.log("Addhyan   ->>>[toggleFavourite] meEmail:", meEmail);      
+
+  //   //        const siteSP = spfi(`${baseSiteUrl}${urlsss}`).using(SPFx(context));
+  //   //       const datacheck  = await siteSP.web.lists.getByTitle(`DMS${test}FileMaster`).items.select("Id", "Title", " IsFavourite").top(5000)();
+  //   //       console.log("Addhyan   ->>>[toggleFavourite] datacheck:", datacheck);
+
+  //   console.log("🔁 Toggle Favourite Started");
+  //   console.log("File Object:", file);
+
+  //   const fileUniqueId = file.UniqueId;
+  //   console.log("File UniqueId:", fileUniqueId);
+
+  //   const meName = context.pageContext.user.displayName || "";
+  //   const meEmail =
+  //     (context.pageContext as any)?.user?.email ||
+  //     (context.pageContext as any)?.user?.loginName ||
+  //     "";
+
+  //   console.log("User Name:", meName);
+  //   console.log("User Email:", meEmail);
+
+  //   const baseSiteUrl = siteUrl.split("/sites/")[0] + "/sites/";
+  //   const siteCollectionName = siteUrl.split("/sites/")[1].split("/")[0];
+  //   const subSiteName = siteUrl.split("/").pop(); // TestHub1
+
+  //   console.log("BaseSiteUrl:", baseSiteUrl);
+  //   console.log("Site Collection:", siteCollectionName);
+  //   console.log("Sub Site:", subSiteName);
+
+  //   const siteSP = spfi(`${baseSiteUrl}${siteCollectionName}`).using(
+  //     SPFx(context)
+  //   );
+
+  //   const listName = `DMS${subSiteName}FileMaster`;
+
+  //   const items = await siteSP.web.lists
+  //     .getByTitle(listName)
+  //     .items
+  //     .select("Id", "FileUID", "IsFavourite", "CurrentUser")
+  //     .filter(
+  //       `FileUID eq '${fileUniqueId}'`
+  //     )
+  //     .top(1)();
+
+  //   console.log("Matched Items:", items);
+  //   if (items.length === 0) {
+  //     console.log("❌ No matching record found for this user & file");
+  //     return;
+  //   }
+
+  //   const item = items[0];
+  //   const newFavouriteValue = !item.IsFavourite;
+
+  //   console.log("Old IsFavourite:", item.IsFavourite);
+  //   console.log("New IsFavourite:", newFavouriteValue);
+
+  //   await siteSP.web.lists
+  //     .getByTitle(listName)
+  //     .items
+  //     .getById(item.Id)
+  //     .update({
+  //       IsFavourite: newFavouriteValue
+  //     });
+
+  //   console.log("✅ Favourite status updated successfully");
+
+
+  //   return newFavouriteValue;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //   try {
+  //     // const siteSP = spfi(siteUrl).using(SPFx(context));
+
+
+  //     // if (!file?.ServerRelativeUrl) {
+  //     //   console.error(
+  //     //     "[toggleFavourite] No ServerRelativeUrl found on file:",
+  //     //     file
+  //     //   );
+  //     //   return;
+  //     // }
+
+  //     // // Get the list item backing this file
+  //     // const item = await siteSP.web
+  //     //   .getFileByServerRelativePath(file.ServerRelativeUrl)
+  //     //   .getItem();
+
+  //     // // Read current favourite value
+  //     // const currentItem = await item.select("Id", "IsFavourite")();
+  //     // const currentFav = currentItem?.IsFavourite || false;
+
+  //     // console.log(`[toggleFavourite] Current favourite: ${currentFav}`);
+
+  //     // // Toggle
+  //     // await item.update({
+  //     //   IsFavourite: !currentFav,
+  //     // });
+
+  //     // console.log(
+  //     //   `[toggleFavourite] File ${file.Name} is now ${
+  //     //     !currentFav ? "marked as favourite" : "unmarked as favourite"
+  //     //   }`
+  //     // );
+
+  //     // alert(
+  //     //   ` File ${file.Name} is now ${
+  //     //     !currentFav ? "marked as favourite" : "unmarked as favourite"
+  //     //   }`
+  //     // );
+
+  //     // // Optional: return new status
+  //     // return !currentFav;
+  //   } catch (err) {
+  //     console.error("[toggleFavourite] Error toggling favourite:", err);
+  //   }
+  // };
+
+
+  // Addhyan 19/2/26
+
+  const toggleFavouriteDoc = async (
+  file: any,
+  siteUrl: string,
+  context: any
+) => {
+  console.log("siteUrl:", siteUrl);
+    console.log("File Object:", file);
+  console.log("🔁 Toggle Favourite Started");
+  const lastPart = siteUrl.split("/").pop();
+  const siteUrls = file.__siteUrl || context.pageContext.site.absoluteUrl;
+  console.log("Derived site URL for file:", siteUrls);
+ 
+ 
+ 
+ 
+  const fileUniqueId = file.UniqueId;
+  const fileUid = file.FileUID;
+  console.log("File UniqueId:", fileUniqueId);
+  console.log( " FileUID:", fileUid);
+ 
+  const meEmail =
+    (context.pageContext as any)?.user?.email ||
+    (context.pageContext as any)?.user?.loginName ||
+    "";
+ 
+  const baseSiteUrl = siteUrl.split("/sites/")[0] + "/sites/";
+  const siteCollectionName = siteUrl.split("/sites/")[1].split("/")[0];
+  const subSiteName = siteUrl.split("/").pop();
+ 
+  const siteSP = spfi(`${baseSiteUrl}${siteCollectionName}`).using(
+    SPFx(context)
+  );
+ 
+  const listName = `DMS${subSiteName}FileMaster`;
+ 
+ 
+ 
+const existingItems = await siteSP.web.lists
+  .getByTitle(listName)
+  .items
+  .select("*") // 🔥 sab columns le aayega
+  .filter(`FileUID eq '${fileUniqueId}'`)();
+ 
+  console.log("All matching items for FileUID:", existingItems);
+  const fullMetaData = existingItems[0];
+ 
+ 
+ 
+ 
+  // ✅ Important Fix: User-wise filter
+  const items = await siteSP.web.lists
+    .getByTitle(listName)
+    .items
+    .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest", )
+    .filter(
+      `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 0`
+    )();
+ 
+  console.log("Matched Items:", items);
+ 
+  // 🔥 CASE 1: Record not found → Add new
+  if (items.length === 0) {
+ 
+    console.log("No record found → Adding new item");
+ 
+    const payload = {
+      FileUID: fileUniqueId,
+      FileName: file.Name,
+      FileSize: file.Length,
+      DocumentLibraryName : fullMetaData.DocumentLibraryName ,
+      CurrentFolderPath : fullMetaData.CurrentFolderPath,
+      SiteID: siteUrl,
+      SiteName: lastPart,
+      IsFavourite: true,
+      CurrentUser: meEmail,
+      Processname: fullMetaData.Processname,
+      Status: fullMetaData.Status,
+      MyRequest: false,
+      FilePreviewURL: fullMetaData.FilePreviewURL,
+      RequestNo: `DMS-${fileUniqueId}`
+    };
+ 
+    await siteSP.web.lists
+      .getByTitle(listName)
+      .items
+      .add(payload);
+ 
+    console.log("✅ New favourite added");
+
+    // addhyan
+  // window.location.reload(); // Refresh the page to reflect changes  
+  Swal.fire({
+        title: 'Added to Favourites!',
+        text: 'The file has been successfully added to your favourites.',
+        icon: 'success',
+        confirmButtonText: 'ok'
+      });
+    return true;
+  }
+ 
+  // 🔥 CASE 2: Record exists → Toggle
+  const item = items[0];
+  const newFavouriteValue = !item.IsFavourite;
+ 
+  await siteSP.web.lists
+    .getByTitle(listName)
+    .items
+    .getById(item.Id)
+    .update({
+      IsFavourite: newFavouriteValue,
+      MyRequest: false
+    });
+ 
+  console.log("✅ Favourite status updated:", newFavouriteValue);
+  // addhyan
+//  window.location.reload(); // Refresh the page to reflect changes
+  // const refreshed = await loadViewData("MyFavourite");
+// if (refreshed) {
+//   setSelectedFiles([...refreshed]);
+// }
+Swal.fire({
+        title: 'Added to Favourites!',
+        text: 'The file has been successfully added to your favourites.',
+        icon: 'success',
+        confirmButtonText: 'ok'
+      });
+  return newFavouriteValue;
+ 
+};
+  // abhay change for seach in all tabs
+  // #region SEARCH TAB 
+  // Abhay 10/10/25 merger 
+
+  const [searchTerm, setSearchTerm] = useState("");
+  //ritik 19/01/2026 for search input box value
+  const [searchInput, setSearchInput] = useState("");
+
+
+
+
+
+  // const filteredFiles = !searchTerm.trim()
+  //   ? selectedFiles
+  //   : selectedFiles.filter((file: any) => {
+  //     const term = searchTerm.toLowerCase();
+
+  //     if (activeView === "My Folders") {
+  //       return (
+  //         (file.FolderName || "").toLowerCase().includes(term) ||
+  //         (file.SiteTitle || "").toLowerCase().includes(term) ||
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+
+  //       );
+  //     }
+  //     else if (activeView === "SharedWithMe") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.ShareWithMe || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "SharedWithOthers") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.ShareWithOther || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "MyRequest") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.RequestStatus || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "MyFavourite") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else if (activeView === "RecycleBin") {
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DeletedBy || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //     else {
+  //       // Default case
+  //       return (
+  //         (file.FileName || "").toLowerCase().includes(term) ||
+  //         (file.DocumentLibraryName || "").toLowerCase().includes(term) ||
+  //         (file.Status || "").toLowerCase().includes(term)
+  //       );
+  //     }
+  //   });
+
+  // const pageSize = 12;
+  // let location: string = "";
+  // const paginatedFiles = useMemo(() => {
+  //   const start = (currentPage - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   return filteredFiles.slice(start, end);
+  // }, [filteredFiles, currentPage]);
+
+  // useEffect(() => {
+  //   setCurrentPage(1);
+  // }, [searchTerm]);
+
+  // // 🧩 ✅ Clear search when section changes
+  // useEffect(() => {
+  //   setSearchTerm("");
+  //   setCurrentPage(1);
+  // }, [activeView]);
+
+
+
+
+  //Handle browse view search //Ritik 14/01/2025
+
+  const filteredFiles = !searchTerm.trim()
+    ? selectedFiles
+    : selectedFiles.filter((file: any) => {
+      const term = searchTerm.toLowerCase();
+
+      // Handle Browse View (Folder Hierarchy)
+      if (!activeView || activeView === "browse") {
+        return (
+          (file.Name || "").toLowerCase().includes(term) ||
+          (file.FileLeafRef || "").toLowerCase().includes(term) ||
+          (file.ServerRelativeUrl || "").toLowerCase().includes(term)
+        );
+      }
+
+      if (activeView === "My Folders") {
+        return (
+          (file.FolderName || "").toLowerCase().includes(term) ||
+          (file.SiteTitle || "").toLowerCase().includes(term) ||
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      }
+      else if (activeView === "SharedWithMe") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.ShareWithMe || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      }
+      else if (activeView === "SharedWithOthers") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.ShareWithOther || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      }
+      else if (activeView === "MyRequest") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.RequestStatus || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      }
+      else if (activeView === "MyFavourite") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      }
+      else if (activeView === "RecycleBin") {
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DeletedBy || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term)
+        );
+      }
+      else {
+        // Default case
+        return (
+          (file.FileName || "").toLowerCase().includes(term) ||
+          (file.DocumentLibraryName || "").toLowerCase().includes(term) ||
+          (file.Status || "").toLowerCase().includes(term)
+        );
+      }
+    });
+  //
+
+  const pageSize = 12;
+  let location: string = "";
+  const paginatedFiles = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredFiles.slice(start, end);
+  }, [filteredFiles, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // 🧩 ✅ Clear search when section changes
+  useEffect(() => {
+    setSearchTerm("");
+    setSearchInput("");
+    setCurrentPage(1);
+  }, [activeView]);
+
+
+
+
+
+  const extensionColors: any = {
+    doc: "#105abe", // Blue
+    docx: "#105abe",
+    txt: "#bebfc1", // Gray (Text Files)
+    pdf: "#fe0100", // Red (PDFs)
+    xls: "#257952", // Green (Excel)
+    xlsx: "#257952",
+    zip: "#fcc41e", // Yellow (Archives)
+
+    // 🎬 Video Files  
+    mp4: "#ff5733", // Orange-Red  
+    avi: "#ff5733",
+    mkv: "#ff5733",
+    mov: "#ff5733",
+    wmv: "#ff5733",
+    flv: "#ff5733",
+
+    // 🎵 Audio Files  
+    mp3: "#4caf50", // Green  
+    wav: "#4caf50",
+    flac: "#4caf50",
+    aac: "#4caf50",
+    ogg: "#4caf50",
+
+    // 🖼️ Image Files  
+    jpg: "#ff9800", // Orange  
+    jpeg: "#ff9800",
+    png: "#00bcd4", // Cyan  
+    gif: "#9c27b0", // Purple  
+    svg: "#673ab7", // Dark Purple  
+    webp: "#009688", // Teal  
+
+    default: "#17a2b8", // Teal (Unknown Files)
+  };
+
+  // helper function to get actual file name // Ritik today 
+  const getActualFileName = (file: any) => {
+    if (file.FileName) return file.FileName;
+
+    if (file.Name) {
+      // "/{name}" remove karega
+      return file.Name.split("/")[0];
+    }
+
+    return "";
+  };
+
+
+const createFileExtensionHtml = (FileName: any, bgColor?: string, isListView: boolean = false) => {
+  const fileExtension = FileName?.split(".")?.pop()?.toLowerCase() || "file";
+  // Mapping icons dynamically to your extensions
+  let selectedIcon = faFile;
+  let iconColor = extensionColors.default;
+  switch (fileExtension) {
+    case "pdf": 
+      selectedIcon = faFilePdf; 
+      iconColor = extensionColors.pdf;
+      break;
+    case "doc":
+    case "docx": 
+      selectedIcon = faFileWord; 
+      iconColor = extensionColors.docx;
+      break;
+    case "xls":
+    case "xlsx": 
+      selectedIcon = faFileExcel; 
+      iconColor = extensionColors.xlsx;
+      break;
+    case "png":
+    case "jpg":
+    case "jpeg":
+    case "gif":
+    case "svg":
+    case "webp": 
+      selectedIcon = faFileImage; 
+      iconColor = extensionColors.jpg;
+      break;
+    case "mp4":
+    case "mov":
+    case "avi": 
+      selectedIcon = faFileVideo; 
+      iconColor = extensionColors.mp4;
+      break;
+    case "zip":
+    case "rar": 
+      selectedIcon = faFileArchive; 
+      iconColor = extensionColors.zip;
+      break;
+    case "txt": 
+      selectedIcon = faFileAlt; 
+      iconColor = extensionColors.txt;
+      break;
+    default: 
+      selectedIcon = faFile;
+      iconColor = extensionColors.default;
+  }
+  const iconData = icon(selectedIcon).html[0];
+  const finalColor = bgColor || iconColor;
+  // ✅ LIST VIEW: Icon only (no background, no text)
+  if (isListView) {
+    return `<div class="newicon" style="
+      
+        height: 18px; 
+        display: flex; 
+        align-items: center; 
+        fill: ${finalColor};
+        color: ${finalColor};
+      ">
+        ${iconData}
+</div>`;
+  }
+  // ✅ GRID VIEW: Badge with background + icon + text (default behavior)
+  return ` <div class="file-extension-badge" style="
+      background-color: ${finalColor};
+      color: white;
+      padding: 6px 15px 5px 15px;;
+      border-radius: 30px;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 0px;
+      font-size: 11px;">
+<div style="width: 14px; margin-top:-2px; height: 14px; display: flex; align-items: center; fill: currentColor;">
+          ${iconData}
+</div>
+<span>${fileExtension.toUpperCase()}</span>
+</div>`;
+}
+
+
+
+
+
+  //Preview Header Resolver (Quick View vs Folder Hierarchy) Ritik 29/01/2026
+  // 🔹 Preview Header Resolver (Quick View vs Folder Hierarchy)
+  const getPreviewHeader = (file: any, activeView: string) => {
+    const fileName =
+      file.FileName ||
+      file.Name ||
+      file.Title ||
+      (file.FilePreviewURL ? file.FilePreviewURL.split("/").pop() : "") ||
+      "Untitled file";
+
+    // 🔹 Quick Views → ONLY file name
+    const quickViews = [
+      "My request",
+      "My favourite",
+      "Share with me",
+      "Share with other",
+      "Recycle bin",
+    ];
+
+    if (quickViews.includes(activeView)) {
+      return {
+        name: fileName,
+        path: "",
+      };
+    }
+
+    // 🔹 Folder Hierarchy → name + full path
+    let path = "";
+
+    if (file.CurrentFolderPath) {
+      path = file.CurrentFolderPath;
+    } else if (file.__folderPath) {
+      path = file.__folderPath;
+    } else if (file.ServerRelativeUrl) {
+      path = file.ServerRelativeUrl.substring(
+        0,
+        file.ServerRelativeUrl.lastIndexOf("/")
+      );
+    }
+
+    return {
+      name: fileName,
+      path,
+    };
+  };
+
+
+
+// srs 20/2/26
+useEffect(() => {
+  if (showRenameMetadataModal && selectedFileForRenameetadata) {
+    const fetchColumns = async () => {
+      setLoadingColumns(true);
+      try {
+        const masterSiteUrl = selectedFileForRenameetadata.__siteUrl;
+        const siteName = selectedFileForRenameetadata.SiteTitle;
+        const libraryName = selectedFileForRenameetadata.DocumentLibraryName;
+
+        // 1. Create the new web object
+        // 2. Use AssignFrom(sp.web) to copy the SPFx context/observers
+        const remoteWeb = Web(masterSiteUrl).using(AssignFrom(sp.web));
+
+        const columns = await remoteWeb.lists
+          .getByTitle("DMSPreviewFormMaster")
+          .items
+          .select("ColumnName", "ColumnType", "ID", "IsRename")
+          .filter(`SiteName eq '${siteName}' and DocumentLibraryName eq '${libraryName}' and IsDocumentLibrary eq 0`)();
+        
+        setExistingColumns(columns);
+      } catch (error) {
+        console.error("Error fetching columns:", error);
+      } finally {
+        setLoadingColumns(false);
+      }
+    };
+    fetchColumns();
+  }
+}, [showRenameMetadataModal, selectedFileForRenameetadata]);
+
+const handleSaveRename = async () => {
+  try {
+    const masterSiteUrl = selectedFileForRenameetadata.__siteUrl;
+    
+    // Connect the remote web to your current PnPjs configuration
+    const remoteWeb = Web(masterSiteUrl).using(AssignFrom(sp.web));
+    const list = remoteWeb.lists.getByTitle("DMSPreviewFormMaster");
+
+    const updatePromises = existingColumns.map(item => 
+      list.items.getById(item.ID).update({ 
+        IsRename: item.IsRename 
+      })
+    );
+
+    await Promise.all(updatePromises);
+    
+    Swal.fire('Success', 'Columns updated successfully', 'success');
+    setShowRenameMetadataModal(false);
+  } catch (error) {
+    console.error("Error updating columns:", error);
+    Swal.fire('Error', 'Failed to update columns', 'error');
+  }
+};
+
+  return (
+>>>>>>> ESSAMUSAIBUPDATED2
     <div
       id="maincontainer"
       style={{
@@ -1505,6 +5513,7 @@ return (
       }}
     >
       {/* sourish 30/9/25 */}
+<<<<<<< HEAD
     <div
       className="app-menu"
       id="myHeader">
@@ -2438,6 +6447,305 @@ return (
                       color: "#333",
                       paddingBottom: "5px",
                       borderBottom: "1px solid #eee",
+=======
+      <div
+        className="app-menu"
+        id="myHeader">
+        <VerticalSideBar _context={sp} />
+      </div>
+      {/* sourish 30/9/25 */}
+      <div className="content-page">
+        <HorizontalNavbar _context={sp} />
+        <div className="content" style={{ marginLeft: `${!useHide ? '240px' : '80px'}`, marginTop: '0.8rem' }}>
+          {/* 
+      <HorizontalNavbar _context={sp}/>
+      <div className="content" style={{marginLeft: `${!useHide ? '240px' : '80px'}`,marginTop:'0.8rem'}}> */}
+          {/* Left Panel with Quick Views and Folder Hierarchy */}
+          <div className="content-page">
+            <div className="" style={{ 
+    background: '#fff', 
+    borderBottom: '1px solid #eee', 
+    marginBottom: '10px', 
+    padding: '8px 10px', 
+    minHeight: '65px', 
+    display: 'flex',
+    alignItems: 'center'
+}}>
+  <div className="row w-100 align-items-center" style={{ margin: 0 }}>
+    <div className="col-md-3">
+ <h2 className="page-title fw-bold m-0 mb-0 pt-5 mt-0 font-20"> Quick Views</h2>
+    </div>
+    
+        
+    <div className="col-md-9 d-flex align-items-center gap-4 justify-content-end" style={{ padding: 0 }}>
+      
+      {/* Group 1: Create Group */}
+      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+
+        <div className="d-flex gap-3">
+          <button 
+            type="button"
+            onClick={() => setActiveComponent(true)}
+            disabled={!selectedCurrentNode || selectedCurrentNode.type === "site"}
+            style={{ background: 'none',   marginTop:'0px',  border: 'none', padding: 0, opacity: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 0.4 : 1, cursor: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 'not-allowed' : 'pointer' }}
+          >
+            <img src={require("../assets/createnew.png")} alt="Create" />
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => {setShowUploadPanel(true); setActiveComponent(false)}}
+            disabled={!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")}
+            style={{ background: 'none',  marginTop:'0px', border: 'none', padding: 0, opacity: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 0.4 : 1, cursor: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 'not-allowed' : 'pointer' }}
+          >
+            <img src={require("../assets/uploafnew.png")} alt="Upload" />
+          </button>
+        </div>
+                <span style={{ fontSize: '14px',  color: '#333', marginTop: '5px' }}>Create</span>
+      </div>
+
+      {/* Group 2: ASK AI */}
+      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+       
+        <div className="d-flex">
+          <button 
+            type="button"
+            onClick={() => { console.log("Ask AI clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0,  marginTop:'0px', cursor: 'pointer' }}
+          >
+            <img src={require("../assets/newr.png")} alt="Ask AI" />
+          </button>
+        </div>
+         <span style={{ fontSize: '14px', color: '#333', marginTop: '5px' }}>Ask AI</span>
+      </div>
+
+      {/* Group 3: NEW */}
+     <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+      
+        <div className="d-flex gap-3">
+          <button 
+            type="button"
+            onClick={() => { console.log("New Request clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0,  marginTop:'0px', cursor: 'pointer' }}
+            title="New Request"
+          >
+            <img src={require("../assets/newr.png")} alt="New Request" />
+          </button>
+          <Dropdown as={ButtonGroup} style={{ marginTop: '0px' }}>
+  <Dropdown.Toggle
+    style={{ padding: '10px 15px' }}
+    id="dropdown-template"
+    className="mt-0"
+  >
+    <span title="Select Template">
+      <img
+        src={require("../assets/newt.png")}
+        alt="Select Template"
+        style={{ width: '20px', height: '20px' }}
+      />
+    </span>
+  </Dropdown.Toggle>
+
+    <Dropdown.Menu className="dropdown-menu-start newtheme font-14">
+    {navItems.map((item, index) => (
+      <Dropdown.Item
+        key={index}
+        onClick={() => {
+          setSelectedTemplate(item);
+          setShowTemplateForm(true);
+        }}
+      >
+        {item.DocumentCategory}
+      </Dropdown.Item>
+    ))}
+  </Dropdown.Menu>
+</Dropdown>
+          
+        </div>
+        
+
+          <span style={{ fontSize: '14px',  color: '#333',  marginTop: '5px' }}>New</span>
+      </div>
+
+      {/* Group 4: ACTION */}
+      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+      
+        <div className="d-flex gap-3">
+          <button 
+            type="button"
+            onClick={() => { console.log("Share clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0, marginTop:'0px', cursor: 'pointer' }}
+            title="Share"
+          >
+            <img src={require("../assets/listiconshare.png")} alt="Share"  />
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => { console.log("Delete clicked"); }}
+            style={{ background: 'none', border: 'none', padding: 0, marginTop:'0px', cursor: 'pointer' }}
+            title="Delete"
+          >
+            <img src={require("../assets/listicond.png")} alt="Delete" />
+          </button>
+        </div>
+          <span style={{ fontSize: '14px',color: '#333', marginTop: '5px' }}>Action</span>
+      </div>
+
+        <div className="d-flex flex-column align-items-center">
+     
+        <div className="">
+          <button 
+            type="button"
+            onClick={() => setActiveLayout('grid')}
+            title="Grid View"
+            style={{ 
+              background: activeLayout === 'grid' ? '#fff' : 'transparent', 
+              border: 'none', 
+              boxShadow: activeLayout === 'grid' ? '0 0px 0px rgba(0,0,0,0.1)' : 'none',
+              marginTop:'0px',
+             
+              cursor: 'pointer'
+            }}
+          >
+            <img src={require("../assets/gridview.png")} alt="Grid" style={{  opacity: activeLayout === 'grid' ? 1 : 0.6 }} />
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveLayout('list')}
+            title="List View"
+            style={{ 
+              background: activeLayout === 'list' ? '#fff' : 'transparent', 
+              border: 'none', 
+              boxShadow: activeLayout === 'list' ? '0 0px 0px rgba(0,0,0,0.1)' : 'none',
+          marginTop:'0px',
+              
+              cursor: 'pointer'
+            }}
+          >
+            <img src={require("../assets/listview.png")} alt="List" style={{  opacity: activeLayout === 'list' ? 1 : 0.6 }} />
+          </button>
+        </div>
+           <span style={{ fontSize: '14px',color: '#333', marginTop: '-1px' }}>View</span>
+      </div>
+
+    </div>
+
+    {/* View Switcher (Right Side) - Updated with Icons and "View" Label */}
+   
+  </div>
+</div>
+             
+          <div  className="main-content-new">
+            <div className="inbox-leftbar">
+              {/* Quick Views Panel */}
+              <div
+                id="buttonpanel"
+                style={{
+                
+
+
+                  flexShrink: 0,
+                }}
+              >
+            
+              {[
+                  { originalKey: "My request", label: "My Requests", icon: faCloud },
+                  { originalKey: "My favourite", label: "My Favourite", icon: faHeart },
+                  { originalKey: "My Folders", label: "My Folders", icon: faFolder },
+                  { originalKey: "Share with me", label: "Shared with Me", icon: faShareAlt },
+                  { originalKey: "Share with other", label: "Shared with Other", icon: faPaperPlane},
+                  { originalKey: "Recycle bin", label: "Recycle Bin", icon: faTrashAlt },
+                ].map((item,view) => (
+                  <button type="button"
+                    key={item.originalKey}
+                    onClick={() => handleViewButtonClick(item.originalKey)}
+                    style={{
+                     
+                      width: "100%",
+                      padding: "8px 10px",
+                      marginBottom: "3px",
+                        marginTop: "0px",
+                      textAlign: "left",
+                     backgroundColor: activeView === item.originalKey ? "#0078d4" : "#fff ",
+                      color: activeView === item.originalKey ? "white" : "#2c3e50",
+                      border: "0px solid #ccc",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                   {item.icon && <FontAwesomeIcon icon={item.icon} style={{ marginRight: "8px" }} />}
+                    {item.label} <span className="doc-count"> {viewCounts[item.originalKey] || 0}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Folder Hierarchy Panel */}
+              <div
+                id="folderhierarchycontainer"
+                style={{
+                  flexGrow: 1,
+                  padding: "0px 0px",
+                  overflow: "auto",
+
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                   
+                    color: "#333",
+                         paddingTop: "10px",
+                    paddingBottom: "5px",
+                    borderTop: "1px solid #eee",
+                  }}
+                >
+                  Folder Hierarchy
+                </h2>
+                {treeData.length > 0 ? (
+                  renderTree(treeData)
+                ) : (
+                  <p>Loading folder structure...</p>
+                )}
+              </div>
+            </div>
+
+            {/* File List Panel  11 */}
+            <div
+  id="filelistcontainer"
+  className="inbox-rightbar"
+  style={{ position: 'relative', overflow: 'hidden' }}>
+              {showTemplateForm && (
+                <TemplateForm
+                  selectedTemplate={selectedTemplate}
+                  onSave={(data) => handleSaveTemplate(data)}
+                  onCancel={handleCancelTemplate}
+                  context={context}
+                />
+              )}
+              <div style={{ display: showTemplateForm ? 'none' : 'block' }}>
+              {/* ===== FILE LIST / UI ===== */}
+              {/* srs 29/1/26 */}
+             {/* --- RIBBON TOOLBAR START: DMSMAIN STYLE --- */}
+{/* --- ICON-BASED RIBBON: NO DUPLICATION & NO IMPORT ERROR --- */}
+{/* --- ICON-BASED RIBBON: DMSMAIN STYLE WITH EXACT PATH --- */}
+
+{/* --- RIBBON TOOLBAR END --- */}
+
+                  <h2
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      marginBottom: "0px",
+                      paddingTop:'18px',
+                      paddingLeft:'10px',
+                      color: "#333",
+                      paddingBottom: "4px",
+                      borderBottom: "0px solid #eee",
+>>>>>>> ESSAMUSAIBUPDATED2
                       paddingRight: "100px", // Make space for upload button
                     }}
                   >
@@ -2463,6 +6771,7 @@ return (
                               </span>
                             )}
                             <span
+<<<<<<< HEAD
                               className="breadcrumb-item"
                               // onClick={() => handleBreadcrumbClick(item)}
                               style={{
@@ -2473,17 +6782,43 @@ return (
                                 //   index === breadcrumbs.length - 1 ? "#333" : "#0066cc",
                                 fontWeight:
                                   index === breadcrumbs.length - 1 ? "600" : "normal",
+=======
+                              className="breadcrumb-item mb-0 font-18 fw-bold text-dark header-title"
+                              onClick={() => handleBreadcrumbClick(item)}
+                              style={{
+                                cursor: "pointer",
+                                color: index === breadcrumbs.length - 1 ? "#333" : "#0066cc",
+                                fontWeight: index === breadcrumbs.length - 1 ? "600" : "normal",
+>>>>>>> ESSAMUSAIBUPDATED2
                                 fontSize: "14px",
                                 padding: "2px 5px",
                                 borderRadius: "3px",
                               }}
                             >
+<<<<<<< HEAD
                               {item.title}
+=======
+                              {
+  item.title === "My request"
+    ? "My Requests"
+    : item.title === "My favourite"
+    ? "My Favourite"
+    : item.title === "Share with me"
+    ? "Shared with Me"
+    : item.title === "Share with other"
+    ? "Shared with Other"
+    : item.title === "Recycle bin"
+    ? "Recycle Bin"
+    : item.title
+}
+                              
+>>>>>>> ESSAMUSAIBUPDATED2
                             </span>
                           </React.Fragment>
                         ))}
                       </div>
                     ) : (
+<<<<<<< HEAD
                       <div style={{ color: "#666", fontSize: "14px" }}>
                         Select a folder to view files
                       </div>
@@ -2720,15 +7055,2513 @@ return (
     {/* sourish 30/9/25 two div added*/}
     </div>
     </div>
+=======
+                      <div style={{ color: "#666", fontSize: "14px" }}>Select a folder to view files</div>
+                    )}
+                  </h2>
+
+ {activeComponent ? (
+    <div className="create-folder-section" style={{ padding: "8px 0px", background: "#fff", borderRadius: "8px" }}>
+         <div style={{ marginTop: "-45px", float:'right', width:'100%',textAlign:"right" }}>
+        <button style={{background:'#fff'}} className="me-2 mt-0 " id="CreateFolderInsideSharePoint">
+          <span className="mb-1 mt-2" data-tooltip="Return">
+ <img src={require('../assets/backn.png')} alt="Create" onClick={() => setActiveComponent(false)}
+/>
+            </span></button>
+        
+ 
+      </div>
+     
+      {/* --- Path Display --- */}
+      <div style={{ margin: "0px 17px 17px 17px", padding: "10px", gap:'10px', backgroundColor: "#f9f9f9", display:'flex', justifyContent:'left', alignItems:'center', borderLeft: "4px solid #0078d4" }}>
+        <h4 className="font-16 text-dark fw-bold m-0 mb-0">This Folder will create under :</h4>
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", fontSize: "14px", color: "#333" }}>
+          {breadcrumbs.length > 0 ? (
+            breadcrumbs.map((item, index) => (
+              <React.Fragment key={item.key}>
+                {index > 0 && <span style={{ margin: "0 8px", color: "#999" }}>›</span>}
+                <span style={{ fontWeight: index === breadcrumbs.length - 1 ? "600" : "normal" }}>
+                  {item.title}
+                </span>
+              </React.Fragment>
+            ))
+          ) : (
+            <span>Root</span>
+          )}
+        </div>
+      </div>
+
+      {/* --- Create Folder Component --- */}
+      <CreateFolder
+        OthProps={{
+          "Entity": `${currentSiteUrl.split("/sites/")[1]?.split("/")[1] || ""}`,
+          "Entityurl": currentSiteUrl,
+          "siteID": currentSiteUrl,
+          "Devision": "",
+          "Department": "",
+          "DocumentLibrary": selectedCurrentNode?.type === "site" || selectedCurrentNode?.type === "subsite" ? "" : selectedCurrentNode?.title,
+          "Folder": currentFolderPath,
+          "folderpath": `/sites/${currentSiteUrl.split("/sites/")[1] || ""}/${currentFolderPath}`,
+          "IsFolderDeligationUser": "false",
+        }}
+        context={context}
+      />
+
+      {/* --- Back Button --- */}
+  
+    </div>
+  ) : showUploadPanel ? (
+    /* --- SECTION 2: UPLOAD FILE VIEW (Hides everything else) --- */
+    <UploadFile
+    // srs 30/1/26
+    sp={sp}
+      currentfolderpath={{
+        "Entity": `${currentSiteUrl.split("/sites/")[1]?.split("/")[1] || ""}`,
+        "Entityurl": currentSiteUrl,
+        // "siteID": currentSiteUrl,
+        // srs 19/2/26
+        "siteID": context.pageContext.site.id.toString(),
+        "Devision": "",
+        "Department": "",
+        "DocumentLibrary": selectedCurrentNode?.type === "site" || selectedCurrentNode?.type === "subsite" ? "" : selectedCurrentNode?.title,
+        "Folder": currentFolderPath,
+        "folderpath": `/sites/${currentSiteUrl.split("/sites/")[1] || ""}/${currentFolderPath}`,
+        "IsFolderDeligationUser": "false",
+      }}
+      onReturnToMain={() => setShowUploadPanel(false)} 
+    />
+  ) : (
+    <>
+      {/* srs 29/1/26 */}
+              {!showPreviewModal && (
+                <>
+
+                  {/* Upload File Button - Only shown when in a folder/library */}
+
+
+                  {/* sourish 3/10/25 */}
+                  {/* srs 29/1/26 moved the whole part on top*/}
+
+                  {/* Upload Panel */}
+                   {/* srs 29/1/26 moved the whole part on top*/}
+                  {/* {showUploadPanel && (
+                    <div
+                      style={{
+                        marginBottom: "20px",
+                        padding: "15px",
+                        backgroundColor: "#f5f5f5",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                      }}
+                    >
+                      <h3 style={{ fontSize: "14px", marginBottom: "10px" }}>Upload Files</h3>
+                      <input type="file" ref={fileInputRef} onChange={handleFileSelect} multiple style={{ display: "none" }} />
+                      <button type="button"
+                        onClick={triggerFileInput}
+                        style={{
+                          padding: "8px 15px",
+                          backgroundColor: "#0078d4",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          marginRight: "10px",
+                        }}
+                      >
+                        Choose Files
+                      </button>
+
+                      {selectedUploadFiles.length > 0 && (
+                        <div style={{ marginTop: "10px" }}>
+                          <h4 style={{ fontSize: "13px", marginBottom: "5px" }}>Selected Files:</h4>
+                          <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                            {selectedUploadFiles.map((file, index) => (
+                              <li
+                                key={index}
+                                style={{
+                                  padding: "5px 0",
+                                  fontSize: "13px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <span style={{ marginRight: "10px" }}>📄</span>
+                                <div>
+                                  <div>{file.name}</div>
+                                  {previewFileUrls[index] && (
+                                    <div
+                                      style={{
+                                        fontSize: "11px",
+                                        color: "#666",
+                                        marginTop: "2px",
+                                      }}
+                                    >
+                                      Preview:{" "}
+                                      <a href={previewFileUrls[index]} target="_blank" rel="noopener noreferrer">
+                                        View File
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                          <button type="button"
+                            onClick={uploadFiles}
+                            style={{
+                              padding: "8px 15px",
+                              backgroundColor: "#107c10",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginTop: "10px",
+                            }}
+                          >
+                            Upload Files to Destination
+                          </button>
+                          {uploadProgress > 0 && (
+                            <div style={{ marginTop: "10px" }}>
+                              <div
+                                style={{
+                                  width: "100%",
+                                  backgroundColor: "#e0e0e0",
+                                  borderRadius: "4px",
+                                  height: "20px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: `${uploadProgress}%`,
+                                    backgroundColor: "#0078d4",
+                                    height: "100%",
+                                    borderRadius: "4px",
+                                    transition: "width 0.3s",
+                                  }}
+                                />
+                              </div>
+                              <div
+                                style={{
+                                  textAlign: "center",
+                                  marginTop: "5px",
+                                  fontSize: "12px",
+                                }}
+                              >
+                                {Math.round(uploadProgress)}% Complete
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )} */}
+
+
+                  {/* File List - edited by ritik - 13/01/2026 - fixed Whenever we searched, the page would disappear if the file was not found.*/}
+                  {!showUploadPanel && (
+                    activeView === "browse" ? (
+                      <>
+                        {/* Search bar for Browse View */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            width: "260px",
+                            border: "1px solid #d1d1d1",
+                            borderRadius: "18px",
+                            padding: "6px 10px",
+                            backgroundColor: "#fff",
+                            marginBottom: "12px",
+                          }}
+                        >
+                          {/* 🔍 search icon  ritik 19/01/2026*/}
+                          <span
+                            onClick={() => {
+                              setSearchTerm(searchInput.trim()); // ✅ search yahan trigger hoga
+                              setCurrentPage(1);
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              color: "#666",
+                              fontSize: "14px",
+                              marginRight: "6px",
+                            }}
+                          >
+                            🔍
+                          </span>
+
+                          {/* ritik 19/01/2026 - search input box */}
+                          <input
+                            type="text"
+                            placeholder="Search"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            style={{
+                              border: "none",
+                              outline: "none",
+                              flex: 1,
+                              fontSize: "14px",
+                              background: "transparent",
+                            }}
+                          />
+
+
+                          {/* ✖ clear button fix Ritik 19/01/2026 */}
+
+
+                          {searchInput && (
+                            <span
+                              onClick={() => {
+                                setSearchInput("");
+                                setSearchTerm("");
+                                setCurrentPage(1);
+                              }}
+                              style={{
+                                cursor: "pointer",
+                                color: "#999",
+                                fontSize: "14px",
+                                marginLeft: "6px",
+                              }}
+                            >
+                              ✖
+                            </span>
+                          )}
+
+                        </div>
+
+
+
+                        {selectedFiles.length > 0 ? (
+                          <>
+                            {(() => {
+                              // Browse View Filter
+                              const browseFiltered = selectedFiles.filter((file) => {
+                                if (!searchTerm.trim()) return true;
+                                const term = searchTerm.toLowerCase();
+                                return (
+                                  (file.Name || "").toLowerCase().includes(term) ||
+                                  (file.FileLeafRef || "").toLowerCase().includes(term) ||
+                                  (file.ServerRelativeUrl || "").toLowerCase().includes(term)
+                                );
+                              });
+
+                              const start = (currentPage - 1) * pageSize;
+                              const end = start + pageSize;
+                              const paginatedBrowseFiles = browseFiltered.slice(start, end);
+
+                              return browseFiltered.length > 0 ? (
+                                <>
+                                  <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                                    {paginatedBrowseFiles.map((file, idx) => (
+                                      <li
+                                        key={file.Name || file.UniqueId || idx}
+                                        style={{
+                                          padding: "8px 0",
+                                          borderBottom: "1px solid #eee",
+                                          display: "flex",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <div
+                                          style={{ marginRight: "8px" }}
+                                          dangerouslySetInnerHTML={{
+                                            __html: createFileExtensionHtml(
+                                              getActualFileName(file)
+                                            ),
+                                          }}
+                                        />
+                                        <span style={{ fontSize: "14px" }}>
+                                          {file.Name || file.FileLeafRef}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+
+                                  {browseFiltered.length > pageSize && (
+                                    <div
+                                      style={{
+                                        margin: "10px 0",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "end",
+                                      }}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        style={{
+                                          marginRight: "10px",
+                                          padding: "5px 12px", marginTop:'0px',
+                                          borderRadius: "4px",
+                                          border: "1px solid #ccc",
+                                          background: currentPage === 1 ? "#eee" : "#1d4ed8",
+                                          cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                                        }}
+                                      >
+                                        Prev
+                                      </button>
+                                      <span style={{ margin: "0 10px" }}>
+                                        Page {currentPage} of {Math.ceil(browseFiltered.length / pageSize) || 1}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setCurrentPage((p) =>
+                                            p < Math.ceil(browseFiltered.length / pageSize) ? p + 1 : p
+                                          );
+                                        }}
+                                        disabled={currentPage === Math.ceil(browseFiltered.length / pageSize)}
+                                        style={{
+                                          marginLeft: "10px",
+                                          padding: "5px 12px",
+                                          borderRadius: "4px", marginTop:'0px',
+                                          border: "1px solid #ccc",
+                                          background:
+                                            currentPage === Math.ceil(browseFiltered.length / pageSize)
+                                              ? "#eee"
+                                              : "#1d4ed8",
+                                          cursor:
+                                            currentPage === Math.ceil(browseFiltered.length / pageSize)
+                                              ? "not-allowed"
+                                              : "pointer",
+                                        }}
+                                      >
+                                        Next
+                                      </button>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <div
+                                  style={{
+                                    color: "#666",
+                                    fontSize: "14px",
+                                    padding: "20px",
+                                    textAlign: "center",
+                                    marginTop: "20px",
+                                  }}
+                                >
+                                  {searchTerm.trim() !== ""
+                                    ? `No files found matching "${searchTerm}"`
+                                    : "No files in this folder"}
+                                </div>
+                              );
+                            })()}
+                          </>
+                        ) : (
+                          <div
+                            style={{
+                              color: "#666",
+                              fontSize: "14px",
+                              padding: "20px",
+                              textAlign: "center",
+                              marginTop: "20px",
+                            }}
+                          >
+                            No files in this folder
+                          </div>
+                        )}
+                      </>
+                    ) : null
+                  )}
+
+                  {/* Search bar for Quick Views */}
+                  {!showUploadPanel && activeView !== "browse" && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          width: "300px",
+                          border: "1px solid #dcdcdc",
+                          borderRadius: "22px",
+                          padding: "7px 12px",
+                          position:'absolute',top:'8px',
+                          backgroundColor: "#fff", right:'12px'
+                        }}
+                      >
+                        <input
+                          type="text"
+                          placeholder="Search files..."
+                          value={searchInput} className="searc_global"
+                          onChange={(e) => setSearchInput(e.target.value)}
+                          style={{
+                            border: "none",
+                            outline: "none",
+                            flex: 1,
+                            fontSize: "14px",
+                            background: "transparent",
+                          }}
+                        />
+
+                        {/* ✖ clear */}
+                        {searchInput && (
+                          <span
+                            onClick={() => {
+                              setSearchInput("");
+                              setSearchTerm("");
+                              setCurrentPage(1);
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              color: "#999",
+                              marginRight: "8px",
+                              fontSize: "14px",
+                            }}
+                          >
+                            ✖
+                          </span>
+                        )}
+
+                        {/* 🔍 search icon */}
+                        <span
+                          onClick={() => {
+                            setSearchTerm(searchInput.trim()); // ✅ SEARCH TRIGGER
+                            setCurrentPage(1);
+                          }}
+                          style={{
+                            color: "#666",
+                            fontSize: "15px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          🔍
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Views Grid/List */}
+                  {!showUploadPanel && activeView !== "browse" && (
+                    <>
+                      {paginatedFiles.length > 0 ? (
+                        <>
+                          {/* Grid View */}
+                          {activeLayout === "grid" && (
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(235px, 1fr))",
+                                gap: "10px", background:'#f1f1f194',
+                                marginBottom: "20px", padding:'12px'
+                              }}
+                            >
+                              {filesLoadedfromnode && paginatedFiles.length > 0 ? (
+                                paginatedFiles.map((file, idx) => (
+                                  <div
+                                    key={file.Id || file.FileUID || idx}
+                                    className="carddesign"
+                                  >
+                                    {/* File Content */}
+
+
+                                    {/* File Extension Badge */}
+                                    <div
+                                      dangerouslySetInnerHTML={{
+                                        __html: createFileExtensionHtml(getActualFileName(file)),
+                                      }}
+                                    />
+
+                                    {/* File Name */}
+                                    <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">
+                                      {getActualFileName(file)}
+                                    </div>
+
+
+
+
+
+
+
+                                    <div className="text-muted font-12">
+                                      {file.Length
+                                        ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
+                                        : ""}
+                                    </div>
+                                    <div className="text-muted font-12">
+                                      {file.TimeCreated
+                                        ? new Date(file.TimeCreated).toLocaleDateString()
+                                        : ""}
+                                    </div>
+
+                                    {/* Three-dot menu button */}
+                                    <div className="dotbutton">
+                                      <button className="action-btn2" type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
+                                        }}
+                                       
+                                      >
+                                        ⋮
+                                      </button>
+
+                                      {/* Context-specific menu */}
+                                      {menuOpenIdx === idx && (
+                                        <div
+                                          style={{
+                                            position: "absolute",
+                                            right: 0,
+                                            top: "28px",
+                                            background: "#fff",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "4px",
+                                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                            zIndex: 10,
+                                            minWidth: "160px",
+                                          }}
+                                        >
+                                          <ul className="internalbutton">
+                                            {/* Common actions for all views */}
+                                            <li>
+                                              <button type="button" className="newbuttontext"
+
+                                                onClick={() => {
+                                                  setPreviewFile(file);
+                                                  setShowPreviewModal(true);
+                                                }}
+                                              >
+                                                <span> <FontAwesomeIcon icon={faEye} /> </span> Preview File
+                                              </button>
+                                            </li>
+                                            {/* // addhyan 24/2/26 */}
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={async () => {
+                                                  await ArchivedFile(
+                                                    file,
+                                                    currentSiteUrl,
+                                                    context
+                                                  );
+                                                  setMenuOpenIdx(null);
+                                                }}
+ 
+                                              >
+                                                <span><FontAwesomeIcon icon={faTrashAlt} /></span> Archive
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={() => {
+                                                  // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                  handleAuditHistory(file);
+                                                  setMenuOpenIdx(null);
+                                                }}
+                                              >
+                                                <span> <FontAwesomeIcon icon={faFileAlt} /> </span> Audit History
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={() => {
+                                                  setModalFile(file);
+
+                                                  setShowVersionModal(true);
+                                                  setMenuOpenIdx(null);
+                                                }}
+                                              >
+                                                <span> <FontAwesomeIcon icon={faHistory} /> </span> Version History
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={async () => {
+                                                  await deleteFileFolder(
+                                                    file,
+                                                    currentSiteUrl,
+                                                    context
+                                                  );
+                                                  setMenuOpenIdx(null);
+                                                }}
+
+                                              >
+                                                <span> <FontAwesomeIcon icon={faTrashAlt} /> </span> Delete File
+                                              </button>
+                                            </li>
+                                            <li>
+                                              <button type="button"
+                                                className="newbuttontext"
+                                                onClick={async () => {
+                                                  const newFav = await toggleFavouriteDoc(
+                                                    file,
+                                                    currentSiteUrl,
+                                                    context
+                                                  );
+                                                  setMenuOpenIdx(null);
+
+                                                  // Update local state to reflect new favourite status
+                                                  setSelectedFiles((prev) =>
+                                                    prev.map((f) =>
+                                                      f.UniqueId === file.UniqueId
+                                                        ? { ...f, IsFavourite: newFav }
+                                                        : f
+                                                    )
+                                                  );
+                                                }}
+                                              >
+                                                <span> <FontAwesomeIcon icon={faHearts} />  </span>{" "}
+                                                {file.IsFavourite
+                                                  ? "Unmark Favourite"
+                                                  : "Mark as Favourite"}
+                                              </button>
+                                            </li>
+
+                                          </ul>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))
+                              ) :
+                                // this is my request and my favourite my recucle bin files ternary operator
+                                (
+                                  paginatedFiles.map((file, idx) => (
+                                    <div
+                                      key={file.Id || file.FileUID || idx}
+                                      className="carddesign"
+
+                                    >
+                                      {/* Card Content */}
+                                      {
+                                        activeView === "My request" ? (
+                                          <>
+
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }}className="mb-1 mt-1 onelinetrim">{file.FileName}</div>
+                                           <div className="d-flex align-items-center justify-content-start gap-3 mb-1">  <div className="text-muted font-12"> <FontAwesomeIcon icon={faShoppingBag}  className="me-1" /> {file.FileSize}</div>
+                                            <div className="text-muted font-12 gap-1"> <FontAwesomeIcon icon={faCalendar}  className="me-1"/> 
+    {new Date(file.Created).toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  })}
+</div></div>
+ 
+                                            <div style={{borderTop:'1px solid #f1f5f9', paddingTop:'10px'}} className="d-flex align-items-center justify-content-between">
+                                            <div className="text-muted font-12"><FontAwesomeIcon icon={faFolder} />  {file.DocumentLibraryName}</div>
+                                            {file.Status=== "Pending" && (
+                                              <div className=" font-12 status_new" style={{ backgroundColor: '#fffbeb', color:'#b45309', border:'1px solid #fde68a' }}><FontAwesomeIcon icon={faClock} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                            {file.Status=== "Auto Approved" && (
+                                              <div className="text-success font-12 status_new" style={{ backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                            {file.Status=== "Rejected" && (
+                                              <div className="text-danger font-12 status_new" style={{ backgroundColor: '#FDECEA', color:'#b45309', border:'1px solid #fde68a' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                             {file.Status=== "Rework" && (
+                                              <div className="text-danger font-12 status_new" style={{ backgroundColor: '#fef2f2', color:'#b91c1c', border:'1px solid #fecaca' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }
+                                            {file.Status=== "Approved" && (
+                                              <div className="text-success font-12 status_new" style={{ backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>  
+                                              )
+                                              
+                                            }  </div>
+                                            {/* <div className="text-muted font-12">{file.Status}</div> */}
+                                          </>
+                                        ) : activeView === "My favourite" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+
+
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : activeView === "My Folders" ? (
+                                         <>
+                                          {console.log("Addhyan file in my folders",file)}
+                                          {file.IsLibrary ? <div style={{ fontWeight: 600, fontSize: "15px", display:'flex', alignItems:'center',gap:'10px' }}>
+                                           <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div> {file.DisplayName} <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-US", {
+                                                                        month: "short",
+                                                                     day: "2-digit",
+                                                                      year: "numeric",
+                                                                   })}</div></div></div> : <div style={{ fontWeight: 600, fontSize: "15px", display:'flex', alignItems:'center',gap:'10px'  }}> <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div>  {file.FolderName}   <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-US", {
+                                                                        month: "short",
+                                                                     day: "2-digit",
+                                                                      year: "numeric",
+                                                                   })}</div></div> </div>}
+                                            {/* <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.FolderName}</div> */}
+                                            {/* <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.documentLibraryName}</div> */}
+                                        
+ 
+                                        
+                                            <div  className="text-muted font-14 mt-1 mb-1">{file.SiteTitle}</div>
+                                             <div style={{ fontSize: "14px", display:'flex', alignItems:'center',gap:'10px', borderTop:'1px solid #f1f5f9', paddingTop:'10px',  justifyContent:'space-between' }}>  <div> <b>Type: </b> {file.IsFolder ? "subFolder" : "Root Folder"}</div>
+                                            <div className={file.IsPrivate ? "text-danger badge1" : "text-success badge1"} style={{
+    backgroundColor: file.IsPrivate ? "#FDECEA" : "#E6F4EA" }} ><FontAwesomeIcon
+                                                        icon={file.IsPrivate ? faLock : faGlobeAsia}
+                                                         className="me-1"
+                                                />{file.IsPrivate ? "Private" : "Public"}</div> </div> 
+                                         
+                                           
+ 
+                                          </>
+
+                                        ) : activeView === "Share with me" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : activeView === "Share with other" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : activeView === "Recycle bin" ? (
+                                          <>
+                                            <div dangerouslySetInnerHTML={{
+                                              __html: createFileExtensionHtml(getActualFileName(file))
+                                            }} />
+                                            <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
+                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                          </>
+                                        ) : null
+                                      }
+
+                                      {/* Three-dot Menu */}
+                                      <div className="dotbutton">
+                                        <button className="" type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
+                                          }}
+                                      
+                                        >
+                                          ⋮
+                                        </button>
+
+                                        {menuOpenIdx === idx && (
+                                          <div
+
+                                            className="three-dot-menu"
+                                            style={{
+                                              position: "absolute",
+                                              right: 0,
+                                              top: "30px",
+                                              background: "#fff",
+                                              border: "1px solid #ddd",
+                                              borderRadius: "4px",
+                                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                              zIndex: 10,
+                                              minWidth: "180px",
+                                            }}
+                                          >
+                                            <ul className="internalbutton">
+
+                                              {/* Menu for My Request */}
+                                              {activeView === "My request" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+                                                  <li><button onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                    handleAuditHistory(file);
+                                                    setMenuOpenIdx(null);
+                                                  }}><FontAwesomeIcon icon={faFileAlt} /> Audit History</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareFile(file);
+                                                    setShowShareModal(true);
+                                                  }}><FontAwesomeIcon icon={faShareAlt} /> Share</button></li>
+                                                  <li><button type="button" onClick={() => {
+
+
+                                                    setDirectDownloadFile(file); // new state for direct downloader
+                                                    // ritik 
+                                                    setTimeout(() => setDirectDownloadFile(null), 3000);
+                                                    setMenuOpenIdx(null);
+                                                  }}><FontAwesomeIcon icon={faDownload} /> Download</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setModalFile(file);
+                                                    setShowVersionModal(true);
+                                                    setMenuOpenIdx(null);
+                                                  }}><FontAwesomeIcon icon={faHistory} /> Version History</button></li>
+
+                                                  {/* Addhyan 19/2/26 */}
+{/* 
+                                                  <li>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        setMenuOpenIdx(null);
+                                                        handleRenameFile(file);
+                                                      }}
+                                                    >
+                                                      <FontAwesomeIcon icon={faEdit} /> Rename File
+                                                    </button>
+                                                  </li> */}
+
+
+                                                </>
+                                              )}
+
+                                              {/* Menu for My Favourite */}
+                                              {activeView === "My favourite" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}><FontAwesomeIcon icon={faEye} />  Preview File</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareFile(file);
+                                                    setShowShareModal(true);
+                                                  }}><FontAwesomeIcon icon={faFileAlt} /> Share</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    // handleUnmarkFavourite(file);
+                                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                                                    // Addhyan 19/2/26
+                                                    // toggleFavourite(file);
+                                                    toggleFavourite(file, currentSiteUrl, context)
+
+                                                    setMenuOpenIdx(null);
+                                                  }}><FontAwesomeIcon icon={faHearts} /> Unmark as Favourite</button></li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for My Folders */}
+                                              {activeView === "My Folders" && (
+                                                <>
+                                                  {
+                                                    !file.IsFolder && (
+                                                      <>
+                                                        {/* <li><button type="button" onClick={() => { }}
+                                                        >Manage WorkFlow </button></li> */}
+
+                                                        <li>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                              setSelectedWorkflowFolder({
+                                                                SiteID: file.SiteID,
+                                                                SiteTitle: file.SiteTitle,
+                                                                SiteUrl: file.SiteUrl,              // ✅ MUST
+                                                                DocumentLibraryName: file.DocumentLibraryName,
+                                                                file: file,                         // Add file object
+                                                              });
+                                                              setShowManageWorkflow(true);
+                                                            }}
+                                                          >
+                                                          <img src={require("../assets/managework.svg")} alt="userlock" />    Manage WorkFlow
+                                                          </button>
+                                                        </li>
+
+                                                        {/* Metadata Modal Trigger Ritik 29/01/2026 */}
+
+                                                        <li><button type="button" onClick={() => {
+                                                          setMenuOpenIdx(null);
+                                                          setSelectedFileForMetadata(file);
+                                                          setShowMetadataModal(true);
+                                                        }}>  <img src={require("../assets/metadata.svg")} alt="userlock" /> Add MetaData</button></li>
+
+                                                         {/* srs 20/2/26 */}
+                                                         <li><button type="button" onClick={() => {
+                                                          setMenuOpenIdx(null);
+                                                          setSelectedFileForRenameMetadata(file);
+                                                          setShowRenameMetadataModal(true);
+                                                        }}>  <img src={require("../assets/Rename-Meta-Data.svg")} alt="userlock" /> Rename Meta Data</button></li>
+
+                                                      </>
+                                                    )
+
+
+
+                                                  }
+
+
+
+
+
+
+
+
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setModalFile(file);
+                                                    setMenuOpenIdx(null);
+                                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                    deleteFolder(file); // sourish 20/8/25
+                                                  }}
+                                                  ><img src={require("../assets/deletefile.svg")} alt="deletefile" /> Delete Folder</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setModalFile(file);
+                                                    setRenameValue(file?.FolderName || ""); // prefill with old name
+                                                    setRenameModalOpen(true);
+                                                    setMenuOpenIdx(null);
+                                                  }}> <img src={require("../assets/rename.svg")} alt="rename" /> Rename Folder</button></li>
+                                                  <li>
+                                                    <button type="button" onClick={() => {
+                                                      const pageBefore = currentPage;
+                                                      setMenuOpenIdx(null);
+                                                      window.managePermission?.(file);
+                                                      setCurrentPage(pageBefore);
+                                                    }}>
+                                                      <img src={require("../assets/userlock.svg")} alt="userlock" />  Manage Permission
+                                                    </button>
+                                                  </li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for Share with me */}
+                                              {activeView === "Share with me" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+
+                                                    setDirectDownloadFile(file); // new state for direct downloader
+                                                    // ritik 
+                                                    setTimeout(() => setDirectDownloadFile(null), 3000);
+                                                    setMenuOpenIdx(null);
+                                                  }}><FontAwesomeIcon icon={faDownload} /> Download File</button></li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for Share with other */}
+                                              {activeView === "Share with other" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+                                                  <li><Button
+                                                    variant="warning"
+                                                    onClick={() => {
+                                                      setShowRevokeModal(true);
+                                                      setAcessFile(file); // file = your folder/file object
+                                                    }}
+                                                  >
+                                                     <img src={require("../assets/revokeacc.svg")} alt="revoke" /> Revoke Access
+                                                  </Button></li>
+                                                </>
+                                              )}
+
+                                              {/* Menu for Recycle Bin */}
+                                              {activeView === "Recycle bin" && (
+                                                <>
+                                                  <li><button type="button" onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setPreviewFile(file);
+                                                    setShowPreviewModal(true);
+                                                  }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+                                                  <li><button type="button" onClick={async () => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    await handleUndoDelete(file); setMenuOpenIdx(null);
+                                                  }}
+                                                  ><img src={require("../assets/undo.svg")} alt="rename" /> Undo (Restore)</button></li>
+                                                </>
+                                              )}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+
+                                  )
+
+                                )}
+
+                            </div>
+                          )}
+
+                          {activeLayout === "list" && (
+                            <div>
+                              <table className="mtablenew">
+                                <thead>
+                                  <tr >
+                                    <th style={{ minWidth: '50px', maxWidth: '50px', }}>S.No</th>
+                                    <th style={{ minWidth: '250px', maxWidth: '250px', }}>Name</th>
+                                    {/* <th >Size</th> */}
+                                    <th>Size</th>
+                                    {/* <th>Library</th> */}
+                                    <th>
+                                      {paginatedFiles.some((f) => f.DocumentLibraryName)
+                                        ? "Library"
+                                        : "Created Date"}
+                                    </th>
+                                    {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+                                      <th style={{ minWidth: '113px', maxWidth: '113px', }}>Status</th>
+                                    )}
+                                    {/* <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th> */}
+                                    <th style={{ textAlign: "center" }}>Action</th> {/* New column */}
+                                  </tr>
+                                </thead>
+
+                                <tbody>
+                                  {paginatedFiles.map((file, idx) => (
+                                    <tr key={file.Id || idx}>
+                                      <td style={{ minWidth: '50px', maxWidth: '50px', }}> <span className="indexdesign">{file.SNo || idx + 1} </span> </td>
+                                      {/* <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td> */}
+                                      {/* <td style={{ minWidth: '250px', maxWidth: '250px', }}>{file.FileName || file.Name || file.FolderName}</td> */}
+                                      {/* <td >{file.FileSize}</td> */}
+                                     
+<td style={{ minWidth: '250px', maxWidth: '250px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <div
+      dangerouslySetInnerHTML={{
+        __html: createFileExtensionHtml(
+          file.FileName || file.Name || file.FolderName || "",
+          undefined,  // bgColor parameter (optional)
+          true        // ✅ isListView = true
+        ),
+      }}
+    />
+    <span>{file.FileName || file.Name || file.FolderName}</span>
+  </div>
+</td>
+                                      <td>
+                                        {file.FileSize
+                                          ? file.FileSize
+                                          : file.Length
+                                            ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
+                                            : "-"}
+                                      </td>
+                                      {/* <td >{file.DocumentLibraryName}</td> */}
+                                      <td>
+                                        {file.DocumentLibraryName
+                                          ? file.DocumentLibraryName
+                                          : file.TimeCreated
+                                            ? new Date(file.TimeCreated).toLocaleDateString()
+                                            : "-"}
+                                      </td>
+                                      {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
+                                     {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+                                        <td style={{ minWidth: '113px', maxWidth: '113px', }}>
+                                          {file.Status === "Pending" && (
+                                            <div className="font-12 text-center" style={{ backgroundColor: '#fffbeb', color:'#b45309', border:'1px solid #fde68a', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faClock} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Auto Approved" && (
+                                            <div className="text-success text-center font-12" style={{backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Rejected" && (
+                                            <div className="text-danger text-center font-12" style={{ backgroundColor: 'rgb(253, 236, 234)', border:'1px solid rgb(253, 230, 138)', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Rework" && (
+                                            <div className="text-danger text-center font-12" style={{ backgroundColor: '#fef2f2',color:'#b91c1c', border:'1px solid #fecaca', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faRedo} /> {file.Status}</div>
+                                          )}
+                                          {file.Status === "Approved" && (
+                                            <div className="text-success text-center font-12" style={{ backgroundColor: '#f0fdf4', color:'#15803d', border:'1px solid #bbf7d0', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faCheckCircle} /> {file.Status}</div>
+                                          )}
+                                          {!file.Status || (file.Status !== "Pending" && file.Status !== "Auto Approved" && file.Status !== "Rejected" && file.Status !== "Rework" && file.Status !== "Approved") && (
+                                            <div className="text-muted text-center font-12">{file.Status || ""}</div>
+                                          )}
+                                        </td>
+                                      )}
+                                      <td style={{ textAlign: "center" }}>
+                                        <button type="button" className="dotbutton2"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMenuOpenIdx(menuOpenIdx === idx ? null : idx);
+                                          }}
+
+                                        >
+                                          ⋮
+                                        </button>
+
+                                        {menuOpenIdx === idx && (
+                                          <div
+                                            style={{
+                                              position: "absolute",
+                                              right: 0,
+                                              top: "20px",
+                                              background: "#fff",
+                                              border: "1px solid #ddd",
+                                              borderRadius: "4px",
+                                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                              zIndex: 10,
+                                              minWidth: "140px",
+                                            }}
+                                          >
+                                            <ul className="internalbutton">
+  {/* --- SYNCED DYNAMIC LOGIC FOR ALL MODULES --- */}
+  {filesLoadedfromnode && 
+   activeView !== "My request" && 
+   activeView !== "My favourite" && 
+   activeView !== "My Folders" && 
+   activeView !== "Share with me" && 
+   activeView !== "Share with other" && 
+   activeView !== "Recycle bin" ? (
+    <>
+      {/* Browsing Menu Logic (Map 1 Sync) */}
+      <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+      <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} /> Audit History</button></li>
+      <li><button type="button" onClick={() => { setModalFile(file); setShowVersionModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faHistory} /> Version History</button></li>
+      <li><button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faTrashAlt} /> Delete File</button></li>
+      <li>
+        <button type="button" onClick={async () => { 
+          const newFav = await toggleFavouriteDoc(file, currentSiteUrl, context); 
+          setSelectedFiles((prev) => prev.map((f) => f.UniqueId === file.UniqueId ? { ...f, IsFavourite: newFav } : f));
+          setMenuOpenIdx(null);
+        }}><FontAwesomeIcon icon={faHearts} /> {file.IsFavourite ? "Unmark Favourite" : "Mark as Favourite"}</button>
+      </li>
+    </>
+  ) : (
+    <>
+      {/* Tab-Specific Menu Logic (Map 2 Sync) */}
+      {activeView === "My request" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+          <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} />  Audit History</button></li>
+          <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}> <FontAwesomeIcon icon={faShareAlt} />  Share</button></li>
+          {/* <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faDownload} />  Download</button></li> */}
+          {/* ririk  */}
+          <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); setTimeout(() => setDirectDownloadFile(null), 3000);}}><FontAwesomeIcon icon={faDownload} />  Download</button></li>
+          <li><button type="button" onClick={() => { setModalFile(file); setShowVersionModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faHistory} /> Version History</button></li>
+          {/* Addhyan 19/2/26 */}
+          {/* <li><button type="button" onClick={() => { handleRenameFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEdit} />  Rename File</button></li> */}
+        </>
+      )}
+
+      {activeView === "My favourite" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} />  Preview File</button></li>
+          <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faShareAlt} /> Share</button></li>
+          {/* <li><button type="button" onClick={() => { toggleFavourite(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faHearts} /> Unmark as Favourite</button></li> */}
+          {/* Addhyan 19/2/26 */}
+          <li><button type="button" onClick={() => { toggleFavourite(file, currentSiteUrl, context); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faHearts} /> Unmark as Favourite</button></li>
+        </>
+      )}
+
+      {activeView === "My Folders" && (
+        <>
+          {!file.IsFolder && (
+            <>
+              <li><button type="button" onClick={() => { setSelectedWorkflowFolder({ SiteID: file.SiteID, SiteTitle: file.SiteTitle, SiteUrl: file.SiteUrl, DocumentLibraryName: file.DocumentLibraryName, file: file }); setShowManageWorkflow(true); setMenuOpenIdx(null); }}><img src={require("../assets/managework.svg")} alt="userlock" /> Manage WorkFlow</button></li>
+              <li><button type="button" onClick={() => { setSelectedFileForMetadata(file); setShowMetadataModal(true); setMenuOpenIdx(null); }}> <img src={require("../assets/metadata.svg")} alt="userlock" /> Add MetaData</button></li>
+              {/* srs 20/2/26 */}
+              <li><button type="button" onClick={() => {
+                                                          setMenuOpenIdx(null);
+                                                          setSelectedFileForRenameMetadata(file);
+                                                          setShowRenameMetadataModal(true);
+                                                        }}>  <img src={require("../assets/Rename-Meta-Data.svg")} alt="userlock" /> Rename Meta Data</button></li>
+            </>
+          )}
+          <li><button type="button" onClick={() => { setModalFile(file); deleteFolder(file); setMenuOpenIdx(null); }}><img src={require("../assets/deletefile.svg")} alt="deletefile" /> Delete Folder</button></li>
+          <li><button type="button" onClick={() => { setModalFile(file); setRenameValue(file?.FolderName || ""); setRenameModalOpen(true); setMenuOpenIdx(null); }}><img src={require("../assets/rename.svg")} alt="rename" /> Rename Folder</button></li>
+          <li><button type="button" onClick={() => { window.managePermission?.(file); setMenuOpenIdx(null); }}><img src={require("../assets/userlock.svg")} alt="userlock" /> Manage Permission</button></li>
+        </>
+      )}
+
+      {activeView === "Share with me" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+          <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faTrashAlt} /> Download File</button></li>
+        </>
+      )}
+
+      {activeView === "Share with other" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+          <li><Button variant="warning" size="sm" onClick={() => { setAcessFile(file); setShowRevokeModal(true); setMenuOpenIdx(null); }}><img src={require("../assets/undo.svg")} alt="rename" /> Revoke Access</Button></li>
+        </>
+      )}
+
+      {activeView === "Recycle bin" && (
+        <>
+          <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
+          <li><button type="button" onClick={async () => { await handleUndoDelete(file); setMenuOpenIdx(null); }}><img src={require("../assets/undo.svg")} alt="rename" />  Undo (Restore)</button></li>
+        </>
+      )}
+    </>
+  )}
+</ul>
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+
+                              </table>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div
+                          style={{
+                            color: "#666",
+                            fontSize: "14px",
+                            padding: "20px",
+                            textAlign: "center",
+                            marginTop: "20px",
+                          }}
+                        >
+                          {searchTerm.trim() !== ""
+                            ? `No records found matching "${searchTerm}"`
+                            : "No files found in this view"}
+                        </div>
+                      )}
+                      {/* create Folder modal */}
+                      <Modal show={activeComponent} onHide={() => setActiveComponent(false)} className='filemodal' size="lg" centered container={() => document.getElementById('filelistcontainer')} backdrop="static">
+                        <Modal.Header closeButton>
+                          <Modal.Title > <h4 className='font-16 text-dark fw-bold mb-1'>This Folder will create under: <h2
+                            style={{
+                              fontSize: "16px",
+                              fontWeight: "600",
+                              marginBottom: "15px",
+                              color: "#333",
+                              paddingBottom: "5px",
+                              borderBottom: "1px solid #eee",
+                              paddingRight: "100px", // Make space for upload button
+                            }}
+                          >
+                            {breadcrumbs.length > 0 ? (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                {breadcrumbs.map((item, index) => (
+                                  <React.Fragment key={item.key}>
+                                    {index > 0 && (
+                                      <span
+                                        style={{
+                                          margin: "0 8px",
+                                          color: "#999",
+                                          fontSize: "14px",
+                                        }}
+                                      >
+                                        ›
+                                      </span>
+                                    )}
+                                    <span
+                                      className="breadcrumb-item"
+                                      // onClick={() => handleBreadcrumbClick(item)}
+                                      style={{
+                                        cursor: "pointer",
+                                        color:
+                                          "#333",
+                                        // color:
+                                        // index === breadcrumbs.length - 1 ? "#333" : "#0066cc",
+                                        fontWeight:
+                                          index === breadcrumbs.length - 1 ? "600" : "normal",
+                                        fontSize: "14px",
+                                        padding: "2px 5px",
+                                        borderRadius: "3px",
+                                      }}
+                                    >
+                                      {item.title}
+                                    </span>
+                                  </React.Fragment>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ color: "#666", fontSize: "14px" }}>
+                                Select a folder to view files
+                              </div>
+                            )}
+                          </h2></h4>
+                            {/* <p className='text-muted font-14 mb-0 fw-400'>Below are the attachment details for Memorandum
+              </p> */}
+
+                          </Modal.Title>
+
+
+                        </Modal.Header>
+                        <Modal.Body className="" id="style-5">
+
+                          <>
+
+                            {activeComponent && (
+                              <CreateFolder
+                                OthProps={{
+                                  "Entity": `${currentSiteUrl.split("/sites/")[1].split("/")[1]}`,
+                                  "Entityurl": currentSiteUrl,
+                                  "siteID": currentSiteUrl,
+                                  "Devision": "",
+                                  "Department": "",
+                                  // "DocumentLibrary": currentFolderPath,
+                                  "DocumentLibrary": selectedCurrentNode.type === "site" || selectedCurrentNode.type === "subsite" ? "" : selectedCurrentNode.title,
+                                  "Folder": currentFolderPath,
+                                  "folderpath": `/sites/${currentSiteUrl.split("/sites/")[1]}/${currentFolderPath}`,
+                                  "IsFolderDeligationUser": "false",
+                                }}
+                                context={context}
+                              // onReturnToMain={handleReturnToMain}
+                              />
+                            )}
+
+                          </>
+                          {/* </>
+              )
+              } */}
+
+                        </Modal.Body>
+
+                      </Modal>
+                      {/* // sourish 21/8/25 */}
+                      {renameModalOpen && (
+  <div
+    style={{
+      position: "absolute",  // ✅ fixed se absolute
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+  >
+                          <div
+                            style={{
+                              background: "#fff",
+                              padding: "20px",
+                              borderRadius: "10px",
+                              width: "320px",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "12px",
+                            }}
+                          >
+                            <h3 style={{ margin: 0 }}>Rename Folder</h3>
+                            <input
+                              type="text"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              style={{
+                                width: "100%",
+                                padding: "8px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc",
+                              }}
+                            />
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                gap: "10px",
+                                marginTop: "10px",
+                              }}
+                            >
+                              <button
+                                style={{
+                                  padding: "6px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #ccc",
+                                  background: "#f5f5f5",
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => setRenameModalOpen(false)}
+                              >
+                                Cancel
+                              </button>
+                              {/* <button
+                                style={{
+                                  padding: "6px 12px",
+                                  borderRadius: "6px",
+                                  border: "none",
+                                  background: "#0078d4",
+                                  color: "#fff",
+                                  cursor: "pointer",
+                                }}
+                                onClick={renameFolder}
+                              >
+                                Rename
+                              </button> */}
+
+                              <button
+  style={{
+    padding: "6px 12px",
+    borderRadius: "6px",
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+  }}
+  onClick={renameFolder}
+>
+<img src={require("../assets/submit-new1.png")} alt="Rename" style={{ height: "24px" }} />
+</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+
+                      {/* srs 20/2/26 */}
+{showRenameMetadataModal && (
+  <div
+    style={{
+      position: "absolute", // Changed from fixed to absolute to match Rename Folder
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      background: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+  >
+    <div
+      className="blur-background"
+      style={{
+        background: "#fff",
+        padding: "30px",
+        borderRadius: "20px",
+        width: "450px", // You can reduce this to "320px" if you want the exact same width as the folder modal
+        boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+        position: "relative",
+      }}
+    >
+      {/* Red Close Button */}
+      <button
+        onClick={() => setShowRenameMetadataModal(false)}
+        style={{
+          position: "absolute",
+          top: "15px",
+          right: "15px",
+          width: "30px",
+          height: "30px",
+          borderRadius: "50%",
+          border: "2px solid #ec1c24",
+          background: "#fff",
+          color: "#ec1c24",
+          fontSize: "20px",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          padding: "0",
+          lineHeight: "1"
+        }}
+      >
+        &times;
+      </button>
+
+      <h3 style={{ 
+        marginTop: 0, 
+        textAlign: "center", 
+        fontSize: "22px", 
+        fontWeight: "500",
+        color: "#333",
+        borderBottom: "1px solid #eee",
+        paddingBottom: "15px"
+      }}>
+        Rename Meta Columns
+      </h3>
+
+      <div style={{ maxHeight: "300px", overflowY: "auto", marginTop: "15px", paddingRight: "5px" }}>
+       {loadingColumns ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+                Processing metadata...
+            </div>
+        ) : (
+          existingColumns.map((column, index) => (
+            <div key={column.ID} style={{ marginBottom: "20px" }}>
+              <label style={{ 
+                display: "block", 
+                fontWeight: "500", 
+                marginBottom: "8px", 
+                fontSize: "14px",
+                color: "#555" 
+              }}>
+                Column {index + 1} ({column.ColumnName})
+              </label>
+              <input
+                type="text"
+                value={column.IsRename || column.ColumnName || ""}
+                onChange={(e) => {
+                  const updated = [...existingColumns];
+                  updated[index].IsRename = e.target.value;
+                  setExistingColumns(updated);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "14px",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  boxSizing: "border-box"
+                }}
+              />
+            </div>
+          ))
+        )}
+      </div>
+
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        gap: "15px", 
+        marginTop: "30px" 
+      }}>
+        <button type="button"
+          onClick={() => setShowRenameMetadataModal(false)}
+          style={{
+            background: "#cccccc",
+            color: "#fff",
+            border: "none",
+            padding: "10px 30px",
+            borderRadius: "6px",
+            fontSize: "16px",
+            fontWeight: "500",
+            cursor: "pointer",
+            minWidth: "120px"
+          }}
+        >
+          Cancel
+        </button>
+        <button type="button"
+          onClick={handleSaveRename}
+          style={{
+            background: "#28a745",
+            color: "#fff",
+            border: "none",
+            padding: "10px 30px",
+            borderRadius: "6px",
+            fontSize: "16px",
+            fontWeight: "500",
+            cursor: "pointer",
+            minWidth: "120px"
+          }}
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+                      {/* download component */}
+                      <DirectDownloader
+                        file={directDownloadFile}
+                        context={context}
+                        // trigger={true}
+                        trigger={!!directDownloadFile}  // Ritik added 23/2/26
+                      />
+
+
+
+
+                      {/*revoke modal*/}
+                      <Revoke
+                                  show={showRevokeModal}
+                        selectedFolder={revoke}
+                        context={context}
+                        onClose={() => setShowRevokeModal(false)}
+                        onRevoke={(userId: string) => {
+                          console.log("Revoked user ID:", userId);
+                          alert(`Access revoked for user ID: ${userId}`);
+                        }}
+                      />
+
+                      {/* version history */}
+                      <VersionHistoryModal
+                        show={showVersionModal}
+                        file={modalFile}
+                        context={context}
+                        onClose={() => setShowVersionModal(false)}
+                      />
+
+                      {/* share modal */}
+                      <ShareModal
+                                  show={showShareModal}
+                        
+                        file={shareFile}
+                        context={context}
+                        onClose={() => {
+                          setShowShareModal(false);
+                          setShareFile(null);
+                        }}
+                        currentUserEmail={(context.pageContext as any)?.user?.email || ""}
+                        currentUserTitle={context.pageContext.user.displayName || ""}
+                        currentSiteUrl={currentSiteUrl}
+                      />
+
+
+
+
+                      {/* aman code manage folder permission */}
+                      {/* === Step 1 Popup === */}
+                      {/* {showPermissionModal && (
+                        <Modal show={showPermissionModal} onHide={() => setShowPermissionModal(false)} container={() => document.getElementById('filelistcontainer')}>
+                    
+                          <Modal.Header closeButton>
+                            <Modal.Title>Set Permission</Modal.Title>
+                          </Modal.Header>
+                          <Modal.Body>
+                            <div style={{ marginBottom: 10 }}>
+                              Set permissions for:{" "}
+                              <strong>{selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || "Selected Folder"}</strong>
+                            </div>
+                            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                              <button
+                                onClick={() => setShowPermissionModal(false)}
+                                style={{ padding: "6px 10px", border: "1px solid #ccc", borderRadius: 4, background: "#fff" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  const pageBefore = currentPage;
+                                  setShowPermissionModal(false);
+                                  await loadAndOpenManagePermission();
+                                  setCurrentPage(pageBefore);
+                                }}
+                                style={{ padding: "6px 10px", border: "1px solid #0b66c3", borderRadius: 4, background: "#0b66c3", color: "#fff" }}
+                              >
+                                Set Permission
+                              </button>
+                            </div>
+                          </Modal.Body>
+                        </Modal>
+                      )} */}
+
+                      {/* // Ritik 20/2/26 for manage permission folder */}
+                      {/* model code for folder permission manage added by Ritik 20/02/2026 */}
+                     {/* ===== MANAGE FOLDER PERMISSION MODAL ===== */}
+{showPermissionModal && selectedFolder && (
+  <Modal
+    show={showPermissionModal}
+    onHide={() => { setShowPermissionModal(false); setTogglePermission(undefined); }}
+    size="xl"
+    container={() => document.getElementById('filelistcontainer')}
+    backdrop="static"
+    centered
+  >
+    <Modal.Header closeButton>
+      <Modal.Title>Manage Permission</Modal.Title>
+    </Modal.Header>
+    <Modal.Body style={{ padding: '15px' }}>
+ 
+      {!togglePermission && (
+        <div className="text-center p-4">Loading...</div>
+      )}
+ 
+      {togglePermission === "No" && (
+        <div>
+          <h6 style={{ marginBottom: '20px' }}>
+            This folder is public. Would you like to make it private?
+          </h6>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button type="button" className="btn btn-primary" onClick={fpSetPrivate}>
+              Set Permission
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setShowPermissionModal(false); setTogglePermission(undefined); }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+ 
+      {togglePermission === "Yes" && (
+        <div>
+          <div className="row mb-2">
+            <div className="col-sm-8">
+              <h5 style={{ fontWeight: '600', color: '#4c4c4c' }}>Manage Permission</h5>
+              <div className="font-12 text-muted">{fpPathState}</div>
+            </div>
+            <div className="col-sm-4 d-flex justify-content-end">
+              <a href="#" onClick={(e) => {
+                e.preventDefault();
+                const newId = rowsForPermission.length ? rowsForPermission[rowsForPermission.length - 1].id + 1 : 0;
+                setRowsForPermission(prev => [...prev, { id: newId, selectedUserForPermission: [], selectedPermission: "" }]);
+              }}>
+                {/* <img src={require("../assets/addnew.png")} alt="add" style={{ height: '30px' }} /> */}
+              </a>
+            </div>
+          </div>
+          <hr />
+ 
+          {rowsForPermission.map((row) => (
+            <div key={row.id} className="row mb-2 align-items-center">
+              <div className="col-md-6">
+                <Select
+                  isMulti
+                  options={folderPrivacyUsers}
+                  value={row.selectedUserForPermission}
+                  onChange={(sel: any) => setRowsForPermission(prev => prev.map(r => r.id === row.id ? { ...r, selectedUserForPermission: sel } : r))}
+                  placeholder="Enter names or email addresses..."
+                />
+                {fpErrors[row.id]?.userSelect && <span className="text-danger font-12">{fpErrors[row.id].userSelect}</span>}
+                {fpErrors[row.id]?.duplicate && <span className="text-danger font-12">{fpErrors[row.id].duplicate}</span>}
+              </div>
+              <div className="col-md-4">
+                <Select
+                  options={[
+                    { value: "Full Control", label: "Full Control" },
+                    { value: "Contribute", label: "Contribute" },
+                    { value: "Edit", label: "Edit" },
+                    { value: "Read", label: "Read" },
+                      // ritik 23/2/26 for restricted view permission
+                    { value: "Restricted View", label: "Restricted View" },
+                    { value: "View", label: "View" },
+                  ]}
+                  value={row.selectedPermission || null}
+                  onChange={(sel: any) => setRowsForPermission(prev => prev.map(r => r.id === row.id ? { ...r, selectedPermission: sel } : r))}
+                  placeholder="Select Permission..."
+                />
+                {fpErrors[row.id]?.permissionSelect && <span className="text-danger font-12">{fpErrors[row.id].permissionSelect}</span>}
+              </div>
+              <div className="col-md-2">
+                {rowsForPermission.length > 1 && (
+                  <a href="#" onClick={(e) => { e.preventDefault(); setRowsForPermission(prev => prev.filter(r => r.id !== row.id)); }}>
+                    {/* <img src={require("../assets/delemodal.png")} alt="delete" style={{ height: '30px' }} /> */}
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+ 
+          <table className="mtbalenew mt-3">
+            <thead>
+              <tr>
+                <th style={{ minWidth: '55px' }}>S.No.</th>
+                <th>User/Groups</th>
+                <th>Permission</th>
+                <th style={{ minWidth: '75px' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {folderPrivacyTableData
+                .slice((fpCurrentPage - 1) * fpItemsPerPage, fpCurrentPage * fpItemsPerPage)
+                .map((item: any, idx: number) => (
+                  <tr key={item.itemId}>
+                    <td><span className="indexdesign">{idx + 1}</span></td>
+                    <td>{item.value}</td>
+                    <td>{item.Permission}</td>
+                    <td>
+                      {/* Ritik 20/02/2026 changes for folder permission manage add trash icon */}
+  <button
+    type="button"
+    title="Remove Permission"
+    onClick={() => fpHandleDeleteUser(item.userId, item.itemId, item.Permission)}
+    style={{
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#dc3545',
+      padding: '4px 6px',
+    }}
+  >
+    <FontAwesomeIcon icon={faTrash} size="sm" />
+  </button>
+</td>
+{/* end of Ritik 20/02/2026 changes for folder permission manage add trash icon */}
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+ 
+          <div className="row mt-2">
+            <div className="col-md-8">
+              {Math.ceil(folderPrivacyTableData.length / fpItemsPerPage) > 1 && (
+                <nav>
+                  <ul className="pagination">
+                    <li className={`page-item ${fpCurrentPage === 1 ? 'disabled' : ''}`}>
+                      <a className="page-link" onClick={() => setFpCurrentPage(p => Math.max(p - 1, 1))}>«</a>
+                    </li>
+                    {Array.from({ length: Math.ceil(folderPrivacyTableData.length / fpItemsPerPage) }, (_, i) => i + 1).map(p => (
+                      <li key={p} className={`page-item ${fpCurrentPage === p ? 'active' : ''}`}>
+                        <a className="page-link" onClick={() => setFpCurrentPage(p)}>{p}</a>
+                      </li>
+                    ))}
+                    <li className={`page-item ${fpCurrentPage === Math.ceil(folderPrivacyTableData.length / fpItemsPerPage) ? 'disabled' : ''}`}>
+                      <a className="page-link" onClick={() => setFpCurrentPage(p => p + 1)}>»</a>
+                    </li>
+                  </ul>
+                </nav>
+              )}
+            </div>
+            <div className="col-md-4 d-flex justify-content-end gap-2">
+              <button type="button" className="btncolorCreate1 me-2" onClick={fpHandleCreate}>
+                <span className="mb-1 mt-2" data-tooltip="Submit">
+                  <img src={require("../assets/submit-new.png")} alt="submit" />
+                </span>
+              </button>
+              <button type="button" className="btncolorCreate1" onClick={() => { setShowPermissionModal(false); setTogglePermission(undefined); }}>
+                <span className="mb-1 mt-2" data-tooltip="Cancel">
+                  {/* <img src={require("../assets/cancelnew.png")} alt="cancel" /> */}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+ 
+    </Modal.Body>
+  </Modal>
+)}
+{/* end of model code for folder permission manage added by Ritik 20/02/2026 */}
+{/* // Ritik 20/2/26 for manage permission folder */}
+
+                      {/* === Step 2 Popup (with People Picker) === */}
+                      {showManagePermissionModal && (
+                        <Modal show={showManagePermissionModal} onHide={() => setShowManagePermissionModal(false)} size="lg"  container={() => document.getElementById('filelistcontainer')} backdrop="static" centered>
+                          <Modal.Header closeButton>
+                            <Modal.Title>Manage Permission</Modal.Title>
+                          </Modal.Header>
+                          <Modal.Body>
+                            {(() => {
+                              const ctx = selectedFolder ? deriveFolderContext(selectedFolder) : { webUrl: "", serverRel: "", documentLibraryName: "" };
+                              return (
+                                <>
+                                  <div style={{ marginBottom: 10, fontSize: 13, color: "#555" }}>
+                                    <div><strong>Folder:</strong> {selectedFolder?.FolderName || selectedFolder?.Title || selectedFolder?.Name || ctx.serverRel}</div>
+                                    <div><strong>Library:</strong> {ctx.documentLibraryName}</div>
+                                    <div><strong>Web:</strong> {ctx.webUrl}</div>
+                                  </div>
+
+                                  {mpLoading ? (
+                                    <div>Loading permissions...</div>
+                                  ) : (
+                                    <>
+                                      {mpError && (
+                                        <div style={{ color: "#b00020", marginBottom: 10, whiteSpace: "pre-wrap" }}>{mpError}</div>
+                                      )}
+
+                                      <div style={{ marginBottom: 10 }}>
+                                        <strong>Inheritance:</strong>{" "}
+                                        {mpHasUnique ? (
+                                          <span style={{ color: "#b26a00" }}>This folder has unique permissions</span>
+                                        ) : (
+                                          <span style={{ color: "#2e7d32" }}>Inheriting from parent</span>
+                                        )}
+                                      </div>
+
+                                      <div style={{ marginBottom: 10 }}>
+                                        <strong>Your ability:</strong>{" "}
+                                        {mpCanManage ? (
+                                          <span style={{ color: "#2e7d32" }}>You can manage permissions</span>
+                                        ) : (
+                                          <span style={{ color: "#b00020" }}>You cannot manage permissions on this folder</span>
+                                        )}
+                                      </div>
+
+                                      <div
+                                        style={{
+                                          borderTop: "1px solid #eee",
+                                          paddingTop: 10,
+                                          marginTop: 10,
+                                          display: "flex",
+                                          gap: 8,
+                                          alignItems: "center",
+                                          flexWrap: "wrap",
+                                        }}
+                                      >
+                                        {/* <select
+              value={newUser}
+              onChange={(e) => setNewUser(e.target.value)}
+              style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
+              disabled={!mpCanManage}
+              >
+              <option value="" disabled>
+              Select a user…
+              </option>
+              {mpSiteUsers.map((u) => (
+              <option key={u.id} value={u.loginName}>
+              {u.title} {u.email ? `(${u.email})` : ""}
+              </option>
+              ))}
+              </select> */}
+
+                                        {/* Typeahead user picker (replaces static dropdown) */}
+                                        <div ref={userSuggestRef} style={{ position: "relative", minWidth: 320 }}>
+                                          <input
+                                            type="text"
+                                            placeholder="Type user name or email..."
+                                            value={newUserDisplay || (mpSiteUsers.find(u => u.loginName === newUser)?.title || "")}
+                                            onChange={(e) => {
+                                              const val = e.target.value || "";
+                                              setNewUserDisplay(val);
+                                              setShowUserSuggestions(true);
+                                              const q = val.trim().toLowerCase();
+                                              const filtered = (mpSiteUsers || []).filter((u) => {
+                                                return (
+                                                  (u.title || "").toLowerCase().includes(q) ||
+                                                  (u.email || "").toLowerCase().includes(q) ||
+                                                  (u.loginName || "").toLowerCase().includes(q)
+                                                );
+                                              }).slice(0, 50);
+                                              setMpUserSuggestions(filtered);
+                                              // Clear previously selected loginName (we'll set login on selection)
+                                              setNewUser("");
+                                            }}
+                                            onFocus={() => {
+                                              setShowUserSuggestions(true);
+                                              setMpUserSuggestions((mpSiteUsers || []).slice(0, 50));
+                                            }}
+                                            disabled={!mpCanManage}
+                                            style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4, minWidth: 320 }}
+                                          />
+                                          {showUserSuggestions && mpUserSuggestions && mpUserSuggestions.length > 0 && (
+                                            <ul style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9999, background: "#fff", border: "1px solid #ccc", borderRadius: 4, maxHeight: 200, overflowY: "auto", listStyle: "none", margin: 0, padding: 0 }}>
+                                              {mpUserSuggestions.map((u) => (
+                                                <li
+                                                  key={u.id}
+                                                  onMouseDown={(e) => { e.preventDefault(); }}
+                                                  onClick={() => {
+                                                    setNewUser(u.loginName);
+                                                    setNewUserDisplay(`${u.title}${u.email ? ` (${u.email})` : ""}`);
+                                                    setShowUserSuggestions(false);
+                                                  }}
+                                                  style={{ padding: "8px", cursor: "pointer", borderBottom: "1px solid #eee" }}
+                                                >
+                                                  <div style={{ fontSize: 13 }}>{u.title}</div>
+                                                  <div style={{ fontSize: 12, opacity: 0.7 }}>{u.email || u.loginName}</div>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          )}
+                                        </div>
+
+                                        <select
+                                          value={newPermission}
+                                          onChange={(e) => setNewPermission(e.target.value)}
+                                          style={{ padding: "6px 8px", border: "1px solid #ccc", borderRadius: 4 }}
+                                          disabled={!mpCanManage}
+                                        >
+                                          <option value="Read">Read</option>
+                                          <option value="Edit">Edit</option>
+                                          <option value="Full Control">Full Control</option>
+                                        </select>
+                                        <button
+                                          onClick={addUserToSelectedFolder}
+                                          style={{ padding: "6px 10px", border: "1px solid #107c10", borderRadius: 4, background: "#107c10", color: "#fff" }}
+                                          disabled={!mpCanManage || !newUser.trim()}
+                                        >
+                                          + Add User
+                                        </button>
+                                      </div>
+
+                                      <div style={{ margin: "10px 0" }}>
+                                        <strong>Current access:</strong>
+                                        {permissionUsers?.length ? (
+                                          <div style={{ marginTop: 8 }}>
+                                            <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", background: "#f6f7f8", border: "1px solid #e1e4e8", borderRadius: 6, fontWeight: 600 }}>
+                                              <div>S.No.</div>
+                                              <div>User/Groups</div>
+                                              <div>Permission</div>
+                                              <div>Action</div>
+                                            </div>
+                                            {permissionUsers.map((a: any, i: number) => (
+                                              <div key={a.principalId} style={{ display: "grid", gridTemplateColumns: "70px 1fr 280px 120px", gap: 8, padding: "8px 12px", border: "1px solid #e1e4e8", borderTop: "none" }}>
+                                                <div>{i + 1}</div>
+                                                <div title={a.principalTitle}>{a.principalTitle}</div>
+                                                <div>{a.roles && a.roles.length ? a.roles.join(", ") : "—"}</div>
+                                                <div>
+                                                  <button
+                                                    style={{ padding: "4px 8px", border: "1px solid #ccc", borderRadius: 4, background: "#fff", cursor: "pointer" }}
+                                                    onClick={() => removeUserFromSelectedFolder(a.principalId)}
+                                                    disabled={!mpCanManage}
+                                                  >
+                                                    Remove
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <div style={{ fontSize: 13, color: "#666" }}>No direct role assignments found.</div>
+                                        )}
+                                      </div>
+                                    </>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </Modal.Body>
+                        </Modal>
+                      )}
+                      {/* aman code manage folder permission */}
+
+
+                      {/* Pagination controls - edited by ritik - 13/01/2026 */}
+                      {
+
+                        // selectedFiles
+
+
+                        filteredFiles
+
+                          .length > 0 && (
+                          <div
+                            style={{
+                              margin: "10px 14px 10px 0",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "end",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              disabled={currentPage === 1}
+                              style={{
+                                marginRight: "10px",
+                                padding: "5px 12px",marginTop:'0px',
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                                background: currentPage === 1 ? "#eee" : "#1d4ed8",
+                                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                              }}
+                            >
+                              Prev
+                            </button>
+                            <span style={{ margin: "0 10px" }}>
+                              Page {currentPage} of {Math.ceil(filteredFiles.length / pageSize) || 1}
+
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage((p) =>
+                                  p < Math.ceil(filteredFiles.length / pageSize)
+                                    ? p + 1
+                                    : p
+                                );
+                              }}
+                              disabled={currentPage === Math.ceil(filteredFiles.length / pageSize)}
+                              style={{
+                                marginLeft: "10px",
+                                padding: "5px 12px", marginTop:'0px',
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                                background:
+                                  currentPage === Math.ceil(filteredFiles.length / pageSize)
+                                    ? "#eee"
+                                    : "#1d4ed8",
+                                cursor:
+                                  currentPage === Math.ceil(filteredFiles.length / pageSize)
+                                    ? "not-allowed"
+                                    : "pointer",
+                              }}
+                            >
+                              Next
+                            </button>
+                          </div>
+                        )}
+                    </>
+                  )
+                  }
+
+                </>
+              )}
+          {/* srs 29/1/26 */}
+    </>
+  )}
+    {/* srs 29/1/26 */}
+
+              {/* //update by ritik 29/01/2026 for preview file title and path display */}
+
+
+              {showPreviewModal && (
+                <PreviewModal
+                  show={true}
+                  fileUrl={previewFile}
+                  fileName={previewFile?.FileName || previewFile?.Name}
+                  filePath={
+                    activeView
+                      ? undefined
+                      : (breadcrumbs.map(b => b.title).join(' › '))
+                  }
+                  viewName={
+                    activeView
+                      ? breadcrumbs[breadcrumbs.length - 1]?.title
+                      : undefined
+                  }
+                  onClose={() => {
+                    setShowPreviewModal(false);
+                    setPreviewFile(null);
+                    setDirectDownloadFile(null); // Ritik added 23/2/26
+                  }}
+                />
+              )}
+
+              {/* meta data model Render Ritik 29/01/2026 */}
+
+              {/* Metadata Modal */}
+              {showMetadataModal && (
+                <MetadataModal
+                    show={showMetadataModal}
+        
+                  file={selectedFileForMetadata}
+                  context={context}
+                  onClose={() => {
+                    setShowMetadataModal(false);
+                    setSelectedFileForMetadata(null);
+                  }}
+                />
+              )}
+
+              {showManageWorkflow && selectedWorkflowFolder && (
+                <ManageWorkflow
+                  context={context}
+                  siteUrl={selectedWorkflowFolder.SiteUrl}   // ✅ FIX
+                  siteTitle={selectedWorkflowFolder.SiteTitle}
+                  documentLibraryName={selectedWorkflowFolder.DocumentLibraryName}
+                  file={selectedWorkflowFolder.file}
+                  onClose={() => {
+                    setShowManageWorkflow(false);
+                    setSelectedWorkflowFolder(null);
+                  }}
+                />
+              )}
+
+
+            </div>
+            </div></div></div>
+          {/* ---------------------------Audit History Modal ---------------------*/}
+         {showAuditModal && (
+  <Modal 
+  show={showAuditModal} 
+  onHide={() => setShowAuditModal(false)} 
+  size="xl"
+  container={() => document.getElementById('filelistcontainer')}
+  backdrop="static"
+>
+    <Modal.Header closeButton>
+      <Modal.Title>Audit History</Modal.Title>
+    </Modal.Header>
+    <Modal.Body style={{ maxHeight: '70vh', padding:'0px', overflowY: 'auto' }}>
+      {auditLoading ? (
+        <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>
+      ) : (
+        <div>
+          {/* Metadata Section */}
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '15px',
+              padding: '20px',
+              backgroundColor: '#fff',
+              borderRadius: '0px',
+              border: '0px solid #dee2e6'
+            }}>
+              {Object.entries(auditVersions.Metadata || {}).filter(([key]) => key !== 'Title') .map(([key, value]) => (
+                <div key={key}>
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#4a4a4a',
+                    marginBottom: '0px',
+                    fontWeight: '600'
+                  }}>
+                    {key}:
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#9f9f9f',
+                    wordBreak: 'break-word'
+                  }}>
+                    {key === 'IsDeleted' ? (
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        backgroundColor: value === 'No' ? '#d4edda' : '#f8d7da',
+                        color: value === 'No' ? '#155724' : '#721c24',
+                        fontSize: '13px'
+                      }}>
+                        {String(value)}
+                      </span>
+                    ) : key === 'Status' ? (
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        backgroundColor:
+                          value === 'Pending' ? '#fff3cd' :
+                          value === 'Approved' ? '#d4edda' :
+                          value === 'Rejected' ? '#f8d7da' : '#e2e3e5',
+                        color:
+                          value === 'Pending' ? '#856404' :
+                          value === 'Approved' ? '#155724' :
+                          value === 'Rejected' ? '#721c24' : '#383d41',
+                        fontSize: '13px'
+                      }}>
+                        {String(value)}
+                      </span>
+                    ) : (
+                      String(value || '-')
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+ 
+          {/* Versions Section */}
+          <div style={{padding:'0px 18px 12px 18px'}}>
+            <h6 style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              marginBottom: '5px',
+              paddingBottom: '8px',
+              borderBottom: '0px solid #0078d4'
+            }}>
+              Version History
+            </h6>
+            {auditVersions.Versions && auditVersions.Versions.length ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  border: '1px solid #dee2e6'
+                }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f5f7fa', color: '#000' }}>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '0px solid #005a9e'
+                      }}>
+                        Version
+                      </th>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '0px solid #005a9e'
+                      }}>
+                        Created
+                      </th>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '0px solid #005a9e'
+                      }}>
+                        Modified By
+                      </th>
+                      {/* <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '0px solid #005a9e'
+                      }}>
+                        Email
+                      </th> */}
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'right',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '0px solid #005a9e'
+                      }}>
+                        Size
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditVersions.Versions.map((v: any, i: number) => (
+                      <tr key={i} style={{
+                        borderBottom: '1px solid #dee2e6',
+                        backgroundColor: i % 2 === 0 ? '#fff' : '#f5f7fa'
+                      }}>
+                        <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          textAlign: 'left'
+                        }}>
+                          {v.VersionLabel || '-'}
+                        </td>
+                        <td style={{ padding: '10px', fontSize: '13px' }}>
+                          {v.Created || '-'}
+                        </td>
+                        <td style={{ padding: '10px', fontSize: '13px' }}>
+                          {v.ModifiedByName || '-'}
+                        </td>
+                        {/* <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          color: '#6c757d'
+                        }}>
+                          {v.ModifiedByEmail || '-'}
+                        </td> */}
+                        <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          textAlign: 'right'
+                        }}>
+                          {v.SizeDisplay || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{
+                padding: '20px',
+                backgroundColor: '#d1ecf1',
+                border: '0px solid #bee5eb',
+                borderRadius: '4px',
+                color: '#0c5460',
+                fontSize: '14px'
+              }}>
+                No versions available
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </Modal.Body>
+    {/* <Modal.Footer>
+      <Button variant="secondary" onClick={() => setShowAuditModal(false)}>
+        Close
+      </Button>
+    </Modal.Footer> */}
+  </Modal>
+)}
+          {/* ================= RENAME FILE MODAL – ADD EXACTLY HERE ================= */}
+          <Modal
+            show={renameFileModalOpen}
+            onHide={() => setRenameFileModalOpen(false)}
+            container={() => document.getElementById('filelistcontainer')}
+            backdrop="static"
+            centered
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Rename File</Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <input
+                type="text" style={{padding:'6px 10px'}}
+                className="form-control"
+                value={renameFileValue}
+                onChange={(e) => setRenameFileValue(e.target.value)}
+                autoFocus
+              />
+            </Modal.Body>
+
+            <Modal.Footer>
+              {/* <Button
+                variant="secondary"
+                onClick={() => setRenameFileModalOpen(false)}
+              >
+                Cancel
+              </Button> */}
+              {/* <Button
+                variant="primary"
+                onClick={submitRenameFile}
+                disabled={!renameFileValue?.trim()}
+              >
+                Rename
+              </Button> */}
+<Button
+  variant="link"
+  onClick={submitRenameFile}
+  disabled={!renameFileValue?.trim()}
+  style={{ padding: 0, border: 'none', width:'50px', height:'50px', borderRadius:'50%',display:'flex', background:'#fff',boxShadow:'rgba(0, 0, 0, 0.1) 0px 2px 8px',alignItems:'center',justifyContent:'center' }}
+>
+<img 
+    src={require("../assets/submit-new1.png")} 
+    alt="Rename" 
+    style={{ 
+      height: "32px",
+      opacity: !renameFileValue?.trim() ? 0.5 : 1 
+    }} 
+  />
+</Button>
+
+            </Modal.Footer>
+          </Modal>
+          {/* ================= RENAME FILE MODAL END ================= */}
+
+
+
+          {/* sourish 30/9/25 two div added*/}
+        </div>
+      </div>
+>>>>>>> ESSAMUSAIBUPDATED2
     </div>
   );
 };
 
 const DMSMain: React.FC<IEssadmsMainProps> = (props) => {
   return (
+<<<<<<< HEAD
       <Provider>
         <ArgPoc context={props.context} />;
         </Provider>
+=======
+    <Provider>
+      <ArgPoc context={props.context} />;
+    </Provider>
+>>>>>>> ESSAMUSAIBUPDATED2
   )
 };
 
