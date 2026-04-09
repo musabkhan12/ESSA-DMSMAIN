@@ -4442,7 +4442,7 @@ const createFileExtensionHtml = (FileName: any, bgColor?: string, isListView: bo
   const finalColor = bgColor || iconColor;
   // ✅ LIST VIEW: Icon only (no background, no text)
   if (isListView) {
-    return `<div class="newicon" style="
+    return `<div class="newicon1" style="
       
         height: 18px; 
         display: flex; 
@@ -4640,7 +4640,8 @@ const handleSaveRename = async () => {
             disabled={!selectedCurrentNode || selectedCurrentNode.type === "site"}
             style={{ background: 'none',   marginTop:'0px',  border: 'none', padding: 0, opacity: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 0.4 : 1, cursor: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 'not-allowed' : 'pointer' }}
           >
-            <img src={require("../assets/createnew.png")} alt="Create" />
+            <span className="mb-1 mt-2" data-tooltip="Create Folder">
+            <img src={require("../assets/createnew.png")} alt="Create" /></span>
           </button>
 
           <button 
@@ -4649,7 +4650,8 @@ const handleSaveRename = async () => {
             disabled={!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")}
             style={{ background: 'none',  marginTop:'0px', border: 'none', padding: 0, opacity: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 0.4 : 1, cursor: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 'not-allowed' : 'pointer' }}
           >
-            <img src={require("../assets/uploafnew.png")} alt="Upload" />
+             <span className="mb-1 mt-2" data-tooltip="Upload File">
+            <img src={require("../assets/uploafnew.png")} alt="Upload" /></span>
           </button>
         </div>
                 <span style={{ fontSize: '14px',  color: '#333', marginTop: '5px' }}>Create</span>
@@ -4664,7 +4666,8 @@ const handleSaveRename = async () => {
             onClick={() => { console.log("Ask AI clicked"); }}
             style={{ background: 'none', border: 'none', padding: 0,  marginTop:'0px', cursor: 'pointer' }}
           >
-            <img src={require("../assets/newr.png")} alt="Ask AI" />
+            <span className="mb-1 mt-2" data-tooltip="Ask AI">
+            <img src={require("../assets/newr.png")} alt="Ask AI" /></span>
           </button>
         </div>
          <span style={{ fontSize: '14px', color: '#333', marginTop: '5px' }}>Ask AI</span>
@@ -4679,20 +4682,22 @@ const handleSaveRename = async () => {
             onClick={() => { console.log("New Request clicked"); }}
             style={{ background: 'none', border: 'none', padding: 0,  marginTop:'0px', cursor: 'pointer' }}
             title="New Request"
-          >
+          >   <span className="mb-1 mt-2" data-tooltip="New Request">
             <img src={require("../assets/newr.png")} alt="New Request" />
+            </span>
           </button>
           <Dropdown as={ButtonGroup} style={{ marginTop: '0px' }}>
   <Dropdown.Toggle
-    style={{ padding: '10px 15px' }}
-    id="dropdown-template"
-    className="mt-0"
+    style={{ padding: '0px 0px', background:'none' }}
+   
+    className="mt-0"  id="dropdown-template"
   >
-    <span title="Select Template">
+   
+      <span className="mb-1 mt-2" data-tooltip="Select Template">
       <img
         src={require("../assets/newt.png")}
         alt="Select Template"
-        style={{ width: '20px', height: '20px' }}
+      
       />
     </span>
   </Dropdown.Toggle>
@@ -4727,8 +4732,9 @@ const handleSaveRename = async () => {
             onClick={() => { console.log("Share clicked"); }}
             style={{ background: 'none', border: 'none', padding: 0, marginTop:'0px', cursor: 'pointer' }}
             title="Share"
-          >
+          ><span className="mb-1 mt-2" data-tooltip="Share">
             <img src={require("../assets/listiconshare.png")} alt="Share"  />
+            </span>
           </button>
 
           <button 
@@ -4736,8 +4742,9 @@ const handleSaveRename = async () => {
             onClick={() => { console.log("Delete clicked"); }}
             style={{ background: 'none', border: 'none', padding: 0, marginTop:'0px', cursor: 'pointer' }}
             title="Delete"
-          >
+          ><span className="mb-1 mt-2" data-tooltip="Delete">
             <img src={require("../assets/listicond.png")} alt="Delete" />
+            </span>
           </button>
         </div>
           <span style={{ fontSize: '14px',color: '#333', marginTop: '5px' }}>Action</span>
@@ -4758,9 +4765,9 @@ const handleSaveRename = async () => {
              
               cursor: 'pointer'
             }}
-          >
+          ><span className="mb-1 mt-2" data-tooltip="Grid View">
             <img src={require("../assets/gridview.png")} alt="Grid" style={{  opacity: activeLayout === 'grid' ? 1 : 0.6 }} />
-          </button>
+        </span>  </button>
           <button 
             type="button"
             onClick={() => setActiveLayout('list')}
@@ -4774,8 +4781,9 @@ const handleSaveRename = async () => {
               cursor: 'pointer'
             }}
           >
+            <span className="mb-1 mt-2" data-tooltip="List View">
             <img src={require("../assets/listview.png")} alt="List" style={{  opacity: activeLayout === 'list' ? 1 : 0.6 }} />
-          </button>
+     </span>     </button>
         </div>
            <span style={{ fontSize: '14px',color: '#333', marginTop: '-1px' }}>View</span>
       </div>
@@ -4810,22 +4818,17 @@ const handleSaveRename = async () => {
                   // srs 6/3/26
                   { originalKey: "Archived Files", label: "Archived Files", icon: faArchive },
                 ].map((item,view) => (
-                  <button type="button"
+                  <button type="button" className="buttonaligntext"
                     key={item.originalKey}
                     onClick={() => handleViewButtonClick(item.originalKey)}
                     style={{
-                     
                       width: "100%",
-                      padding: "8px 10px",
-                      marginBottom: "3px",
-                        marginTop: "0px",
-                      textAlign: "left",
-                     backgroundColor: activeView === item.originalKey ? "#0078d4" : "#fff ",
+                   backgroundColor: activeView === item.originalKey ? "#2c9942" : "#fff ",
                       color: activeView === item.originalKey ? "white" : "#2c3e50",
                       border: "0px solid #ccc",
                       borderRadius: "8px",
                       cursor: "pointer",
-                      fontSize: "16px",
+                  
                       transition: "all 0.2s",
                     }}
                   >
@@ -5342,7 +5345,7 @@ const handleSaveRename = async () => {
                                 >
                                   {searchTerm.trim() !== ""
                                     ? `No files found matching "${searchTerm}"`
-                                    : "No files in this folder"}
+                                    : <div style={{display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column'}}> <img src={require('../assets/no-filef.png')}></img>  <p className="mt-2 font-14 fw-bold text-dark">No files found in this view</p> </div>}
                                 </div>
                               );
                             })()}
@@ -5443,14 +5446,7 @@ const handleSaveRename = async () => {
                         <>
                           {/* Grid View */}
                           {activeLayout === "grid" && (
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(235px, 1fr))",
-                                gap: "10px", background:'#f1f1f194',
-                                marginBottom: "20px", padding:'12px'
-                              }}
-                            >
+                            <div className="layoutdesign">
                               {filesLoadedfromnode && paginatedFiles.length > 0 ? (
                                 paginatedFiles.map((file, idx) => (
                                   <div
@@ -5468,7 +5464,7 @@ const handleSaveRename = async () => {
                                     />
 
                                     {/* File Name */}
-                                    <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">
+                                    <div className="text-dark fw-bold1 font-16 onelinetrim ">
                                       {getActualFileName(file)}
                                     </div>
 
@@ -5633,23 +5629,28 @@ const handleSaveRename = async () => {
                                       {/* Card Content */}
                                       {
                                         activeView === "My request" ? (
-                                          <>
-
-                                            <div dangerouslySetInnerHTML={{
+                                         <>
+                                            <div className="d-flex align-items-center gap-2">
+                                               <div dangerouslySetInnerHTML={{
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
-                                            <div style={{ fontWeight: 600, fontSize: "15px" }}className="mb-1 mt-1 onelinetrim">{file.FileName}</div>
-                                           <div className="d-flex align-items-center justify-content-start gap-3 mb-1">  <div className="text-muted font-12"> <FontAwesomeIcon icon={faShoppingBag}  className="me-1" /> {file.FileSize}</div>
-                                            <div className="text-muted font-12 gap-1"> <FontAwesomeIcon icon={faCalendar}  className="me-1"/> 
+                                            <div className="text-muted font-12"> <FontAwesomeIcon icon={faShoppingBag}  className="me-1" /> {file.FileSize}</div>
+                                            </div>
+                                           
+ 
+ 
+                                            <div className="font-14 fw-bold1 mb-1 mt-1 onelinetrim">{file.FileName}</div>
+                                           <div className="d-flex align-items-center justify-content-start gap-3 mb-1">  <div className="text-muted font-12"><FontAwesomeIcon icon={faFolder} />  {file.DocumentLibraryName}</div>
+                                            </div>
+ 
+                                            <div style={{borderTop:'1px solid #f1f5f9', paddingTop:'10px'}} className="d-flex align-items-center justify-content-between">
+                                            <div className="text-muted font-12 gap-1"> <FontAwesomeIcon icon={faCalendar}  className="me-1"/>
     {new Date(file.Created).toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
     year: "numeric",
   })}
-</div></div>
- 
-                                            <div style={{borderTop:'1px solid #f1f5f9', paddingTop:'10px'}} className="d-flex align-items-center justify-content-between">
-                                            <div className="text-muted font-12"><FontAwesomeIcon icon={faFolder} />  {file.DocumentLibraryName}</div>
+</div>
                                             {file.Status=== "Pending" && (
                                               <div className=" font-12 status_new" style={{ backgroundColor: '#fffbeb', color:'#b45309', border:'1px solid #fde68a' }}><FontAwesomeIcon icon={faClock} /> {file.Status}</div>  
                                               )
@@ -6060,18 +6061,18 @@ const handleSaveRename = async () => {
                                     <th style={{ minWidth: '50px', maxWidth: '50px', }}>S.No</th>
                                     <th style={{ minWidth: '250px', maxWidth: '250px', }}>Name</th>
                                     {/* <th >Size</th> */}
-                                    <th>Size</th>
+                                    <th style={{ minWidth: '80px', maxWidth: '80px' }}>Size</th>
                                     {/* <th>Library</th> */}
-                                    <th>
+                                    <th style={{ minWidth: '150px', maxWidth: '150px' }}>
                                       {paginatedFiles.some((f) => f.DocumentLibraryName)
                                         ? "Library"
                                         : "Created Date"}
                                     </th>
                                     {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
-                                      <th style={{ minWidth: '113px', maxWidth: '113px', }}>Status</th>
+                                      <th style={{ minWidth: '118px', maxWidth: '118px', }}>Status</th>
                                     )}
                                     {/* <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th> */}
-                                    <th style={{ textAlign: "center" }}>Action</th> {/* New column */}
+                                    <th style={{ textAlign: "center",minWidth: '80px', maxWidth: '80px' }}>Action</th> {/* New column */}
                                   </tr>
                                 </thead>
 
@@ -6099,7 +6100,7 @@ const handleSaveRename = async () => {
     <span>{file.DisplayName ||file.FileName || file.Name || file.FolderName}</span>
   </div>
 </td>
-                                      <td>
+                                      <td style={{minWidth: '80px', maxWidth: '80px'}}>
                                         {file.FileSize
                                           ? file.FileSize
                                           : file.Length
@@ -6107,7 +6108,7 @@ const handleSaveRename = async () => {
                                             : "-"}
                                       </td>
                                       {/* <td >{file.DocumentLibraryName}</td> */}
-                                      <td>
+                                      <td  style={{minWidth: '150px', maxWidth: '150px'}}>
                                         {file.DocumentLibraryName
                                           ? file.DocumentLibraryName
                                           : file.TimeCreated
@@ -6116,7 +6117,7 @@ const handleSaveRename = async () => {
                                       </td>
                                       {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
                                      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
-                                        <td style={{ minWidth: '113px', maxWidth: '113px', }}>
+                                        <td style={{ minWidth: '118px', maxWidth: '118px', }}>
                                           {file.Status === "Pending" && (
                                             <div className="font-12 text-center" style={{ backgroundColor: '#fffbeb', color:'#b45309', border:'1px solid #fde68a', padding: '4px 8px', borderRadius: '30px', whiteSpace: 'nowrap' }}><FontAwesomeIcon icon={faClock} /> {file.Status}</div>
                                           )}
@@ -6137,7 +6138,7 @@ const handleSaveRename = async () => {
                                           )}
                                         </td>
                                       )}
-                                      <td style={{ textAlign: "center" }}>
+                                      <td style={{ textAlign: "center",minWidth: '80px', maxWidth: '80px' }}>
                                         <button type="button" className="dotbutton2"
                                         ref={(el) => menuButtonRefs.current[idx] = el} // ritik 18/03/26
                                           onClick={(e) => {
@@ -6313,7 +6314,7 @@ const handleSaveRename = async () => {
                         >
                           {searchTerm.trim() !== ""
                             ? `No records found matching "${searchTerm}"`
-                            : "No files found in this view"}
+                             : <div style={{display:'flex',  marginTop:'40px', alignItems:'center', justifyContent:'center', flexDirection:'column'}}> <img src={require('../assets/no-filef.png')}></img>  <p className="mt-2 font-14 fw-bold text-dark">No files found in this view</p> </div>}
                         </div>
                       )}
                       {/* create Folder modal */}

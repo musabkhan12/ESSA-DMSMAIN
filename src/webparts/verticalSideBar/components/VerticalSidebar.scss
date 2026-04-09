@@ -16,6 +16,9 @@
   font-weight: 500;
   padding: 10px 20px;
 }
+.buttonaligntext{
+  padding: 8px 10px;margin-bottom:3px;    margin-top:0px; text-align: left;    font-size:16px;
+}
 .activenew{background: #fff !important;}
 .newalign svg{vertical-align: text-top !important;}
 .page-title{
@@ -439,7 +442,14 @@ a:hover, a:active {
 
 }
 
-
+.layoutdesign{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 10px;
+    background: #f1f1f194;
+    margin-bottom: 20px;
+    padding: 12px;
+}
 .item{
   margin:0.8rem 0.8rem 0rem 0.8rem;
 } 
@@ -1168,7 +1178,7 @@ background-color: rgb(167, 30, 132);
 #folderhierarchycontainer button{margin: 0px;}
 .main-content-new{
       display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 320px 1fr;
     gap: 10px; margin-bottom: 65px;
   
 }
@@ -1229,7 +1239,7 @@ margin: 10px 0px !important ;
   width: 22px;}
   .text-dark{color: #000;}
   .dotbutton{
-    position: absolute; top: 17px; right: 10px;
+    position: absolute; top: 13px; right: 10px;
   }
   .dotbutton button{min-width: auto !important;}
   .internalbutton{padding: 0px; list-style: none; margin: 0px;}
@@ -1256,10 +1266,10 @@ margin: 10px 0px !important ;
 }
 
 [data-tooltip]:before {
-    background-color: #fa901d;
+    background-color: #E0FFE7;
     border-radius: 5px;
     box-shadow: 0 0 4px rgba(0, 0, 0, .3);
-    color: #fff;
+    color: #2c9942;
     content: attr(data-tooltip);
     font-size: 14px;
     font-weight: 600;
@@ -1287,7 +1297,7 @@ margin: 10px 0px !important ;
       border-top: 10px solid #f0f0f0; border-radius: 0px !important;
 }
 [data-tooltip]:after {
-    border-bottom: 10px solid #fa901d;
+    border-bottom: 10px solid #E0FFE7;
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
     content: " ";
@@ -1296,7 +1306,7 @@ margin: 10px 0px !important ;
     line-height: 0;
     margin-left: -5px;
     position: absolute;
-    top: 29px;
+    top: 25px;
     width: 0;
 }
 .btncolorCreate1 [data-tooltip]:after {
@@ -1458,6 +1468,13 @@ margin: 10px 0px !important ;
   .internalmedia .gal-box .image-popup {
       height: 250px !important;
   }
+  .layoutdesign{
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .main-content-new {
+ 
+    grid-template-columns: 290px 1fr;
+  }
   .header-title {
     font-size: 18px !important;
 }
@@ -1548,9 +1565,24 @@ margin: 10px 0px !important ;
    // margin: .3rem .4rem 0;
 }
 }
-
+#dropdown-template:hover{
+  background-color: transparent !important; border-color: none !important;
+}
+#dropdown-template:after{
+display: none !important;
+}
+.fw-bold1{font-weight: 600;}
 @media(max-width:1440px)
 {
+    .layoutdesign{
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .buttonaligntext{
+    font-size: 14px; padding: 8px 12px !important;
+  }
+      .main-content-new {
+        grid-template-columns: 255px 1fr;
+    }
   .internalmedia .gal-box .image-popup {
       height: 225px !important;
   }
@@ -2145,10 +2177,10 @@ color: #fff !important;
 .swal2-confirm:hover{background: #008751 !important; border-color: #008751 !important;}
 
 .smalllogostyle {
-  height: 60px !important;
-  width: 60px !important;
+  height:10px !important;
+ 
 }
 .largelogostyle {
-  height: 58px !important;
-  width: 200px !important;
+  height: 37px !important;
+  
 }
