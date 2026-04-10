@@ -50,6 +50,9 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   const [toggleApproval, setToggleApproval] = React.useState(false);
   const [approvalOption, setApprovalOption] = useState("");
   console.log("Approval option", approvalOption);
+  // srs 9/4/26
+const [showLoader, setShowLoader] = useState(false);
+const [progress, setProgress] = useState(0);
 
 
 
@@ -456,6 +459,42 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   //     console.log("Target value of delete option", event.target.value);
   //     setDeleteOption(event.target.value);
   // }
+// srs 9/4/26
+const startProgressLoader = (totalSeconds: number) => {
+  setShowLoader(true);
+  setProgress(0);
+ 
+  const totalTime = totalSeconds * 1000;
+  const intervalTime = 100;
+  const totalSteps = totalTime / intervalTime;
+  let currentStep = 0;
+ 
+  const interval = setInterval(() => {
+    currentStep++;
+    const percent = Math.min((currentStep / totalSteps) * 100, 100);
+    setProgress(percent);
+ 
+    if (currentStep >= totalSteps) {
+      clearInterval(interval);
+      setShowLoader(false); // Hide the progress bar overlay first
+ 
+      // --- Success Popup Logic ---
+      Swal.fire({
+        title: "Success!",
+        text: "Folder created successfully and everything is set up.",
+        icon: "success",
+        confirmButtonText: "OK",
+        allowOutsideClick: false, // Prevents closing by clicking outside
+      }).then((result) => {
+        if (result.isConfirmed) {
+          location.reload(); // Refresh the page only when OK is clicked
+        }
+      });
+      // ----------------------------
+    }
+  }, intervalTime);
+};
+
 
   // Handle form submission (Create button click)
   const handleCreate = async (e: any) => {
@@ -528,7 +567,18 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
     //   );
     // }
     else {
-
+        // srs 9/4/26
+        let totalSeconds = 0;
+        if (OthProps.DocumentLibrary === "") {
+            totalSeconds = 30;
+            if (formFields && formFields.length > 0) {
+                totalSeconds += formFields.length * 15;
+            }
+        } else {
+            totalSeconds = 10;
+        }
+        startProgressLoader(totalSeconds);
+        // end
       const payloadForFolderMaster = {
         SiteTitle: OthProps.Entity,
         CurrentUser: currentUserEmailRef.current
@@ -822,16 +872,29 @@ if (OthProps.DocumentLibrary !== "") {
         const addedItem = await siteSP.web.lists.getByTitle("DMSPreviewFormMaster").items.add(payload);
         console.log("Item added successfully in the DMSPreviewFormField for IsDocumentLibrary", addedItem);
 
-        formFields.forEach(async (field) => {
-          // type.replace(/\s+/g, '').toLowerCase();
-          (payloadForPreviewFormMaster as any).ColumnName = field.fieldName.replace(/\s+/g, '');
-          (payloadForPreviewFormMaster as any).ColumnType = field.selectField
-          console.log("Call the Api with this payload", payloadForPreviewFormMaster)
+        // formFields.forEach(async (field) => {
+        //   // type.replace(/\s+/g, '').toLowerCase();
+        //   (payloadForPreviewFormMaster as any).ColumnName = field.fieldName.replace(/\s+/g, '');
+        //   (payloadForPreviewFormMaster as any).ColumnType = field.selectField
+        //   console.log("Call the Api with this payload", payloadForPreviewFormMaster)
 
+        //   const addedItem = await siteSP.web.lists.getByTitle("DMSPreviewFormMaster").items.add(payloadForPreviewFormMaster);
+        //   console.log("Item added successfully in the DMSPreviewFormField", addedItem);
+
+        // })
+
+         // srs 9/4/26 Psot sequence number
+       for (let i = 0; i < formFields.length; i++) {
+          // type.replace(/\s+/g, '').toLowerCase();
+          (payloadForPreviewFormMaster as any).ColumnName = formFields[i].fieldName.replace(/\s+/g, '');
+          (payloadForPreviewFormMaster as any).ColumnType = formFields[i].selectField;
+          (payloadForPreviewFormMaster as any).Sequence = i + 1;
+          console.log("Call the Api with this payload", payloadForPreviewFormMaster)
+ 
           const addedItem = await siteSP.web.lists.getByTitle("DMSPreviewFormMaster").items.add(payloadForPreviewFormMaster);
           console.log("Item added successfully in the DMSPreviewFormField", addedItem);
-
-        })
+ 
+        }
       }
 
       // new code  creating payload for DMSFolderPrivacy and add the data
@@ -973,27 +1036,28 @@ if (OthProps.DocumentLibrary !== "") {
         }
       }
       // Clear form on successful submission
-      Swal.fire({
-        title: "Folder Created Successfully",
-        text: "Folder Created Successfully. It will reflect after a few seconds as we set up everything for the folder.",
-        icon: "success",
-        // srs 19/2/26
-        // showCancelButton: true,        
-        confirmButtonText: 'OK',
-        // cancelButtonText: 'No'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // srs 19/2/26
-          location.reload(); // This will reload the page
-          // onReturnToMain()
-        }
-        if (result.isDismissed) {
-          // srs 19/2/26
-          location.reload();
-          // onReturnToMain()
-        }
-        clearForm();
-      });
+      // srs 9/4/26 commented this
+      // Swal.fire({
+      //   title: "Folder Created Successfully",
+      //   text: "Folder Created Successfully. It will reflect after a few seconds as we set up everything for the folder.",
+      //   icon: "success",
+      //   // srs 19/2/26
+      //   // showCancelButton: true,        
+      //   confirmButtonText: 'OK',
+      //   // cancelButtonText: 'No'
+      // }).then((result) => {
+      //   if (result.isConfirmed) {
+      //     // srs 19/2/26
+      //     location.reload(); // This will reload the page
+      //     // onReturnToMain()
+      //   }
+      //   if (result.isDismissed) {
+      //     // srs 19/2/26
+      //     location.reload();
+      //     // onReturnToMain()
+      //   }
+      //   clearForm();
+      // });
 
       //  setTimeout(() => {
       //     Swal.close(); // Close the pop-up
@@ -1038,6 +1102,52 @@ if (OthProps.DocumentLibrary !== "") {
 
   return (
     <>
+       {/* // srs 9/4/26 */}
+    {showLoader && (
+  <div style={{
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999
+  }}>
+    <div style={{
+      width: "400px",
+      background: "#fff",
+      padding: "20px",
+      borderRadius: "8px",
+      textAlign: "center"
+    }}>
+      <h3>Setting up your Folder...</h3>
+ 
+      <div style={{
+        width: "100%",
+        height: "20px",
+        backgroundColor: "#e0e0e0",
+        borderRadius: "10px",
+        overflow: "hidden",
+        marginTop: "15px"
+      }}>
+        <div style={{
+          width: `${progress}%`,
+          height: "100%",
+          backgroundColor: "#0078d4",
+          transition: "width 0.1s linear"
+        }} />
+      </div>
+ 
+      <p style={{ marginTop: "10px" }}>
+        {Math.round(progress)}% Completed
+      </p>
+    </div>
+  </div>
+)}
+ 
       {/* <button className="BackButton me-0 mb-3"
          onClick={()=>{location.reload() ;
           // onReturnToMain()

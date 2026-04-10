@@ -148,6 +148,37 @@ const checkfolderprivace = async () => {
   checkfolderprivace();
   }, []);
 
+  //Aman 9/04/26 start
+  const getDynamicValidation = async (fileExtension: string) => {
+    try {
+        const essaSiteUrl = `${window.location.origin}/sites/ESSA`;
+        const essaWeb = Web(essaSiteUrl).using(AssignFrom(sp.web as any));
+
+        // 1. Check if the specific extension is restricted
+        const extData = await essaWeb.lists.getByTitle("Extension").items
+            .filter(`ExtensionName eq '${fileExtension.toLowerCase()}'`)
+            .select("Restrict")();
+
+        const isRestricted = extData.length > 0 ? extData[0].Restrict : false;
+
+        if (isRestricted) {
+            // 2. Fetch the global limit from the first available row in FilesizeMaster
+            const sizeData = await essaWeb.lists.getByTitle("FilesizeMaster").items
+                .select("FileSize")
+                .top(1)();
+
+            const maxSize = sizeData.length > 0 ? parseInt(sizeData[0].FileSize) : 100;
+            return { isRestricted: true, maxSize };
+        }
+
+        // Default high limit for non-restricted files
+        return { isRestricted: false, maxSize: 500 }; 
+    } catch (error) {
+        console.error("Error fetching dynamic validation rules:", error);
+        return { isRestricted: false, maxSize: 100 }; // Fallback
+    }
+};
+// Aman 9/04/26 end
 
 const [data, setData] = useState({
   Entity: '',
@@ -185,36 +216,36 @@ const documentLibraryName  = data.DocumentLibrary;
 console.log("documentLibraryName" , documentLibraryName)
 
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  setIsUploading(true);
-  const file = event.target.files![0];
+//   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+//   setIsUploading(true);
+//   const file = event.target.files![0];
 
   
-  if (file) {
-    // Aman 16/3/26
-        const MAX_SIZE_MB = 100;
-    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+//   if (file) {
+//     // Aman 16/3/26
+//         const MAX_SIZE_MB = 100;
+//     const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
  
-    if (file.size > MAX_SIZE_BYTES) {
-      Swal.fire({
-        icon: 'error',
-        title: 'File Too Large',
-        text: `File size exceeds the ${MAX_SIZE_MB}MB limit. Please select a smaller file.`,
-      });
-      event.target.value = '';
-      setIsUploading(false);
-      return;
-    }
-    // Directly upload the file without any validation
-    uploadFile(file);
-  }else{
-    console.log("no file selected")
-    const submitButton = document.getElementById("submitBtn") as HTMLButtonElement;
-    if(submitButton){
-      submitButton.disabled=true;
-    }
-  }
-};
+//     if (file.size > MAX_SIZE_BYTES) {
+//       Swal.fire({
+//         icon: 'error',
+//         title: 'File Too Large',
+//         text: `File size exceeds the ${MAX_SIZE_MB}MB limit. Please select a smaller file.`,
+//       });
+//       event.target.value = '';
+//       setIsUploading(false);
+//       return;
+//     }
+//     // Directly upload the file without any validation
+//     uploadFile(file);
+//   }else{
+//     console.log("no file selected")
+//     const submitButton = document.getElementById("submitBtn") as HTMLButtonElement;
+//     if(submitButton){
+//       submitButton.disabled=true;
+//     }
+//   }
+// };
 
 
   // const uploadFile = async (file: File) => {
@@ -250,6 +281,41 @@ console.log("documentLibraryName" , documentLibraryName)
   //   }
   // };
   
+  // Aman 9/04/26  strat
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  setIsUploading(true);
+  const file = event.target.files![0];
+
+  if (file) {
+    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    // Fetch dynamic settings from ESSA site
+    const validation = await getDynamicValidation(fileExt);
+    const MAX_SIZE_BYTES = validation.maxSize * 1024 * 1024;
+
+    if (validation.isRestricted && file.size > MAX_SIZE_BYTES) {
+      Swal.fire({
+        icon: 'error',
+        title: 'File Too Large',
+        text: `For ${fileExt} files, the limit is ${validation.maxSize}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+      });
+      event.target.value = '';
+      setIsUploading(false);
+      return;
+    }
+    
+    // Duplicate logic is handled inside uploadFile or as per your current flow
+    uploadFile(file);
+  } else {
+    console.log("no file selected")
+    const submitButton = document.getElementById("submitBtn") as HTMLButtonElement;
+    if(submitButton){
+      submitButton.disabled=true;
+    }
+    setIsUploading(false);
+  }
+};  // Aman 9/04/26 end 
 const uploadFile = async (file: File) => {
   try {
     // 1. Extract the Root Site Collection URL
@@ -505,31 +571,52 @@ const handlebulkFileChange = async (event: React.ChangeEvent<HTMLInputElement>) 
   const validFilesToProcess: File[] = []; // aman 13/03/26: Store only valid files
   const batchSeenNames = new Set<string>(); // aman 13/03/26: Handle batch duplicates
   // --- duplicate validation change end aman 13/03/26 ---
+ // Aman 9/04/26 loop commented 
+  // for (let i = 0; i < files.length; i++) {
+  //   const currentFile = files[i];
+  //   const fileNameLower = currentFile.name.toLowerCase();
  
+  //   if (currentFile.size > MAX_SIZE_BYTES) {
+  //     largeFiles.push(currentFile.name);
+  //     // continue; // aman 13/03/26: Skip large files but continue loop
+  //   } else if (existingNamesSet.has(fileNameLower) || batchSeenNames.has(fileNameLower)) {
+  //     // --- duplicate validation change aman 13/03/26 ---
+  //     duplicateFiles.push(currentFile.name);
+  //     // continue; // aman 13/03/26: Skip duplicates but continue loop
+  //   } else {
+  //     validFilesToProcess.push(currentFile); // aman 13/03/26: Add to valid list
+  //     batchSeenNames.add(fileNameLower);
+  //   }
+  // }
+
+  // Aman 9/04/26 start
+
   for (let i = 0; i < files.length; i++) {
     const currentFile = files[i];
     const fileNameLower = currentFile.name.toLowerCase();
- 
-    if (currentFile.size > MAX_SIZE_BYTES) {
-      largeFiles.push(currentFile.name);
-      // continue; // aman 13/03/26: Skip large files but continue loop
+    const fileExt = currentFile.name.substring(currentFile.name.lastIndexOf('.')).toLowerCase();
+
+    // Fetch dynamic validation for each file in batch
+    const validation = await getDynamicValidation(fileExt);
+    const MAX_SIZE_BYTES = validation.maxSize * 1024 * 1024;
+
+    if (validation.isRestricted && currentFile.size > MAX_SIZE_BYTES) {
+      largeFiles.push(`${currentFile.name} (Max: ${validation.maxSize}MB)`);
     } else if (existingNamesSet.has(fileNameLower) || batchSeenNames.has(fileNameLower)) {
-      // --- duplicate validation change aman 13/03/26 ---
       duplicateFiles.push(currentFile.name);
-      // continue; // aman 13/03/26: Skip duplicates but continue loop
     } else {
-      validFilesToProcess.push(currentFile); // aman 13/03/26: Add to valid list
+      validFilesToProcess.push(currentFile); 
       batchSeenNames.add(fileNameLower);
     }
   }
- 
+ // Aman 9/04/26 end 
   // --- Combined Validation Summary Popup aman 16/03/26 ---
   if (largeFiles.length > 0 || duplicateFiles.length > 0) {
   let combinedMsg = `<div style="text-align: left; font-size: 14px;">`;
  
   if (largeFiles.length > 0) {
     combinedMsg += `<p style="color: #d33; font-weight: bold; margin-bottom: 5px;">
-    Files exceeding the allowed size (Max ${MAX_SIZE_MB} MB):
+    Files exceeding their allowed size limits:
     </p>
     <ul style="margin:8px 0 16px 20px; line-height:1.6;">
     ${largeFiles.map(f => `<li>${f}</li>`).join('')}
@@ -902,7 +989,8 @@ React.useEffect(()=>{
         `SiteName eq '${currentfolderpath.Entity}' 
          and DocumentLibraryName eq '${libraryName}' 
          and AddorRemoveThisColumn eq 'Add To Library' and IsInProgress eq 0`
-      )();
+      ).orderBy("Sequence", true)();
+// srs 9/4/26 added orderby
 
     console.log("Document Library Fields retrieved:", documentLibraryFields);
 
@@ -1550,15 +1638,21 @@ const listItem = subsiteWeb.lists.getByTitle(libraryTitle).items.getById(itemId)
         CurrentLevel: 1
       });
     }
+// ritik 10/04/26 start
+    // if (newItem) {
+    //   setIsFinalUploading(false);
+    //   Deletemedia();
+    //   setTimeout(() => {
+    //     location.reload();
+    //     onReturnToMain();
+    //   }, 3000);
+    // }
 
     if (newItem) {
       setIsFinalUploading(false);
       Deletemedia();
-      setTimeout(() => {
-        location.reload();
-        onReturnToMain();
-      }, 3000);
     }
+    // ritik 10/04/26 end 
   } catch (error) {
     console.error("Error during submission:", error);
     setIsFinalUploading(false);
@@ -1893,10 +1987,12 @@ rootWeb.using(AssignFrom(sp.web as any));
     // Cleanup and refresh UI
     setIsFinalUploading(false);
     Deletemedia();
-    setTimeout(() => {
-      location.reload();
-      onReturnToMain();
-    }, 3000);
+    // ritik 10/04/26 start
+    // setTimeout(() => {
+    //   location.reload();
+    //   onReturnToMain();
+    // }, 3000);
+    // ritik 10/04/26 end
  
   } catch (error) {
     console.error("Error in bulk upload:", error);
@@ -1991,7 +2087,7 @@ const breadcrumbParts = useMemo(() => {
 
        
           <div style={{float:'right',marginTop:'-45px'}} className='' 
-          onClick={()=>{location.reload() ;onReturnToMain()}}
+          onClick={()=>{onReturnToMain()}}
           >   
            <span className="mb-1" data-tooltip='Back'>
            <img  src={back}></img> &nbsp;</span>

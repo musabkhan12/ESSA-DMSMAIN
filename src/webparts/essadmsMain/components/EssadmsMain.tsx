@@ -222,41 +222,84 @@ const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
 //     return true;
 //   });
 // };
-useEffect(() => {
-  const loadAllCounts = async () => {
-    const [myReq, myFav, myFol, sharedMe, sharedOther, recycle, archivedFiles] = await Promise.all([
-      loadViewData("MyRequest"),
-      loadViewData("MyFavourite"),
-      loadViewData("MyFolders"),
-      loadViewData("SharedWithMe"),
-      loadViewData("SharedWithOthers"),
-      loadViewData("RecycleBin"),
-      // srs 6/3/26 
-      loadViewData("ArchivedFiles"),
-    ]);
+// useEffect(() => {
+//   const loadAllCounts = async () => {
+//     const [myReq, myFav, myFol, sharedMe, sharedOther, recycle, archivedFiles] = await Promise.all([
+//       loadViewData("MyRequest"),
+//       loadViewData("MyFavourite"),
+//       loadViewData("MyFolders"),
+//       loadViewData("SharedWithMe"),
+//       loadViewData("SharedWithOthers"),
+//       loadViewData("RecycleBin"),
+//       // srs 6/3/26 
+//       loadViewData("ArchivedFiles"),
+//     ]);
  
-    setViewCounts({
-      "My request": myReq.length,
-      "My favourite": myFav.length,
-      "My Folders": myFol.length,
-      "Share with me": sharedMe.length,
-      "Share with other": sharedOther.length,
-      "Recycle bin": recycle.length,
-      //srs 6/3/26
-      "Archived Files": archivedFiles.length,
-      // srs 12/3/26 correct code if count mismatch in archival issue in current code data duplicate if same file name present with same fileUID
-      // "My request": getUniqueFiles(myReq).length,
-      // "My favourite": getUniqueFiles(myFav).length,
-      // "My Folders": getUniqueFiles(myFol).length,
-      // "Share with me": getUniqueFiles(sharedMe).length,
-      // "Share with other": getUniqueFiles(sharedOther).length,
-      // "Recycle bin": getUniqueFiles(recycle).length,
-      // "Archived Files": getUniqueFiles(archivedFiles).length,
+//     setViewCounts({
+//       "My request": myReq.length,
+//       "My favourite": myFav.length,
+//       "My Folders": myFol.length,
+//       "Share with me": sharedMe.length,
+//       "Share with other": sharedOther.length,
+//       "Recycle bin": recycle.length,
+//       //srs 6/3/26
+//       "Archived Files": archivedFiles.length,
+//       // srs 12/3/26 correct code if count mismatch in archival issue in current code data duplicate if same file name present with same fileUID
+//       // "My request": getUniqueFiles(myReq).length,
+//       // "My favourite": getUniqueFiles(myFav).length,
+//       // "My Folders": getUniqueFiles(myFol).length,
+//       // "Share with me": getUniqueFiles(sharedMe).length,
+//       // "Share with other": getUniqueFiles(sharedOther).length,
+//       // "Recycle bin": getUniqueFiles(recycle).length,
+//       // "Archived Files": getUniqueFiles(archivedFiles).length,
+//     });
+//   };
+ 
+//   loadAllCounts();
+// }, []); // ✅ Empty array = runs once on mount
+
+// ritik - 10/04/26 start
+
+const refreshViewCount = async (viewType: ViewType) => {
+  const viewKey = viewType === "MyRequest" ? "My request"
+    : viewType === "MyFavourite" ? "My favourite"
+    : viewType === "MyFolders" ? "My Folders"
+    : viewType === "SharedWithMe" ? "Share with me"
+    : viewType === "SharedWithOthers" ? "Share with other"
+    : viewType === "ArchivedFiles" ? "Archived Files"
+    : "Recycle bin";
+ 
+  try {
+    const files = await loadViewData(viewType);
+    const seen = new Set();
+    const unique = files.filter((item: any) => {
+      const uid = item.FileUID || item.UniqueId || item.Id;
+      if (seen.has(uid)) return false;
+      seen.add(uid);
+      return true;
     });
-  };
+    // Har view ka count aate hi set ho jata hai - user ko gradually dikhega
+    setViewCounts(prev => ({ ...prev, [viewKey]: unique.length }));
+  } catch (e) {
+    console.error(`Count load failed for ${viewType}:`, e);
+  }
+};
  
-  loadAllCounts();
-}, []); // ✅ Empty array = runs once on mount
+useEffect(() => {
+  // Sequential load - throttle safe, counts gradually appear karte hain
+  const loadAllCountsSequentially = async () => {
+    await refreshViewCount("MyRequest");
+    await refreshViewCount("MyFavourite");
+    await refreshViewCount("MyFolders");
+    await refreshViewCount("SharedWithMe");
+    await refreshViewCount("SharedWithOthers");
+    await refreshViewCount("RecycleBin");
+    await refreshViewCount("ArchivedFiles");
+  };
+  loadAllCountsSequentially();
+}, []); // mount pe ek baar
+
+// ritik - 10/04/26 end
 
 //  type ViewType = "MyRequest" | "MyFavourite" | "MyFolders" | "SharedWithMe" | "SharedWithOthers" | "RecycleBin";
  // srs 6/3/26
@@ -884,6 +927,7 @@ useEffect(() => {
     // If we ended on a library or folder, load its files
     if (currentNode.type === "library" || currentNode.type === "folder") {
       await loadFilesForNode(currentNode);
+      setBreadcrumbs(breadcrumbPath); //ritik 09/04/26 added after load file node set the breadcrumb
     }
   };
   /** --------------------------------------- clicking ----------------------------------------- */
@@ -1079,6 +1123,25 @@ const visibleFiles = (files || [])
       Status: extraData.status // Inject the Status
     };
   });
+
+  // ritik 10/04/26 start
+
+  // setSelectedFiles(visibleFiles); Ritik added 10/04/26 when someone upload the file it will apairing on first page
+const sortedFiles = [...visibleFiles].sort((a: any, b: any) => {
+  const dateA = new Date(a.TimeCreated || a.TimeLastModified || 0).getTime();
+  const dateB = new Date(b.TimeCreated || b.TimeLastModified || 0).getTime();
+  return dateB - dateA; // latest first
+});
+setSelectedFiles(sortedFiles);
+console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
+
+// setBreadcrumbs(getNodePath(node.key)); ritik 09/04/26
+        const nodePath = getNodePath(node.key);
+if (nodePath && nodePath.length > 0) {
+  setBreadcrumbs(nodePath);
+}
+
+// ritik 10/04/26 end 
 
 setSelectedFiles(visibleFiles);
 console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
@@ -1332,6 +1395,7 @@ try {
   setSelectedFiles(uniqueFiles);
   setCurrentFolderPath("");
   setCurrentSiteUrl("");
+    refreshViewCount(viewType); //Ritik 10/04/26
  
 } catch (error) {
       console.error(`[view] Error loading ${viewName} data:`, error);
@@ -2749,6 +2813,10 @@ if (refreshed) {
 
   
 const handleAuditHistory = async (file: any) => {
+  console.log("Initiating audit history for file:", file);
+
+
+
   try {
     setAuditLoading(true);
     setModalFile(file);
@@ -2767,18 +2835,76 @@ const handleAuditHistory = async (file: any) => {
         : `${folderPath}/${fileName}`;
     }
     const tenantUrl = context.pageContext.web.absoluteUrl.split("/sites/")[0];
+    console.log("Tenant URL:", tenantUrl);
     const parts = folderPath.split("/").filter(Boolean);
+    console.log("Folder path parts:", parts);
+    const subsitePath2 = "/" + parts.slice(0, 2).join("/");
+    console.log("Subsite path 2:", subsitePath2);
     const subsitePath = "/" + parts.slice(0, 3).join("/");
+
+    console.log("Derived subsite path:", subsitePath);
     const subsiteUrl = `${tenantUrl}${subsitePath}`;
+    console.log("Calculated subsite URL for audit:", subsiteUrl);
+    const subsiteUrl2 = `${tenantUrl}${subsitePath2}`;
+    console.log("Calculated subsite URL 2 for audit:", subsiteUrl2);
  
     // Initialize SP using the calculated subsite URL
     const siteSP = spfi(subsiteUrl).using(SPFx(context));
+
+     const siteSP2 = spfi(subsiteUrl2).using(SPFx(context));
+    // const approvalItems = await siteSP2.web.lists
+    //   .getByTitle("DMSFileApprovalTaskList")
+    //   .items
+    //   .select("CurrentUser", "Remark", "ApprovalType", "LogHistory", "Log", "FileUID")
+    //   .filter(`FileUID eq '${file.FileUID}'`)
+    //   .getAll();
+    //   console.log("Approval items for file:", approvalItems);
+
+  //   const approvalItems = await siteSP2.web.lists
+  // .getByTitle("DMSFileApprovalTaskList")
+  // .items
+  // .select(
+  //   "CurrentUser",
+  //   "Remark",
+  //   "ApprovalType",
+  //   "LogHistory",
+  //   "Log",
+  //   "FileUID/Id",
+  //   "FileUID/Title"
+  // )
+  // .expand("FileUID")
+  // .filter(`FileUID/Id eq '${file.FileUID}'`) // 👈 important change
+  // .getAll();
+  // console.log("Approval items for file:", approvalItems);
+
+
+  const approvalItems = await siteSP2.web.lists
+      .getByTitle("DMSFileApprovalTaskList")
+      .items
+      .select(
+        "CurrentUser",
+        "Remark",
+        // "ApprovalType",
+        "LogHistory",
+        "Log",
+        "FileUID/FileUID",   // 👈 inner field
+        "MasterApproval/Level",
+         "FileUID/Status",
+      )
+      .expand("FileUID", "MasterApproval")    // 👈 MUST for lookup
+      .filter(`FileUID/FileUID eq '${file.FileUID || file.UniqueId}'`) // 👈 main fix
+      .getAll();
+
+      console.log("Approval items for file:", approvalItems);
+
+
+
  
     let fetchedFileItem: any = null;
     let fetchedListItem: any = null;
     let fileProps: any = null;
     let versions: any[] = [];
- 
+
     /* ---------- Fetch Data (Same logic as VersionHistory) ---------- */
     if (serverRelativePath) {
       try {
@@ -2801,7 +2927,6 @@ const handleAuditHistory = async (file: any) => {
         const versionData = await fileItemObj.versions
           .select("ID,VersionLabel,Created,Size,Url,CreatedBy/Title,CreatedBy/UserPrincipalName")
           .expand("CreatedBy")();
- 
         // 3. Metadata (detailedItem)
         const itemQuery = await fileItemObj.getItem();
         const detailedItem = await itemQuery
@@ -2849,30 +2974,136 @@ const handleAuditHistory = async (file: any) => {
         console.warn("Audit: List fallback failed", e);
       }
     }
+
+
+    
  
     /* ---------- Final Metadata Mapping ---------- */
     const src = fetchedFileItem || fetchedListItem || file || {};
-    const metadata: any = {
-      Title: src?.Title || src?.Name || file?.Title || file?.FileName || file?.Name || "",
-      FileName: src?.FileLeafRef || src?.Name || file?.FileName || file?.Name || "",
-      FileUID: file?.FileUID || file?.UniqueId || file?.GUID || "",
-      Status: src?.Status || file?.Status || "",
-      IsDeleted: (src?.IsDeleted ?? file?.IsDeleted ?? fetchedListItem?.IsDeleted) ? "Yes" : "No",
-      Modified: src?.Modified ? new Date(src.Modified).toLocaleString() :
-                src?.TimeLastModified ? new Date(src.TimeLastModified).toLocaleString() :
-                fileProps?.TimeLastModified ? new Date(fileProps.TimeLastModified).toLocaleString() :
-                file?.Modified ? new Date(file.Modified).toLocaleString() : "-",
-      ModifiedBy: src?.Editor?.Title || src?.ModifiedBy?.Title || fileProps?.ModifiedBy?.Title || file?.ModifiedBy || "-"
-    };
+    // const metadata: any = {
+    //   Title: src?.Title || src?.Name || file?.Title || file?.FileName || file?.Name || "",
+    //   FileName: src?.FileLeafRef || src?.Name || file?.FileName || file?.Name || "",
+    //   // FileUID: file?.FileUID || file?.UniqueId || file?.GUID || "",  -- addhyan 09/04/2026
+    //   Status: src?.Status || file?.Status || "",
+    //   // IsDeleted: (src?.IsDeleted ?? file?.IsDeleted ?? fetchedListItem?.IsDeleted) ? "Yes" : "No", -- addhyan 09/04/2026
+    //   Modified: src?.Modified ? new Date(src.Modified).toLocaleString() :
+    //             src?.TimeLastModified ? new Date(src.TimeLastModified).toLocaleString() :
+    //             fileProps?.TimeLastModified ? new Date(fileProps.TimeLastModified).toLocaleString() :
+    //             file?.Modified ? new Date(file.Modified).toLocaleString() : "-",
+    //   ModifiedBy: src?.Editor?.Title || src?.ModifiedBy?.Title || fileProps?.ModifiedBy?.Title || file?.ModifiedBy || "-",
+    //   ...src // include all other available fields for display
+    // };
+
+//     const metadata: any = Object.fromEntries(
+//   Object.entries(src).filter(([key, value]) => {
+    
+//     // ❌ Skip odata fields
+//     if (key.startsWith("odata")) return false;
+
+//     // ❌ Skip system fields
+//     const systemFields = [
+//       "ID", "Id", "GUID",
+//       "Created", "Modified",
+//       "AuthorId", "EditorId",
+//       "Attachments",
+//       "OData__CopySource",
+//       "CheckoutUserId",
+//       "FileSystemObjectType",
+//       "OData__UIVersionString",
+//       "ContentTypeId",
+//       "ServerRedirectedEmbedUri",
+//       "OData__ColorTag",
+//       "ComplianceAssetId",
+//       "MediaServiceOCR",
+//       "ServerRedirectedEmbedUrl",
+//       "Length", "ServerRelativeUrl",
+//       "TimeLastModified", "UIVersionLabel"
+//     ];
+
+//     if (systemFields.includes(key)) return false;
+
+//     // ❌ Skip objects (Editor, ModifiedBy etc)
+//     if (typeof value === "object" && value !== null) return false;
+
+//     // ❌ Skip navigation links
+//     if (key.includes("@odata")) return false;
+
+//     // ✅ Keep rest (custom columns)
+//     return true;
+//   })
+// );
+
+
+const systemFields = [
+      "ID", "Id", "GUID",
+      "Created", "Modified",
+      "AuthorId", "EditorId",
+      "Attachments",
+      "OData__CopySource",
+      "CheckoutUserId",
+      "FileSystemObjectType",
+      "OData__UIVersionString",
+      "ContentTypeId",
+      "ServerRedirectedEmbedUri",
+      "OData__ColorTag",
+      "ComplianceAssetId",
+      "MediaServiceOCR",
+      "ServerRedirectedEmbedUrl",
+      "Length", "ServerRelativeUrl",
+      "TimeLastModified", "UIVersionLabel"
+    ];
+
+const customFields = Object.fromEntries(
+  Object.entries(src).filter(([key, value]) => {
+
+    if (key.startsWith("odata")) return false;
+    if (key.includes("@odata")) return false;
+    if (systemFields.includes(key)) return false;
+    if (typeof value === "object" && value !== null) return false;
+    if (
+      value === null ||
+      value === undefined ||
+      value === "" ||
+      value === "-" 
+      // (typeof value === "string" && value.trim() === "")
+    ) return false;
+
+    return true;
+  })
+);
+
+// STEP 2: final metadata (ADD THIS 👇)
+const metadata: any = {
+  ...customFields,
+
+  Modified:
+    src?.Modified
+      ? new Date(src.Modified).toLocaleString()
+      : src?.TimeLastModified
+      ? new Date(src.TimeLastModified).toLocaleString()
+      : fileProps?.TimeLastModified
+      ? new Date(fileProps.TimeLastModified).toLocaleString()
+      : file?.Modified
+      ? new Date(file.Modified).toLocaleString()
+      : "-",
+
+  ModifiedBy:
+    src?.Editor?.Title ||
+    src?.ModifiedBy?.Title ||
+    fileProps?.ModifiedBy?.Title ||
+    file?.ModifiedBy ||
+    "-"
+};
  
     setAuditVersions({
       Metadata: metadata,
-      Versions: versions
+      Versions: versions,
+       ApprovalData: approvalItems 
     });
  
   } catch (err) {
     console.error("Audit history error:", err);
-    setAuditVersions({ Metadata: {}, Versions: [] });
+    setAuditVersions({ Metadata: {}, Versions: [], ApprovalData: [] });
   } finally {
     setAuditLoading(false);
   }
@@ -7319,8 +7550,8 @@ const handleSaveRename = async () => {
             </div>
           </div>
  
-          {/* Versions Section */}
-          <div style={{padding:'0px 18px 12px 18px'}}>
+          {/* Approval Section */}
+           <div style={{padding:'0px 18px 12px 18px'}}>
             <h6 style={{
               fontSize: '16px',
               fontWeight: '600',
@@ -7328,7 +7559,7 @@ const handleSaveRename = async () => {
               paddingBottom: '8px',
               borderBottom: '0px solid #0078d4'
             }}>
-              Version History
+              Approval Details 
             </h6>
             {auditVersions.Versions && auditVersions.Versions.length ? (
               <div style={{ overflowX: 'auto' }}>
@@ -7346,7 +7577,7 @@ const handleSaveRename = async () => {
                         fontWeight: '600',
                         borderBottom: '0px solid #005a9e'
                       }}>
-                        Version
+                        Approval Level
                       </th>
                       <th style={{
                         padding: '10px',
@@ -7355,7 +7586,7 @@ const handleSaveRename = async () => {
                         fontWeight: '600',
                         borderBottom: '0px solid #005a9e'
                       }}>
-                        Created
+                        Approver
                       </th>
                       <th style={{
                         padding: '10px',
@@ -7364,7 +7595,7 @@ const handleSaveRename = async () => {
                         fontWeight: '600',
                         borderBottom: '0px solid #005a9e'
                       }}>
-                        Modified By
+                        Action DateTime
                       </th>
                       {/* <th style={{
                         padding: '10px',
@@ -7382,12 +7613,21 @@ const handleSaveRename = async () => {
                         fontWeight: '600',
                         borderBottom: '0px solid #005a9e'
                       }}>
-                        Size
+                       Status
+                      </th>
+                      <th style={{
+                        padding: '10px',
+                        textAlign: 'right',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '0px solid #005a9e'
+                      }}>
+                       Remark
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {auditVersions.Versions.map((v: any, i: number) => (
+                    {auditVersions.ApprovalData.map((v: any, i: number) => (
                       <tr key={i} style={{
                         borderBottom: '1px solid #dee2e6',
                         backgroundColor: i % 2 === 0 ? '#fff' : '#f5f7fa'
@@ -7398,13 +7638,24 @@ const handleSaveRename = async () => {
                           fontWeight: '600',
                           textAlign: 'left'
                         }}>
-                          {v.VersionLabel || '-'}
+                          Level {v.MasterApproval?.Level || "-"}
+                          
                         </td>
                         <td style={{ padding: '10px', fontSize: '13px' }}>
-                          {v.Created || '-'}
+                          {v.CurrentUser || "-"}
+                         
                         </td>
                         <td style={{ padding: '10px', fontSize: '13px' }}>
-                          {v.ModifiedByName || '-'}
+                          {/* {v.LogHistory || "-"} */}
+                          {v.LogHistory
+  ? `${String(new Date(v.LogHistory).getDate()).padStart(2, "0")}/${
+      new Date(v.LogHistory).toLocaleString("en-US", { month: "short" })
+    }/${new Date(v.LogHistory).getFullYear()} ${
+      (new Date(v.LogHistory).getHours() % 12) || 12
+    }:${String(new Date(v.LogHistory).getMinutes()).padStart(2, "0")} ${
+      new Date(v.LogHistory).getHours() >= 12 ? "pm" : "am"
+    }`
+  : "-"}
                         </td>
                         {/* <td style={{
                           padding: '10px',
@@ -7418,7 +7669,15 @@ const handleSaveRename = async () => {
                           fontSize: '13px',
                           textAlign: 'right'
                         }}>
-                          {v.SizeDisplay || '-'}
+                          {v.FileUID?.Status || "-"}
+                        </td>
+                        <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          textAlign: 'right'
+                        }}>
+                          {v.Remark || "-"}
+                          
                         </td>
                       </tr>
                     ))}
@@ -7434,7 +7693,7 @@ const handleSaveRename = async () => {
                 color: '#0c5460',
                 fontSize: '14px'
               }}>
-                No versions available
+                No Approval available
               </div>
             )}
           </div>
