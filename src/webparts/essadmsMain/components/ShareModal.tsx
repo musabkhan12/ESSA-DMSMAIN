@@ -163,28 +163,76 @@ const ShareModal: React.FC<ShareModalProps> = ({
 //     }
 //   };
 
+// const checkFilePermission = async () => {
+//   if (!file || !context) return;
+ 
+//   try {
+//     // 1. Extract the Sub-site URL from the file path
+//     // Path: /sites/AlRostmaniSpfx2/TestHub1/Approval Temp Lib/...
+//     const pathParts = file.CurrentFolderPath.split('/');
+//     console.log("File Path Parts:", pathParts); 
+//     // Based on your structure, the sub-site is the 4th element (index 3)
+//     // sites (1) / AlRostmaniSpfx2 (2) / TestHub1 (3)
+//     const subSiteUrl = `${window.location.origin}${pathParts.slice(0, 4).join('/')}`;
+//     console.log("Adjusted Sub-site URL:", subSiteUrl);
+ 
+//     // 2. Initialize SP using the dynamic sub-site URL
+//     const sp = spfi(subSiteUrl).using(SPFx(context));
+ 
+//     // 3. Construct the path (must be server-relative)
+//     const filePath = `${file.CurrentFolderPath}/${file.FileName}`;
+//     // 4. Get the Item
+//     // Now that 'sp' points to /TestHub1, .getItem() will succeed
+//     const fileItem = await sp.web.getFileByServerRelativePath(filePath).getItem();
+//     // 5. Check Permissions
+//     const filePerms = await fileItem.getCurrentUserEffectivePermissions();
+ 
+//     const hasFullControl = sp.web.hasPermissions(filePerms, PermissionKind.ManagePermissions);
+//     const hasEdit = sp.web.hasPermissions(filePerms, PermissionKind.EditListItems);
+//     const hasContribute = sp.web.hasPermissions(filePerms, PermissionKind.AddListItems);
+//     const hasRead = sp.web.hasPermissions(filePerms, PermissionKind.ViewListItems);
+ 
+//     let permissionLevel: string = "No Access";
+//     if (hasFullControl) permissionLevel = "Full Control";
+   
+//     else if (hasEdit) permissionLevel = "Edit";
+
+//     else if (hasContribute) permissionLevel = "Contribute";
+//     else if (hasRead) permissionLevel = "Read";
+ 
+//     setFilePermission(permissionLevel);
+//     console.log("Determined file permission level:", permissionLevel);
+ 
+//   } catch (error: any) {
+//     console.error("Error details:", error.message);
+//     // If it still says "does not belong to a list", the URL in step 1 is slightly off
+//     setFilePermission("Error");
+//   }
+// };
+
+
+// Ritk 31/3/26
 const checkFilePermission = async () => {
   if (!file || !context) return;
- 
   try {
-    // 1. Extract the Sub-site URL from the file path
-    // Path: /sites/AlRostmaniSpfx2/TestHub1/Approval Temp Lib/...
-    const pathParts = file.CurrentFolderPath.split('/');
-    console.log("File Path Parts:", pathParts); 
-    // Based on your structure, the sub-site is the 4th element (index 3)
-    // sites (1) / AlRostmaniSpfx2 (2) / TestHub1 (3)
+    // folder hierarchy files me CurrentFolderPath nahi hota, ServerRelativeUrl hota hai
+    const folderPath = file.CurrentFolderPath ||
+      (file.ServerRelativeUrl ? file.ServerRelativeUrl.substring(0, file.ServerRelativeUrl.lastIndexOf("/")) : "");
+    
+    if (!folderPath) {
+      setFilePermission("Full Control");
+      return;
+    }
+ 
+    const pathParts = folderPath.split('/');
     const subSiteUrl = `${window.location.origin}${pathParts.slice(0, 4).join('/')}`;
     console.log("Adjusted Sub-site URL:", subSiteUrl);
  
-    // 2. Initialize SP using the dynamic sub-site URL
     const sp = spfi(subSiteUrl).using(SPFx(context));
  
-    // 3. Construct the path (must be server-relative)
-    const filePath = `${file.CurrentFolderPath}/${file.FileName}`;
-    // 4. Get the Item
-    // Now that 'sp' points to /TestHub1, .getItem() will succeed
+    const fileName = file.FileName || file.Name;
+    const filePath = `${folderPath}/${fileName}`;
     const fileItem = await sp.web.getFileByServerRelativePath(filePath).getItem();
-    // 5. Check Permissions
     const filePerms = await fileItem.getCurrentUserEffectivePermissions();
  
     const hasFullControl = sp.web.hasPermissions(filePerms, PermissionKind.ManagePermissions);
@@ -194,9 +242,7 @@ const checkFilePermission = async () => {
  
     let permissionLevel: string = "No Access";
     if (hasFullControl) permissionLevel = "Full Control";
-   
     else if (hasEdit) permissionLevel = "Edit";
-
     else if (hasContribute) permissionLevel = "Contribute";
     else if (hasRead) permissionLevel = "Read";
  
@@ -205,11 +251,9 @@ const checkFilePermission = async () => {
  
   } catch (error: any) {
     console.error("Error details:", error.message);
-    // If it still says "does not belong to a list", the URL in step 1 is slightly off
-    setFilePermission("Error");
+    setFilePermission("Full Control"); // fallback - dropdown dikhega
   }
 };
-
   
 
   const handleUserInputChange = (value: string) => {
@@ -287,7 +331,11 @@ const checkFilePermission = async () => {
     setLoading(true);
   
     try {
-      const pathParts = file.CurrentFolderPath.split('/');
+      // const pathParts = file.CurrentFolderPath.split('/');
+       // Ritik 31/3/26
+      const folderPath = file.CurrentFolderPath ||
+  (file.ServerRelativeUrl ? file.ServerRelativeUrl.substring(0, file.ServerRelativeUrl.lastIndexOf("/")) : "");
+const pathParts = folderPath.split('/');
       const subSiteUrl = `${window.location.origin}${pathParts.slice(0, 4).join('/')}`;
       
       // ✅ YAHI FIX HAI — dynamically site collection URL file ke path se
@@ -300,7 +348,9 @@ const checkFilePermission = async () => {
       const spSubSite        = spfi(subSiteUrl).using(SPFx(context));
       const spSiteCollection = spfi(siteCollectionUrl).using(SPFx(context));
   
-      const filePath = `${file.CurrentFolderPath}/${file.FileName}`;
+      // const filePath = `${file.CurrentFolderPath}/${file.FileName}`;
+      // Ritik 31/3/26
+      const filePath = `${folderPath}/${file.FileName || file.Name}`;
       const fileItem = await spSubSite.web.getFileByServerRelativePath(filePath).getItem();
       console.log("File item fetched successfully");
   
@@ -352,7 +402,9 @@ const checkFilePermission = async () => {
               FileName: file.FileName,
               FileUID: file.FileUID || file.UniqueId,
               CurrentUser: currentUserEmail,
-              CurrentFolderPath: file.CurrentFolderPath,
+              // CurrentFolderPath: file.CurrentFolderPath,
+               // Ritik 31/3/26
+              CurrentFolderPath: folderPath, //Ritik 31/02/2026
               SiteName: file.SiteName || "Unknown",
               PermissionType: selectedPermission,
               ShareAt: new Date().toISOString(),

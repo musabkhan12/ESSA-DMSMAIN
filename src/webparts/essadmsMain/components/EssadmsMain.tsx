@@ -43,6 +43,12 @@ import {faRedo, faUser,faFilePdf, faCloud,  faFolder as faFolders,  faGlobeAsia,
 import { faFolder, faHeart, faCalendarAlt as faCalendars, faTrashAlt, faEye,  faFileAlt,faEdit, faPaperPlane  } from '@fortawesome/free-regular-svg-icons';
 // srs 6/3/26
 import { faArchive } from '@fortawesome/free-solid-svg-icons';
+// Addhyan 13/4/26
+import ShareFileUrlModal from "./ShareFileUrlModal";
+// Aman 13/4/26
+import BreadcrumbSharePopup from "./BreadcrumbSharePopup";
+import FolderSharePopup from "./FolderSharePopup";
+ 
 
 
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -50,6 +56,8 @@ import { faArchive } from '@fortawesome/free-solid-svg-icons';
 declare global {
   interface Window {
     managePermission?: (folder: any) => void;
+     // srs 10/4/26
+    ManageFilePermission: (fileId: string, siteId: string, documentLibraryName: string, siteTitle: string) => Promise<void>;
   }
 }
 interface TreeNode {
@@ -100,6 +108,24 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [sp] = useState(() => spfi().using(SPFx(context)));
   const [filesLoadedfromnode, setFilesLoadedloadedfromnode] = useState(false);
 
+  // Aman 13/4/26
+   const [breadcrumbShare, setBreadcrumbShare] = useState({
+  show: false,
+  url: ""
+});
+ 
+const [folderShare, setFolderShare] = useState({
+  show: false,
+  url: ""
+});
+ 
+const closeFolderShare = () => {
+  setFolderShare({
+    show: false,
+    url: ""
+  });
+};
+ // Aman 13/4/26 end
   // state variables for tree 
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   // state variables for files
@@ -211,6 +237,67 @@ const fpItemsPerPage = 10;
 // Ritik 20/2/26
 
 const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
+
+// add useState for share file url modal - Addhyan 13/4/26 start
+  const [showShareUrlModal, setShowShareUrlModal] = useState(false);
+  const [shareUrlFile, setShareUrlFile] = useState<any>(null);
+  const isDeepLinkPreview = useRef<Boolean>(false);
+
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("essaPreview") !== "1") return;
+ 
+  const serverRelativeUrl = params.get("essaFileUrl") || "";
+  const fileName          = params.get("essaFileName") || "";
+  const siteUrl           = params.get("essaSiteUrl") || "";
+  const filePreviewURL    = params.get("essaFilePreviewURL") || "";
+  const siteName          = params.get("essaSiteName") || "";
+  const folderPath        = params.get("essaFolderPath") || "";
+ 
+  if (!serverRelativeUrl && !filePreviewURL) {
+    console.warn("[DeepLink] essaPreview=1 found but no file URL — ignoring.");
+    return;
+  }
+ 
+  const reconstructedFile: any = {
+    ServerRelativeUrl: serverRelativeUrl,
+    FileName:          fileName,
+    Name:              fileName,
+    __siteUrl:         siteUrl,
+    SiteName:          siteName,
+    CurrentFolderPath: folderPath,
+    FilePreviewURL:    filePreviewURL || null,
+  };
+ 
+  console.log("[DeepLink] Auto-opening PreviewModal for:", reconstructedFile);
+ 
+  // ── Mark that we are in deep-link preview mode ──────────────────────
+  // loadViewData will check this ref and skip resetting showPreviewModal
+  isDeepLinkPreview.current = true;
+ 
+  // Open preview after component fully mounts + loadRootSites completes
+  // NOTE: No replaceState here — initialize() needs the URL intact to detect deep link
+  // URL will be cleaned after preview is confirmed open
+  setTimeout(() => {
+    setPreviewFile(reconstructedFile);
+    setShowPreviewModal(true);
+    console.log("[DeepLink] PreviewModal opened ✅");
+ 
+    // Clean URL AFTER preview is open (so refresh doesn't re-trigger)
+    try {
+      window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+    } catch (_) { /* non-critical */ }
+ 
+    // After 5 seconds, release the guard so normal navigation works again
+    setTimeout(() => {
+      isDeepLinkPreview.current = false;
+    }, 5000);
+  }, 1500); // wait longer to ensure loadRootSites + initialize() both complete first
+ 
+}, []); // run once on mount
+  // Addhyan 13/4/26 end 
+ 
+   // add useState for share file url modal - addhyan /10/04/26 start
   // ✅ Load all view counts on initial page load
 // srs 12/3/26 correct code if count mismatch in archival issue in current code data duplicate
 //   const getUniqueFiles = (files: any[]) => {
@@ -504,10 +591,37 @@ useEffect(() => {
   };
 
 // srs 6/3/26
-  const handleUndoArchive = async (file: any) => {
-    let itemId = file.Id || file.ID;
+//   const handleUndoArchive = async (file: any) => {
+//     let itemId = file.Id || file.ID;
+//   try {
+//     // 1. Target the specific item by ID
+//     await sp.web.lists
+//       .getByTitle("EssaArchivallist")
+//       .items
+//       .getById(itemId)
+//       .update({
+//         Isarchive: false
+//       });
+
+//     console.log(`Item ${itemId} has been successfully restored.`);
+    
+//     // 2. Trigger a refresh of your UI/state here if necessary
+//     // e.g., fetchArchiveItems();
+
+//   } catch (error) {
+//     console.error("Error updating Isarchive status:", error);
+//     alert("Failed to restore the item. Please try again.");
+//   }
+// };
+
+// srs 31/3/26
+
+const handleUndoArchive = async (file: any) => {
+  // Get the ID regardless of casing
+  const itemId = file.Id || file.ID;
+
   try {
-    // 1. Target the specific item by ID
+    // 1. Update the SharePoint List Item
     await sp.web.lists
       .getByTitle("EssaArchivallist")
       .items
@@ -516,14 +630,30 @@ useEffect(() => {
         Isarchive: false
       });
 
-    console.log(`Item ${itemId} has been successfully restored.`);
-    
-    // 2. Trigger a refresh of your UI/state here if necessary
-    // e.g., fetchArchiveItems();
+    // 2. Show Success Popup
+    Swal.fire({
+      title: 'Success!',
+      text: 'Item has been unarchived successfully.',
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'OK'
+    }).then((result) => {
+      /* 3. Reload the page only after the "OK" button is clicked */
+      if (result.isConfirmed) {
+        window.location.reload();
+      }
+    });
 
   } catch (error) {
     console.error("Error updating Isarchive status:", error);
-    alert("Failed to restore the item. Please try again.");
+    
+    // Show Error Popup if the update fails
+    Swal.fire({
+      title: 'Error!',
+      text: 'Failed to restore the item. Please try again.',
+      icon: 'error',
+      confirmButtonText: 'Close'
+    });
   }
 };
 
@@ -637,26 +767,58 @@ useEffect(() => {
 
 
 
-  useEffect(() => {
-    const initialize = async () => {
-      console.log("[initialize] Start");
-      await loadRootSites();
+  // useEffect(() => {
+    // const initialize = async () => {
+    //   console.log("[initialize] Start");
+    //   await loadRootSites();
 
-      // Check URL hash on initial load
-      const rawHash = window.location.hash.substring(1);
-      const hash = decodeURIComponent(rawHash || "");
-      console.log("[initialize] Hash:", rawHash, "decoded:", hash);
+    //   // Check URL hash on initial load
+    //   const rawHash = window.location.hash.substring(1);
+    //   const hash = decodeURIComponent(rawHash || "");
+    //   console.log("[initialize] Hash:", rawHash, "decoded:", hash);
 
-      if (hash) {
-        setPendingPath(hash.split("/"));
-      } else {
-        handleViewButtonClick("My request");
-      }
-      setIsInitialLoad(false);
-      console.log("[initialize] Complete");
-    };
+    //   if (hash) {
+    //     setPendingPath(hash.split("/"));
+    //   } else {
+    //     handleViewButtonClick("My request");
+    //   }
+    //   setIsInitialLoad(false);
+    //   console.log("[initialize] Complete");
+    // };
 
-    initialize();
+    // initialize();
+
+
+    // Addhyan 13/4/26
+    useEffect(() => {
+  const initialize = async () => {
+    console.log("[initialize] Start");
+    await loadRootSites();
+ 
+    // ── Check karo kya yeh deep link se open hua hai ──
+    const params = new URLSearchParams(window.location.search);
+    const isDeepLink = params.get("essaPreview") === "1";
+ 
+    // Check URL hash
+    const rawHash = window.location.hash.substring(1);
+    const hash = decodeURIComponent(rawHash || "");
+    console.log("[initialize] Hash:", rawHash, "decoded:", hash, "isDeepLink:", isDeepLink);
+ 
+    if (isDeepLink) {
+      // Deep link hai — "My request" load mat karo, preview handle karega
+      console.log("[initialize] Deep link detected — skipping handleViewButtonClick");
+      // (preview wala useEffect neeche handle karega)
+    } else if (hash) {
+      setPendingPath(hash.split("/"));
+    } else {
+      handleViewButtonClick("My request");
+    }
+ 
+    setIsInitialLoad(false);
+    console.log("[initialize] Complete");
+  };
+ 
+  initialize();
 
     // Listen for browser hash changes
     const handleHashChange = () => {
@@ -1120,7 +1282,13 @@ const visibleFiles = (files || [])
     return {
       ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
       ID: extraData.id, // Inject the List ID
-      Status: extraData.status // Inject the Status
+      Status: extraData.status, // Inject the Status
+      // srs 10/4/26
+      // --- ADD THESE LINES TO FIX PERMISSIONS ---
+      FileUID: f.UniqueId,             // Maps library GUID to the expected property
+      SiteID: node.siteUrl,            // Passes the current subsite URL
+      DocumentLibraryName: node.libraryTitle,
+      SiteName: entityName             // Used for Admin Group naming logic
     };
   });
 
@@ -1180,7 +1348,11 @@ console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles
           // i am adding this here set currrent site url because when we click on subsite it will set current site url for upload file / or create fodler it pass as props
           setCurrentSiteUrl(node.siteUrl);
           console.log("[toggleNode] Loading libraries for subsite:", node.title);
-          const libs = await siteSP.web.lists.filter("BaseTemplate eq 101 and Hidden eq false").select("Title")();
+          // const libs = await siteSP.web.lists.filter("BaseTemplate eq 101 and Hidden eq false").select("Title")();
+           // srs 31/3/26 filter out Documents and Site Assets 
+          const libs = await siteSP.web.lists
+    .filter("BaseTemplate eq 101 and Hidden eq false and Title ne 'Documents' and Title ne 'Site Assets'")
+    .select("Title")();
           node.children = libs.map((lib: any) => ({
             key: `lib-${node.key}-${lib.Title}`,
             title: lib.Title,
@@ -1268,6 +1440,55 @@ console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles
       }
     }
   };
+
+  // Aman 13/4/26
+const handleBreadcrumbShareClick = () => {
+  const url = window.location.href;
+ 
+  setBreadcrumbShare({
+    show: true,
+    url: url
+  });
+};
+ 
+const closeBreadcrumbShare = () => {
+  setBreadcrumbShare(prev => ({
+    ...prev,
+    show: false
+  }));
+};
+
+const handleFolderShareClick = (file: any) => {
+  try {
+    if (!file || !file.__siteUrl) return;
+ 
+    const baseUrl = "https://officeindia.sharepoint.com/sites/ESSA/SitePages/ESSADMS.aspx";
+ 
+    let folderPath = file.FolderPath || "";
+ 
+    if (typeof folderPath !== "string") return;
+ 
+    if (folderPath.includes("/sites/")) {
+      folderPath = folderPath.split("/sites/")[1];
+    }
+ 
+    if (folderPath.startsWith("/")) {
+      folderPath = folderPath.substring(1);
+    }
+ 
+    const finalUrl = `${baseUrl}#${encodeURI(folderPath)}`;
+ 
+    // ✅ POPUP OPEN
+    setFolderShare({
+      show: true,
+      url: finalUrl
+    });
+ 
+  } catch (error) {
+    console.error("Folder Share Error:", error);
+  }
+};
+// End Aman 13/4/26
 
   const expandPathToNode = async (nodeKey: string) => {
     console.log("[expandPathToNode] for key:", nodeKey);
@@ -1417,7 +1638,9 @@ try {
     return "";
   };
 const loadViewData = async (viewType: ViewType): Promise<any[]> => {
-    setShowPreviewModal(false)
+    // setShowPreviewModal(false)
+    // Addhyan 13/4/26
+    if (!isDeepLinkPreview.current) setShowPreviewModal(false);
     // sourish 20/8/25 previous wworking code 
     // if (viewType === "MyFolders") {
     //   try {
@@ -3110,6 +3333,242 @@ const metadata: any = {
 };
  
   /* ----------------- end handleAuditHistory ------------------ */
+  // srs 10/4/26
+window.ManageFilePermission = async (
+    fileId: string,
+    siteId: string, 
+    documentLibraryName: string,
+    siteTitle: string
+) => {
+    try {
+        const web = Web(siteId).using(AssignFrom(sp.web));
+
+        // 1. Fetch File and Item
+        const file = web.getFileById(fileId);
+        const item = await file.getItem();
+        
+        // 2. Fresh check for Inheritance
+        const itemQuery = item.select("HasUniqueRoleAssignments", "Id");
+        itemQuery.query.set("v", Date.now().toString());
+        const itemInfo: any = await itemQuery();
+        
+        const isUnique = itemInfo.HasUniqueRoleAssignments === true;
+
+        // 3. Fetch assignments - Cast to any[] to avoid the 'Member' property error
+        const currentAssignments: any[] = await item.roleAssignments
+            .expand("Member", "RoleDefinitionBindings")();
+
+        const allUsers = await web.siteUsers.select("Id", "Title", "Email")();
+        const filteredUsers = allUsers.filter(u => u.Email && !u.Title.includes("System"));
+
+        let selectedUsers: Array<{ id: string, title: string }> = [];
+
+        // 4. Management Dialog
+        const { value: formValues, isDenied: revertClicked } = await Swal.fire({
+            title: 'Manage File Permission',
+            width: '600px',
+            padding: '1rem',
+            backdrop: false,
+            showCloseButton: true,
+            customClass: { popup: 'sharepoint-style-shadow' },
+            html: `
+                <style>
+                    .sharepoint-style-shadow { box-shadow: 0 0 20px rgba(0,0,0,0.2) !important; border: 1px solid #ddd !important; }
+                    .user-option:hover { background-color: #f3f2f1 !important; color: #0078d4; }
+                    .status-indicator { 
+                        margin-bottom: 15px; margin-top:8px; text-align:left; padding: 10px; font-size: 12px; border-radius: 4px; 
+                        border: 1px solid ${isUnique ? '#fbc7c7' : '#c7ebc7'}; 
+                        background: ${isUnique ? '#fff4f4' : '#f3fbf3'}; 
+                        color: ${isUnique ? '#d13438' : '#107c10'}; 
+                    }
+                    .selected-tags-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; min-height: 35px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: #faf9f8; }
+                    .user-tag { background: #0078d4; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+                    .remove-tag { cursor: pointer; font-weight: bold; }
+                    .user-management-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; border: 1px solid #eee; }
+                    .user-management-table th { background: #f3f2f1; padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+                    .user-management-table td { padding: 6px 8px; text-align:left; border-bottom: 1px solid #eee; }
+                    .delete-user-btn { color: #d13438; cursor: pointer; font-size: 18px; background: none; border: none; font-weight: bold; }
+                </style>
+
+                <div>
+                    <div class="status-indicator">
+                        <strong>Current Status:</strong> ${isUnique ? '⚠️ Unique Permissions' : '✅ Inheriting Permissions'}
+                    </div>
+                    <label style="font-weight: 600; display: block; margin-bottom: 5px; text-align:left;">Add New Users:</label>
+                    <div id="selected-users-tags" class="selected-tags-container">
+                        <span style="color: #999; font-size: 12px;">Search and click users...</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="text" id="user-search-input" class="swal2-input" placeholder="Type name..." style="width: 100%; margin: 0; font-size: 14px;">
+                        <div id="user-dropdown-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #d9d9d9; max-height: 180px; overflow-y: auto; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            ${filteredUsers.map(u => `
+                                <div class="user-option" data-id="${u.Id}" data-title="${u.Title}" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f4f4f4;">
+                                    <div style="font-weight: 600; text-align:left; font-size: 13px; color:#000">${u.Title}</div>
+                                    <div style="font-size: 11px; color: #777; text-align:left;">${u.Email}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <label style="font-weight: 600; display: block; margin: 20px 0 5px 0; text-align:left;">Permission Level:</label>
+                    <select id="swal-permission-level" class="swal2-select" style="width: 100%; margin: 0; font-size: 14px; margin-bottom: 20px;">
+                        <option value="Full Control">Full Control</option>
+                        <option value="Edit">Edit</option>
+                        <option value="Contribute">Contribute</option>
+                        <option value="Read" selected>Read</option>
+                    </select>
+
+                    ${isUnique ? `
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 5px; text-align:left">Existing Access:</label>
+                    <div style="max-height: 150px; overflow-y: auto;">
+                        <table class="user-management-table">
+                            <thead>
+                                <tr><th>User</th><th>Permission</th><th style="text-align:center">Action</th></tr>
+                            </thead>
+                            <tbody>
+                                ${currentAssignments
+                                    .filter(a => (a.Member?.Title || "").trim() !== "DMSSuper_Admin")
+                                    .map(a => `
+                                    <tr>
+                                        <td style="text-align:left">
+                                            <div style="font-weight:600">${a.Member?.Title || 'Unknown'}</div>
+                                            <div style="font-size:10px; color:#666">${a.Member?.Email || ''}</div>
+                                        </td>
+                                        <td style="text-align:left">${a.RoleDefinitionBindings.map((r: any) => r.Name).join(', ')}</td>
+                                        <td style="text-align:center">
+                                            <button class="delete-user-btn" data-pid="${a.PrincipalId}">&times;</button>
+                                        </td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    ` : ''}
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Grant Access',
+            confirmButtonColor: '#0078d4',
+            showDenyButton: !!isUnique,
+            denyButtonText: 'Restore Inheritance',
+            denyButtonColor: '#6e7881',
+            didOpen: () => {
+                const input = document.getElementById('user-search-input') as HTMLInputElement;
+                const list = document.getElementById('user-dropdown-list') as HTMLDivElement;
+                const tagsContainer = document.getElementById('selected-users-tags') as HTMLDivElement;
+                const options = list.querySelectorAll('.user-option');
+
+                document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const pid = (e.currentTarget as HTMLElement).getAttribute('data-pid');
+                        Swal.close(); 
+                        const confirm = await Swal.fire({ title: 'Remove User?', icon: 'warning', showCancelButton: true });
+                        if (confirm.isConfirmed) {
+                            await item.roleAssignments.getById(parseInt(pid!)).delete();
+                            window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+                        } else {
+                            window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+                        }
+                    });
+                });
+
+                const renderTags = () => {
+                    if (selectedUsers.length === 0) {
+                        tagsContainer.innerHTML = '<span style="color: #999; font-size: 12px;">Search and click users...</span>';
+                        return;
+                    }
+                    tagsContainer.innerHTML = selectedUsers.map(u => `
+                        <span class="user-tag">${u.title} <span class="remove-tag" data-id="${u.id}">&times;</span></span>
+                    `).join('');
+                    tagsContainer.querySelectorAll('.remove-tag').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const id = (e.target as HTMLElement).getAttribute('data-id');
+                            selectedUsers = selectedUsers.filter(user => user.id !== id);
+                            renderTags();
+                        });
+                    });
+                };
+
+                input.addEventListener('input', () => {
+                    const val = input.value.toLowerCase();
+                    list.style.display = val ? 'block' : 'none';
+                    options.forEach((opt: any) => {
+                        const text = opt.innerText.toLowerCase();
+                        opt.style.display = text.includes(val) ? 'block' : 'none';
+                    });
+                });
+
+                options.forEach((opt: any) => {
+                    opt.addEventListener('click', () => {
+                        const id = opt.getAttribute('data-id');
+                        const title = opt.getAttribute('data-title');
+                        if (!selectedUsers.find(u => u.id === id)) {
+                            selectedUsers.push({ id, title });
+                            renderTags();
+                        }
+                        input.value = "";
+                        list.style.display = 'none';
+                    });
+                });
+            },
+            preConfirm: () => {
+                const permission = (document.getElementById('swal-permission-level') as HTMLSelectElement).value;
+                if (selectedUsers.length === 0) {
+                    Swal.showValidationMessage('Please select at least one user');
+                    return false;
+                }
+                return { users: selectedUsers, permission };
+            }
+        });
+
+        // 5. ACTION: RESTORE INHERITANCE
+        if (revertClicked) {
+            Swal.fire({ title: 'Restoring...', didOpen: () => Swal.showLoading()});
+            await item.resetRoleInheritance();
+            window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+            return;
+        }
+
+        // 6. ACTION: GRANT ACCESS (WITH CLEAN BREAK LOGIC)
+        if (formValues) {
+            Swal.fire({ title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const adminGroupName = `${siteTitle}_Admin`.trim();
+            const superAdminName = "DMSSuper_Admin";
+
+            if (!isUnique) {
+                await item.breakRoleInheritance(true); 
+
+                // FIX: Cast assignments to any[] to allow accessing Member property
+                const assignments: any[] = await item.roleAssignments.expand("Member").select("PrincipalId", "Member/Title")();
+
+                for (const assignment of assignments) {
+                    const title = (assignment.Member?.Title || "").trim();
+                    if (title !== superAdminName && title !== adminGroupName) {
+                        try {
+                            await item.roleAssignments.getById(assignment.PrincipalId).delete();
+                        } catch (e) {
+                            console.warn(`Cleanup: Could not remove ${title}`);
+                        }
+                    }
+                }
+            }
+
+            const roleDef = await web.roleDefinitions.getByName(formValues.permission)();
+            for (const user of formValues.users) {
+                await item.roleAssignments.add(parseInt(user.id), roleDef.Id);
+            }
+
+            Swal.fire({ icon: 'success', title: 'Permissions Set', timer: 1500, showConfirmButton: false }).then(() => {
+                window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+            });
+        }
+
+    } catch (error) {
+        console.error("Permission Logic Error:", error);
+        Swal.fire({ icon: "error", title: "Operation Failed", text: error.message });
+    }
+};
+
 
 
   // sourish 20/8/25
@@ -4888,8 +5347,9 @@ const handleSaveRename = async () => {
                 <span style={{ fontSize: '14px',  color: '#333', marginTop: '5px' }}>Create</span>
       </div>
 
+      {/* srs 31/3/26 comment Ask Ai  */}
       {/* Group 2: ASK AI */}
-      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
+      {/* <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
        
         <div className="d-flex">
           <button 
@@ -4902,7 +5362,7 @@ const handleSaveRename = async () => {
           </button>
         </div>
          <span style={{ fontSize: '14px', color: '#333', marginTop: '5px' }}>Ask AI</span>
-      </div>
+      </div> */}
 
       {/* Group 3: NEW */}
      <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
@@ -5026,8 +5486,11 @@ const handleSaveRename = async () => {
   </div>
 </div>
              
-          <div  className="main-content-new">
-            <div className="inbox-leftbar">
+          {/* <div  className="main-content-new">
+            <div className="inbox-leftbar"> */}
+            {/* Ritik 13/4/26 */}
+                 <div className="main-content-new" style={{display:'flex', height:'calc(100vh - 130px)', overflow:'hidden'}}>
+                  <div className="inbox-leftbar" style={{overflowY:'auto', height:'100%'}}>
               {/* Quick Views Panel */}
               <div
                 id="buttonpanel"
@@ -5104,7 +5567,9 @@ const handleSaveRename = async () => {
             <div
   id="filelistcontainer"
   className="inbox-rightbar"
-  style={{ position: 'relative', overflow: 'hidden' }}>
+  // style={{ position: 'relative', overflow: 'hidden' }}>
+  // Ritik 13/4/26
+    style={{ position: 'relative', overflowY: 'auto', flex: 1 }}>  
               {showTemplateForm && (
                 <TemplateForm
                   selectedTemplate={selectedTemplate}
@@ -5185,6 +5650,22 @@ const handleSaveRename = async () => {
                             </span>
                           </React.Fragment>
                         ))}
+                         {/* Aman 13/4/26 */}
+                          {breadcrumbs.length > 2 && selectedCurrentNode && (
+    <FontAwesomeIcon
+      icon={faShareAlt}
+      title="Share URL Path"
+      style={{
+        marginLeft: "8px",
+        cursor: "pointer",
+        fontSize: "13px",
+        color: "#666",
+      }}
+     onClick={() => {
+  handleBreadcrumbShareClick();
+}}
+    />
+  )}
                       </div>
                     ) : (
                       <div style={{ color: "#666", fontSize: "14px" }}>Select a folder to view files</div>
@@ -5785,6 +6266,26 @@ const handleSaveRename = async () => {
                                                 <span> <FontAwesomeIcon icon={faFileAlt} /> </span> Audit History
                                               </button>
                                             </li>
+                                             {/* srs 10/4/26 */}
+                                             <li>
+  <button 
+    type="button"
+    className="newbuttontext"
+    onClick={() => {
+      // Extract the required fields from your file object
+      // Note: Ensure your 'file' object has these properties (adjust names if necessary)
+      window.ManageFilePermission(
+         file.FileUID,            // fileId
+        file.SiteID,             // siteId (Your data shows this is the URL)
+        file.DocumentLibraryName, // documentLibraryName
+        file.SiteName            // siteTitle (Used for the Admin Group naming)
+      );
+      setMenuOpenIdx(null);
+    }}
+  >
+    <span> <FontAwesomeIcon icon={faFileAlt} /> </span> Manage File Permission
+  </button>
+</li>
                                             <li>
                                               <button type="button"
                                                 className="newbuttontext"
@@ -5814,6 +6315,15 @@ const handleSaveRename = async () => {
                                                 <span> <FontAwesomeIcon icon={faTrashAlt} /> </span> Delete File
                                               </button>
                                             </li>
+
+                                            {/* // add Button for share file url modal - Addhyan 13/4/26 start */}
+                                                  <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareUrlFile(file);
+                                                    setShowShareUrlModal(true);
+                                                  }}><FontAwesomeIcon icon={faShareAlt} /> Share file url</button></li>
+ 
+                                                   {/* // add button for share file url modal - Addhyan 13/4/26 end */}
                                             <li>
                                               <button type="button"
                                                 className="newbuttontext"
@@ -6035,11 +6545,34 @@ const handleSaveRename = async () => {
                                                     handleAuditHistory(file);
                                                     setMenuOpenIdx(null);
                                                   }}><FontAwesomeIcon icon={faFileAlt} /> Audit History</button></li>
+                                                   {/* srs 10/4/26 */}
+                                                   <li><button onClick={() => {
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    setMenuOpenIdx(null);
+                                                    // this is to hide li options in every tab (addhyan)
+                                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                     window.ManageFilePermission(
+          file.FileUID,            // fileId
+        file.SiteID,             // siteId (Your data shows this is the URL)
+        file.DocumentLibraryName, // documentLibraryName
+        file.SiteName            // siteTitle (Used for the Admin Group naming)
+      );
+                                                    setMenuOpenIdx(null);
+                                                  }}><FontAwesomeIcon icon={faFileAlt} /> Manage File Permission</button></li>
                                                   <li><button type="button" onClick={() => {
                                                     setMenuOpenIdx(null);
                                                     setShareFile(file);
                                                     setShowShareModal(true);
                                                   }}><FontAwesomeIcon icon={faShareAlt} /> Share</button></li>
+
+                                                  {/* // add Button for share file url modal - Addhyan 13/4/26 start */}
+                                                  <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareUrlFile(file);
+                                                    setShowShareUrlModal(true);
+                                                  }}><FontAwesomeIcon icon={faShareAlt} /> Share file url</button></li>
+ 
+                                                   {/* // add button for share file url modal - Addhyan 13/4/26 end */}
                                                   <li><button type="button" onClick={() => {
 
 
@@ -6190,6 +6723,18 @@ const handleSaveRename = async () => {
                                                       <img src={require("../assets/userlock.svg")} alt="userlock" />  Manage Permission
                                                     </button>
                                                   </li>
+                                                  {/* Aman 13/4/26 */}
+                                                   <li>
+  <button
+    type="button"
+    onClick={() => {
+      setMenuOpenIdx(null);
+      handleFolderShareClick(file);
+    }}
+  >
+    <FontAwesomeIcon icon={faShareAlt} /> Share Folder Path
+  </button>
+</li>
                                                 </>
                                               )}
 
@@ -6426,7 +6971,16 @@ const handleSaveRename = async () => {
       {/* Browsing Menu Logic (Map 1 Sync) */}
       <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
       <li><button type="button" className="newbuttontext" onClick={async () => {await ArchivedFile(file,currentSiteUrl,context);setMenuOpenIdx(null);}}><span><FontAwesomeIcon icon={faTrashAlt} /></span> Archive</button></li>
+           {/* // Ritik 31/3/26 */}
+      <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faShareAlt} /> Share</button></li>
       <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} /> Audit History</button></li>
+       {/* srs 10/4/26 */}
+      <li><button type="button" onClick={() => {  window.ManageFilePermission(
+          file.FileUID,            // fileId
+        file.SiteID,             // siteId (Your data shows this is the URL)
+        file.DocumentLibraryName, // documentLibraryName
+        file.SiteName            // siteTitle (Used for the Admin Group naming)
+      ); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} /> Manage File Permission</button></li>
       <li><button type="button" onClick={() => { setModalFile(file); setShowVersionModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faHistory} /> Version History</button></li>
       <li><button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faTrashAlt} /> Delete File</button></li>
       <li>
@@ -6444,6 +6998,13 @@ const handleSaveRename = async () => {
         <>
           <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
           <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} />  Audit History</button></li>
+          {/* srs 10/4/26 */}
+          <li><button type="button" onClick={() => {  window.ManageFilePermission(
+          file.FileUID,            // fileId
+        file.SiteID,             // siteId (Your data shows this is the URL)
+        file.DocumentLibraryName, // documentLibraryName
+        file.SiteName            // siteTitle (Used for the Admin Group naming)
+      ); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} />  Manage File Permission</button></li>
           <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}> <FontAwesomeIcon icon={faShareAlt} />  Share</button></li>
           {/* <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faDownload} />  Download</button></li> */}
           {/* ririk  */}
@@ -6481,6 +7042,18 @@ const handleSaveRename = async () => {
           <li><button type="button" onClick={() => { setModalFile(file); deleteFolder(file); setMenuOpenIdx(null); }}><img src={require("../assets/deletefile.svg")} alt="deletefile" /> Delete Folder</button></li>
           <li><button type="button" onClick={() => { setModalFile(file); setRenameValue(file?.FolderName || ""); setRenameModalOpen(true); setMenuOpenIdx(null); }}><img src={require("../assets/rename.svg")} alt="rename" /> Rename Folder</button></li>
           <li><button type="button" onClick={() => { window.managePermission?.(file); setMenuOpenIdx(null); }}><img src={require("../assets/userlock.svg")} alt="userlock" /> Manage Permission</button></li>
+          {/* Aman 13/4/26 */}
+           <li>
+  <button
+    type="button"
+    onClick={() => {
+      setMenuOpenIdx(null);
+      handleFolderShareClick(file);
+    }}
+  >
+    <FontAwesomeIcon icon={faShareAlt} /> Share Folder Path
+  </button>
+</li>
         </>
       )}
 
@@ -6933,7 +7506,32 @@ const handleSaveRename = async () => {
                         currentSiteUrl={currentSiteUrl}
                       />
 
+{/* // add call for share file url modal - Addhyan 13/4/26 start */}
+                      <ShareFileUrlModal
+                        show={showShareUrlModal}
+                        file={shareUrlFile}
+                        context={context}
+                        currentSiteUrl={currentSiteUrl}
+                        onClose={() => {
+                          setShowShareUrlModal(false);
+                          setShareUrlFile(null);
+                        }}
+                      />
+ 
+{/* // add call for share file url modal - Addhyan 13/4/26 start */}
 
+{/* Aman 13/4/26 */}
+ <BreadcrumbSharePopup
+  show={breadcrumbShare.show}
+  url={breadcrumbShare.url}
+  onClose={closeBreadcrumbShare}
+/>
+ 
+<FolderSharePopup
+  show={folderShare.show}
+  url={folderShare.url}
+  onClose={closeFolderShare}
+/>
 
 
                       {/* aman code manage folder permission */}
@@ -7550,8 +8148,9 @@ const handleSaveRename = async () => {
             </div>
           </div>
  
+   {/* // srs 31/3/26 Version History Commented */}
           {/* Approval Section */}
-           <div style={{padding:'0px 18px 12px 18px'}}>
+           {/* <div style={{padding:'0px 18px 12px 18px'}}>
             <h6 style={{
               fontSize: '16px',
               fontWeight: '600',
@@ -7597,15 +8196,6 @@ const handleSaveRename = async () => {
                       }}>
                         Action DateTime
                       </th>
-                      {/* <th style={{
-                        padding: '10px',
-                        textAlign: 'left',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        borderBottom: '0px solid #005a9e'
-                      }}>
-                        Email
-                      </th> */}
                       <th style={{
                         padding: '10px',
                         textAlign: 'right',
@@ -7646,7 +8236,6 @@ const handleSaveRename = async () => {
                          
                         </td>
                         <td style={{ padding: '10px', fontSize: '13px' }}>
-                          {/* {v.LogHistory || "-"} */}
                           {v.LogHistory
   ? `${String(new Date(v.LogHistory).getDate()).padStart(2, "0")}/${
       new Date(v.LogHistory).toLocaleString("en-US", { month: "short" })
@@ -7657,13 +8246,6 @@ const handleSaveRename = async () => {
     }`
   : "-"}
                         </td>
-                        {/* <td style={{
-                          padding: '10px',
-                          fontSize: '13px',
-                          color: '#6c757d'
-                        }}>
-                          {v.ModifiedByEmail || '-'}
-                        </td> */}
                         <td style={{
                           padding: '10px',
                           fontSize: '13px',
@@ -7696,7 +8278,7 @@ const handleSaveRename = async () => {
                 No Approval available
               </div>
             )}
-          </div>
+          </div> */}
         </div>
       )}
     </Modal.Body>

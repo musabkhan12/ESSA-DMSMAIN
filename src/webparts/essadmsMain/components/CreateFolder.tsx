@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import { spfi, SPFI, SPFx } from "@pnp/sp";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import "@pnp/sp/sites";
+import { Modal } from "react-bootstrap";
 //import context from "react-bootstrap/esm/AccordionContext";
 // import Form from "react-bootstrap/Form";
 
@@ -203,7 +204,8 @@ const [progress, setProgress] = useState(0);
   //start
   //   store the form field and its type.
   const [formFields, setFormFields] = useState([
-    { id: 0, fieldName: '', selectField: '' }
+    // { id: 0, fieldName: '', selectField: '' }
+    { id: 0, fieldName: '', selectField: '', order: 1 } // Ritik 10/04/2026 Added order: 1 for the order column in table
   ]);
 
   //   add field in the formField arry
@@ -248,7 +250,8 @@ const [progress, setProgress] = useState(0);
     const newId = formFields.length ? formFields[formFields.length - 1].id + 1 : 0;
     setFormFields([
       ...formFields,
-      { id: newId, fieldName: "", selectField: "" },
+      // { id: newId, fieldName: "", selectField: "" },
+      { id: newId, fieldName: "", selectField: "", order: formFields.length + 1 }, // Ritik 10/04/2026 Added order for the order column in table
     ]);
   };
   console.log("FormsField Array", formFields);
@@ -888,7 +891,9 @@ if (OthProps.DocumentLibrary !== "") {
           // type.replace(/\s+/g, '').toLowerCase();
           (payloadForPreviewFormMaster as any).ColumnName = formFields[i].fieldName.replace(/\s+/g, '');
           (payloadForPreviewFormMaster as any).ColumnType = formFields[i].selectField;
-          (payloadForPreviewFormMaster as any).Sequence = i + 1;
+          // (payloadForPreviewFormMaster as any).Sequence = i + 1;
+          // Ritik 10/04/2026 Saves user-defined order instead of loop index, so reordered fields are stored correctly
+          (payloadForPreviewFormMaster as any).Sequence = formFields[i].order;
           console.log("Call the Api with this payload", payloadForPreviewFormMaster)
  
           const addedItem = await siteSP.web.lists.getByTitle("DMSPreviewFormMaster").items.add(payloadForPreviewFormMaster);
@@ -1103,49 +1108,34 @@ if (OthProps.DocumentLibrary !== "") {
   return (
     <>
        {/* // srs 9/4/26 */}
-    {showLoader && (
-  <div style={{
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999
-  }}>
-    <div style={{
-      width: "400px",
-      background: "#fff",
-      padding: "20px",
-      borderRadius: "8px",
-      textAlign: "center"
-    }}>
-      <h3>Setting up your Folder...</h3>
- 
-      <div style={{
-        width: "100%",
-        height: "20px",
-        backgroundColor: "#e0e0e0",
-        borderRadius: "10px",
-        overflow: "hidden",
-        marginTop: "15px"
-      }}>
-        <div style={{
-          width: `${progress}%`,
-          height: "100%",
-          backgroundColor: "#0078d4",
-          transition: "width 0.1s linear"
-        }} />
+ {/* Ritik 10/04/2026*/}
+       {showLoader && (
+  <Modal
+    show={showLoader}
+    centered
+    backdrop="static"
+    keyboard={false}
+    container={() => document.getElementById("filelistcontainer")}
+  >
+    <Modal.Body className="text-center p-4">
+      <div style={{ position: "relative" }}>
+        <button
+          onClick={() => setShowLoader(false)}
+          style={{ position: "absolute", top: -20, right: -10, background: "none", border: 0, cursor: "pointer", padding: 0 }}
+        >
+          <svg width="32" height="32" viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="15" fill="#fff" stroke="red" strokeWidth="2.5"/>
+            <path d="M10 10L22 22M22 10L10 22" stroke="red" strokeWidth="3.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+        <h5 style={{ paddingRight: "40px" }}>Setting up your Folder...</h5>
+        <div style={{ width: "100%", height: "20px", backgroundColor: "#e0e0e0", borderRadius: "10px", overflow: "hidden", marginTop: "15px" }}>
+          <div style={{ width: `${progress}%`, height: "100%", backgroundColor: "#0078d4", transition: "width 0.1s linear" }} />
+        </div>
+        <p style={{ marginTop: "10px" }}>{Math.round(progress)}% Completed</p>
       </div>
- 
-      <p style={{ marginTop: "10px" }}>
-        {Math.round(progress)}% Completed
-      </p>
-    </div>
-  </div>
+    </Modal.Body>
+  </Modal>
 )}
  
       {/* <button className="BackButton me-0 mb-3"
@@ -1322,6 +1312,8 @@ if (OthProps.DocumentLibrary !== "") {
             <tr>
               <th style={{ width: "40%" }}>Field Name</th>
               <th style={{ width: "40%" }}>Select Field Type</th>
+              {/* Ritik 10/04/2026 added table header for the order */}
+              <th style={{ width: "15%" }}>Order</th>
               <th style={{ width: "20%" }}>Action</th>
             </tr>
           </thead>
@@ -1366,9 +1358,36 @@ if (OthProps.DocumentLibrary !== "") {
                   )}
                 </td>
 
+                     {/* Ritik 10/04/2026 added Table data  */}
+                <td>
+  <select
+    className="create-folder-form-control"
+    value={formField.order}
+    onChange={(e) => {
+      const newOrder = parseInt(e.target.value);
+      const oldOrder = formField.order;
+      const reordered = formFields.map(f => {
+        if (f.id === formField.id) return { ...f, order: newOrder };
+        if (oldOrder > newOrder && f.order >= newOrder && f.order < oldOrder)
+          return { ...f, order: f.order + 1 };
+        if (oldOrder < newOrder && f.order <= newOrder && f.order > oldOrder)
+          return { ...f, order: f.order - 1 };
+        return f;
+      });
+      setFormFields([...reordered].sort((a, b) => a.order - b.order));
+    }}
+  >
+    {formFields.map((_, i) => (
+      <option key={i + 1} value={i + 1}>{i + 1}</option>
+    ))}
+  </select>
+</td>
+
                 {/* Delete Button */}
                 <td className="text-center">
-                  {formField.id !== 0 && (
+                  {/* {formField.id !== 0 && ( */}
+                  {/* Ritik 10/04/2026 allowing deletion of all fields, including the first one, as there is no longer a requirement to keep at least one field */}
+                  {formField.id !== 1 && (
                     <button style={{background:'#fff'}}
                       type="button"
                       onClick={(e) => handleRemoveField(formField.id, e)}
