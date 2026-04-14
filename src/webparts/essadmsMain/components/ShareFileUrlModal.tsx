@@ -1,6 +1,14 @@
 import * as React from "react";
 import { Modal, Button } from 'react-bootstrap';
 import { WebPartContext } from "@microsoft/sp-webpart-base";
+import { Form } from "react-bootstrap";
+import { spfi, SPFx } from "@pnp/sp";
+import "@pnp/sp/webs";
+import "@pnp/sp/site-users/web";
+import "@pnp/sp/lists";
+import "@pnp/sp/items";
+import Swal from "sweetalert2";
+import Select from "react-select";
 
 interface ShareFileUrlModalProps {
   show: boolean;
@@ -10,9 +18,90 @@ interface ShareFileUrlModalProps {
   context: WebPartContext;
 }
 
+type UserOption = {
+  value: string;
+  label: string;
+};
+
 const ShareFileUrlModal: React.FC<ShareFileUrlModalProps> = ({ show, onClose, file, currentSiteUrl, context }) => {
   const [shareUrl, setShareUrl] = React.useState<string>("");
   const [copied, setCopied] = React.useState<boolean>(false);
+ 
+ 
+  const [users, setUsers] = React.useState<any[]>([]);
+const [selectedUsers, setSelectedUsers] = React.useState<UserOption[]>([]);
+ 
+ 
+ 
+ 
+ 
+const userOptions = users.map((u) => ({
+  value: u.Email,
+  label: `${u.Title} (${u.Email})`
+}));
+ 
+ 
+ 
+ 
+React.useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      if (!context) return;
+ 
+      const sp = spfi().using(SPFx(context));
+ 
+      const sites = await sp.web.lists
+        .getByTitle("MasterSiteCollection")
+        .items.select("Title", "SiteURL")();
+        sites.push({
+  Title: "ESSA",
+  SiteURL: context.pageContext.web.absoluteUrl
+});
+      let allUsers: any[] = [];
+ 
+      for (const site of sites) {
+        if (!site.SiteURL) continue;
+ 
+        try {
+          const siteSp = spfi(site.SiteURL).using(SPFx(context));
+          const siteUsers = await siteSp.web.siteUsers();
+ 
+          const filteredUsers = siteUsers.filter(
+  (u: any) =>
+    u.Email &&
+    u.PrincipalType === 1
+);
+ 
+allUsers = [...allUsers, ...filteredUsers];
+        } catch (err) {
+          console.error("User fetch error:", site.SiteURL);
+        }
+      }
+ 
+      const uniqueUsers = Array.from(
+  new Map(
+    allUsers
+      .filter((u) => u.Email)
+      .map((u) => [u.Email.toLowerCase(), u])
+  ).values()
+);
+ 
+      setUsers(uniqueUsers);
+ 
+    } catch (error) {
+      console.error("User fetch failed:", error);
+    }
+  };
+ 
+  if (show) {
+    setSelectedUsers([]);
+    fetchUsers();
+  }
+}, [show, context]);
+ 
+ 
+ 
+// aman tak ka code
 
  
   // ─────────────────────────────────────────────
@@ -63,7 +152,68 @@ const ShareFileUrlModal: React.FC<ShareFileUrlModalProps> = ({ show, onClose, fi
       console.error("buildDeepLinkUrl failed:", err);
       return "";
     }
-  };
+ };
+
+  const handleSendMail = async () => {
+  try {
+    if (!selectedUsers || selectedUsers.length === 0) {
+      alert("Please select at least one user");
+      return;
+    }
+ 
+    const sp = spfi().using(SPFx(context));
+ 
+    // current user (Share By)
+    const currentUser = await sp.web.currentUser();
+ 
+    //selected users  get IDs
+    const userIds: number[] = [];
+ 
+    for (const user of selectedUsers) {
+      const ensuredUser = await sp.web.ensureUser(user.value);
+      userIds.push(ensuredUser.data.Id);
+    }
+ 
+    // create item in list
+    const payload = {
+      
+      Url: shareUrl,
+      SharebyId: currentUser.Id,
+      SharetoId: { results: userIds }
+    };
+    console.log("ShareFileUrl payload:", payload);
+
+    try {
+      await sp.web.lists.getByTitle("shareFileUrlData").items.add(payload);
+    } catch (innerError: any) {
+      const message = innerError?.message || "";
+      console.warn("ShareFileUrl add failed with payload object, retrying with raw array:", message);
+
+      if (message.includes("StartObject") || message.includes("StartArray")) {
+        const fallbackPayload = {
+          ...payload,
+          SharetoId: userIds
+        };
+        console.log("Retry payload for ShareFileUrl:", fallbackPayload);
+        await sp.web.lists.getByTitle("shareFileUrlData").items.add(fallbackPayload);
+      } else {
+        throw innerError;
+      }
+    }
+
+    Swal.fire({
+      icon: "success",
+      title: "Mail request sent successfully",
+      showConfirmButton: false,
+      timer: 1500
+    });
+    onClose();
+ 
+  } catch (error) {
+    console.error("Error sending mail:", error);
+    alert("Something went wrong");
+  }
+};
 
   React.useEffect(() => {
     if (!show || !file) {
@@ -108,6 +258,19 @@ const ShareFileUrlModal: React.FC<ShareFileUrlModalProps> = ({ show, onClose, fi
             <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>File</div>
             <div style={{ fontSize: '16px', fontWeight: 600 }}>{fileName}</div>
           </div>
+ 
+          <Form.Group style={{ marginTop: "10px" }}>
+  <Form.Label>Select User</Form.Label>
+ 
+  <Select
+    isMulti
+    options={userOptions}
+    value={selectedUsers}
+    onChange={(selected: any) => setSelectedUsers(Array.isArray(selected) ? selected : [])}
+    placeholder="Select users..."
+    isSearchable={true}
+  />
+</Form.Group>
 
           <div>
             <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Shareable link</div>
@@ -151,6 +314,7 @@ const ShareFileUrlModal: React.FC<ShareFileUrlModalProps> = ({ show, onClose, fi
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>Close</Button>
+        <Button variant="primary" onClick={handleSendMail}>Send Mail</Button>
       </Modal.Footer>
     </Modal>
   );

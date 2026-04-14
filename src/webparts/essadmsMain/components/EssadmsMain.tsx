@@ -7525,12 +7525,14 @@ const handleSaveRename = async () => {
   show={breadcrumbShare.show}
   url={breadcrumbShare.url}
   onClose={closeBreadcrumbShare}
+  context={context}
 />
  
 <FolderSharePopup
   show={folderShare.show}
   url={folderShare.url}
   onClose={closeFolderShare}
+  context={context}
 />
 
 
