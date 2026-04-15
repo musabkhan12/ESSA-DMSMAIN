@@ -8150,9 +8150,8 @@ const handleSaveRename = async () => {
             </div>
           </div>
  
-   {/* // srs 31/3/26 Version History Commented */}
           {/* Approval Section */}
-           {/* <div style={{padding:'0px 18px 12px 18px'}}>
+          <div style={{padding:'0px 18px 12px 18px'}}>
             <h6 style={{
               fontSize: '16px',
               fontWeight: '600',
@@ -8198,6 +8197,15 @@ const handleSaveRename = async () => {
                       }}>
                         Action DateTime
                       </th>
+                      {/* <th style={{
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderBottom: '0px solid #005a9e'
+                      }}>
+                        Email
+                      </th> */}
                       <th style={{
                         padding: '10px',
                         textAlign: 'right',
@@ -8238,6 +8246,7 @@ const handleSaveRename = async () => {
                          
                         </td>
                         <td style={{ padding: '10px', fontSize: '13px' }}>
+                          {/* {v.LogHistory || "-"} */}
                           {v.LogHistory
   ? `${String(new Date(v.LogHistory).getDate()).padStart(2, "0")}/${
       new Date(v.LogHistory).toLocaleString("en-US", { month: "short" })
@@ -8248,6 +8257,13 @@ const handleSaveRename = async () => {
     }`
   : "-"}
                         </td>
+                        {/* <td style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          color: '#6c757d'
+                        }}>
+                          {v.ModifiedByEmail || '-'}
+                        </td> */}
                         <td style={{
                           padding: '10px',
                           fontSize: '13px',
@@ -8280,7 +8296,7 @@ const handleSaveRename = async () => {
                 No Approval available
               </div>
             )}
-          </div> */}
+          </div>
         </div>
       )}
     </Modal.Body>
