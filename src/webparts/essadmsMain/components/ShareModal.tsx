@@ -67,6 +67,27 @@ const ShareModal: React.FC<ShareModalProps> = ({
     }
   }, [show, file]);
 
+  // Ritik 16/4/26 - Reset active component on modal open/close
+  // modal close reset
+React.useEffect(() => {
+  if (!show) {
+    setSelectedUsers([]);
+    setSelectedPermission("");
+    setSelectedComment("");
+    setUserInput("");
+    setShowDropdown(false);
+  }
+}, [show]);
+ 
+// file change reset
+React.useEffect(() => {
+  setSelectedUsers([]);
+  setSelectedPermission("");
+  setSelectedComment("");
+  setUserInput("");
+  setShowDropdown(false);
+}, [file]);
+
 
   // user fetching function addhyan - 28/01/2026
 

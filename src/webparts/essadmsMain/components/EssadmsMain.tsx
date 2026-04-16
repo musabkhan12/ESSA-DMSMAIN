@@ -58,7 +58,9 @@ declare global {
     managePermission?: (folder: any) => void;
      // srs 10/4/26
     ManageFilePermission: (fileId: string, siteId: string, documentLibraryName: string, siteTitle: string) => Promise<void>;
-  }
+    // srs 15/4/26
+    rework: (fileId: any, siteId: any, documentLibrary: any, siteName: any, filePath: any) => Promise<void>;
+   }
 }
 interface TreeNode {
   key: string;
@@ -87,6 +89,7 @@ interface BreadcrumbItem {
   libraryTitle?: string;
   folderPath?: string;
 }
+
 
 const ArgPoc = ({ context }: { context: WebPartContext }) => {
   // Template form state
@@ -289,9 +292,9 @@ const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
     } catch (_) { /* non-critical */ }
  
     // After 5 seconds, release the guard so normal navigation works again
-    setTimeout(() => {
-      isDeepLinkPreview.current = false;
-    }, 5000);
+    // setTimeout(() => {
+    //   isDeepLinkPreview.current = false;
+    // }, 5000);
   }, 1500); // wait longer to ensure loadRootSites + initialize() both complete first
  
 }, []); // run once on mount
@@ -1088,9 +1091,16 @@ const handleUndoArchive = async (file: any) => {
 
     // If we ended on a library or folder, load its files
     if (currentNode.type === "library" || currentNode.type === "folder") {
+      // Aman 16/4/26
+      setSelectedCurrentNode(currentNode);
+      // Aman 16/4/26 end
       await loadFilesForNode(currentNode);
       setBreadcrumbs(breadcrumbPath); //ritik 09/04/26 added after load file node set the breadcrumb
     }
+    // Aman 16/4/26 - if we ended on site/subsite, we should still set selectedCurrentNode to update the UI context, but we won't load files until user clicks the library
+    if (currentNode.type === "site" || currentNode.type === "subsite") {
+  await handleNodeClick(currentNode);
+}
   };
   /** --------------------------------------- clicking ----------------------------------------- */
   // const handleNodeClick = async (node: TreeNode) => {
@@ -1122,7 +1132,7 @@ const handleUndoArchive = async (file: any) => {
   // };
   const handleNodeClick = async (node: TreeNode) => {
     setShowUploadPanel(false);    // Upload File Button Hide From Site collection and Subsites click by Aman
-
+    setActiveComponent(false); // addhyan 16/4/26
     // this below lines will close preview modal  (addhyan work on this )
     setShowPreviewModal(false); // <-- Close preview modal
     setPreviewFile(null);       // <-- Clear preview file
@@ -1419,6 +1429,7 @@ console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles
   /** -------------------------------- breadcrumb click (same) --------------------------------- */
   const handleBreadcrumbClick = async (item: BreadcrumbItem) => {
     setShowUploadPanel(false);                  // Upload File Button Hide From Site collection and Subsites click by Aman
+   setActiveComponent(false); // addhyan 16/4/26
     console.log("[breadcrumb] Clicked:", item);
     if (item.type === "view") {
       handleViewButtonClick(item.title);
@@ -3336,12 +3347,12 @@ const metadata: any = {
   // srs 10/4/26
 window.ManageFilePermission = async (
     fileId: string,
-    siteId: string, 
+    siteUrl: string, 
     documentLibraryName: string,
     siteTitle: string
 ) => {
     try {
-        const web = Web(siteId).using(AssignFrom(sp.web));
+        const web = Web(siteUrl).using(AssignFrom(sp.web));
 
         // 1. Fetch File and Item
         const file = web.getFileById(fileId);
@@ -3464,9 +3475,9 @@ window.ManageFilePermission = async (
                         const confirm = await Swal.fire({ title: 'Remove User?', icon: 'warning', showCancelButton: true });
                         if (confirm.isConfirmed) {
                             await item.roleAssignments.getById(parseInt(pid!)).delete();
-                            window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+                            window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
                         } else {
-                            window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+                            window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
                         }
                     });
                 });
@@ -3524,7 +3535,7 @@ window.ManageFilePermission = async (
         if (revertClicked) {
             Swal.fire({ title: 'Restoring...', didOpen: () => Swal.showLoading()});
             await item.resetRoleInheritance();
-            window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+            window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
             return;
         }
 
@@ -3559,7 +3570,7 @@ window.ManageFilePermission = async (
             }
 
             Swal.fire({ icon: 'success', title: 'Permissions Set', timer: 1500, showConfirmButton: false }).then(() => {
-                window.ManageFilePermission(fileId, siteId, documentLibraryName, siteTitle);
+                window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
             });
         }
 
@@ -3570,50 +3581,976 @@ window.ManageFilePermission = async (
 };
 
 
+// srs 15/4/26
 
-  // sourish 20/8/25
-  const deleteFolder = async (file: any) => {
-    try {
-      if (!file?.FolderPath || !file?.__siteUrl) {
-        console.error("Missing folder path or site URL");
-        return;
-      }
+ const checkValidation=(message:any)=>{
+  Swal.fire(`${message}`,``, "warning");
+}
 
-      // Delete Folder
+const showReplaceMessage=(message:any)=>{
+  Swal.fire(`${message}`,``, 'success');
+}
 
-      // Build correct web URL for the subsite
-      const fullWebUrl = `${file.__siteUrl}/${encodeURIComponent(file.SiteTitle)}`;
-      const sp = spfi(fullWebUrl).using(SPFx(context));
+   const currentUserEmailRef = useRef('');
+  const currentUserIDref = useRef<number>(0);
+  const currentUserTitleRef = useRef('');
+    useEffect(() => {
+     getcurrentuseremail()
+     
+}, []);
 
-      // FolderPath is already server-relative, so just use it directly
-      const finalPath = file.FolderPath;
+ const getcurrentuseremail = async()=>{
+  const userProfile = await sp.profiles.myProperties();
+  console.log(userProfile , "userProfile")
+  console.log(userProfile.Title , "userProfile userProfile.Title")
+  const userdata = await sp.web.currentUser();
 
-      console.log("Deleting from:", fullWebUrl);
-      console.log("Final server-relative path:", finalPath);
+  console.log(userdata , "user data edc")
+  console.log(userdata.Id , "user data edc")
+  currentUserIDref.current = userdata.Id;
+  currentUserEmailRef.current = userdata.Email;
+  currentUserTitleRef.current = userdata.Title;
+  // console.log(currentUserEmailRef.current, "currentuser")
+ }
 
-      await sp.web.getFolderByServerRelativePath(finalPath).delete();
+window.rework=async(fileId:any,siteId:any,documentLibrary:any,siteName:any,filePath:any)=>{
+// FIX 1: Use a unique name for segments to avoid redeclaration error
+  // Define it here so it's recognized in this "block"
+  const pathSegments = filePath.split('/'); 
+  const locationPath = `/${pathSegments[1]}/${pathSegments[2]}`; 
+  const masterSiteUrl = window.location.origin + locationPath;
 
+  // Use sp.web here to satisfy the Timeline requirement
+  const subsiteSp = spfi(siteId).using(AssignFrom(sp.web));
+  const web = subsiteSp.web;
 
-      // Delete corresponding item from list in site collection root
-      const spRoot = spfi(file.__siteUrl).using(SPFx(context));
+  const masterSp = spfi(masterSiteUrl).using(AssignFrom(sp.web));
+  const masterWeb = masterSp.web;
+  
+  let clickedReplace=false;
 
-      console.log("Deleting list item from site:", file.__siteUrl, " List: DMSFolderMaster, ID:", file.ID);
+  
+  // Get the list item  corresponding to the file
+  const fileItem:any = await web.getFileById(fileId).expand("ListItemAllFields")();
+  console.log("fileItem",fileItem.ListItemAllFields.Status);
+  
+ 
+ // fetched the columns details corresponding to the file 
+ const fileColumns =await masterWeb.lists.getByTitle("DMSPreviewFormMaster").items.select("ColumnName","SiteName","DocumentLibraryName","IsRequired","ColumnType").filter(`SiteName eq '${siteName}' and DocumentLibraryName eq '${documentLibrary}' and IsDocumentLibrary ne 1`)();
+ console.log("fileColumns",fileColumns);
 
-      await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(file.ID).delete();
+ // Create an array of objects to store the columnName with there corresponding value
+ const resultArrayThatContainstheColumnDetails = fileColumns.map((column) => {
+ const columnName = column.ColumnName;
+ const columnTpye=column.ColumnType;
+ const columnRequired=column.IsRequired;
+ const columnValue = fileItem.ListItemAllFields[columnName];
 
-      const refreshed = await loadViewData("MyFolders");
-      setSelectedFiles(refreshed);
-      setActiveView("My Folders");
-      setBreadcrumbs([
-        { key: "my-folders", title: "My Folders", type: "view", siteUrl: "" },
-      ]);
-      setCurrentPage(1);
+   return {
+     label: columnName,
+     value: columnValue !== undefined ? columnValue : null, // Handle missing fields
+     type:columnTpye,
+     required:columnRequired
+   };
+ });
 
+  console.log("resultArrayThatContainstheColumnDetails",resultArrayThatContainstheColumnDetails)
 
-    } catch (err) {
-      console.error("Error deleting folder:", err);
+  // Create the main container
+  const mainContainer = document.createElement('div');
+  mainContainer.className = 'main-containeruploadfile';
+  const librarydiv= document.getElementById('filelistcontainer')
+  const backButton = document.createElement('button')
+  backButton.textContent = 'Close File Preview';
+  backButton.className = 'btn btn-secondary me-2 mt-2'; 
+  
+  backButton.addEventListener('click', () => {
+    // Since you used innerHTML = "" to wipe the container, 
+    // a reload is the cleanest way to restore the React state and the file list.
+    window.location.reload();
+    
+    // ALTERNATIVE: If you don't want a full reload, you can try calling your view handler:
+    // handleViewButtonClick(activeView || "My request");
+  });
+  const submitButton=document.createElement('button');
+  const replaceButton=document.createElement('button');
+
+  const uploadFileDiv=document.createElement('div');
+  uploadFileDiv.id="uploadFileDiv";
+  uploadFileDiv.style.display='none'
+   // input for upload file
+   const uploadFileInput=document.createElement('input');
+   uploadFileInput.className="dynamic-input";
+   uploadFileInput.type="file";
+   uploadFileInput.id="fileInput";
+
+  //  start
+   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const replaceButtonHide=document.getElementById('replaceButton');
+    if(replaceButtonHide){
+      replaceButtonHide.style.display='none'
+    }
+    const file = event.target.files![0];
+    if (file) {
+      // selectedFile=file;
+      uploadFile(file);
     }
   };
+
+  // const uploadFile = async (file: File) => {
+  //   try {
+  //     const folder = sp.web.getFolderByServerRelativePath('DMSOrphanDocs');
+  //     const uploadResult = await folder.files.addChunked(file.name, file);
+  //     console.log("File uploaded successfully", uploadResult);
+
+  //     // Generate the preview URL dynamically
+  //     const previewUrl = await generatePreviewUrl(uploadResult.data.ServerRelativeUrl);
+      
+  //     previewFile(previewUrl);
+  //   } catch (error) {
+  //     console.error("Error uploading file:", error);
+  //   }
+  // };
+
+
+  const uploadFile = async (file: File) => {
+    try {
+      // 1. USE masterWeb (the instance targeting your Master Site Collection)
+      // 2. USE the full server-relative path (e.g., /sites/AlRostmaniSpfx2/DMSOrphanDocs)
+      const folderPath = `${locationPath}/DMSOrphanDocs`.replace(/\/\/+/g, '/');
+      
+      console.log("Uploading to folder:", folderPath);
+      
+      const folder = masterWeb.getFolderByServerRelativePath(folderPath);
+      const uploadResult = await folder.files.addChunked(file.name, file);
+      
+      console.log("File uploaded successfully to Master Site", uploadResult);
+
+      // Generate the preview URL dynamically
+      const previewUrl = await generatePreviewUrl(uploadResult.data.ServerRelativeUrl);
+      
+      previewFile(previewUrl);
+    } catch (error) {
+      console.error("Error uploading file to cross-site location:", error);
+      // If 'masterWeb' fails, it might be because 'DMSOrphanDocs' 
+      // doesn't exist on the Master site. Check if it's on the subsite instead:
+      // const folder = web.getFolderByServerRelativePath(...);
+    }
+  };
+  const generatePreviewUrl = async (serverRelativeUrl: string) => {
+    // Encode the file name and construct the preview URL
+    const encodedFilePath = encodeURIComponent(serverRelativeUrl);
+    
+    // Example: 
+    // serverRelativeUrl = "/sites/AlRostmani/test/DocumentLibraryInsideTest/Book.xlsx"
+    const parentFolder = serverRelativeUrl.substring(0, serverRelativeUrl.lastIndexOf('/'));
+    const siteUrl = window.location.origin;
+
+    // const previewUrl = `${siteUrl}/sites/AlRostmani/DMSOrphanDocs/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodeURIComponent(parentFolder)}`;
+    const previewUrl = `${siteUrl}${locationPath}/DMSOrphanDocs/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodeURIComponent(parentFolder)}`;
+    // const previewUrl = `${siteUrl}/sites/SPFXDemo/DMSOrphanDocs/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodeURIComponent(parentFolder)}`;
+    console.log("Generated Preview URL:", previewUrl);
+   if(previewUrl){
+    console.log("enter herr")
+    const deletebut = document.getElementById('closeCommand') as HTMLElement
+    if(deletebut){
+      console.log(" here " , deletebut)
+    }
+   }
+    return previewUrl;
+  };
+
+  const previewFile = async (previewUrl: string) => {
+    try {
+      console.log("Previewing file at URL:", previewUrl);
+      const iframe = document.getElementById("filePreview") as HTMLIFrameElement;
+      const spinner = document.getElementById("spinner") as HTMLElement;
+   
+      const librarydiv = document.getElementById('filelistcontainer');
+      const ribbonDiv = document.querySelector('.col-lg-10.newbutton.tool') as HTMLElement;
+     
+       // 🔹 REMOVE EXISTING CLOSE BUTTON IF IT EXISTS
+  const existingCloseButton = document.getElementById('closePreviewRibbon');
+  if (existingCloseButton && ribbonDiv && ribbonDiv.contains(existingCloseButton)) {
+    ribbonDiv.removeChild(existingCloseButton);
+  }
+      // Show the spinner and hide the iframe initially
+      spinner.style.display = "block";
+      iframe.style.display = "none";
+      iframe.src = previewUrl;
+  
+      // Add an onload event listener to the iframe
+      iframe.onload = () => {
+        console.log("Iframe has loaded");
+  
+        const checkAndHideButton = () => {
+          try {
+            const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
+            if (iframeDocument) {
+              const button = iframeDocument.getElementById("OneUpCommandBar") as HTMLElement;
+              const excelToolbar = iframeDocument.getElementById("m_excelEmbedRenderer_m_ewaEmbedViewerBar") as HTMLElement;
+              if(excelToolbar){
+                excelToolbar.style.display= "none"
+              }
+              if (button) {
+                console.log("Hiding the OneUpCommandBar element");
+                button.style.display = "none";
+  
+                // Hide the spinner and show the iframe after the button is hidden
+                spinner.style.display = "none";
+                iframe.style.display = "block"; 
+
+               // Exit the loop once the button is found and hidden
+              } else {
+                console.log("OneUpCommandBar not found, rechecking...");
+              }
+              
+              const helpbutton = iframeDocument.getElementById("m_excelEmbedRenderer_m_ewaEmbedViewerBar") as HTMLElement; 
+              if(helpbutton){
+                helpbutton.style.display = "none"
+              }
+            }
+          } catch (error) {
+            console.error("Error accessing iframe content:", error);
+          }
+  
+          // Re-check after a short delay if the button wasn't found
+          setTimeout(checkAndHideButton, 100);
+        };
+  
+        // Start checking for the button
+        checkAndHideButton();
+      };
+    } catch (error) {
+      console.error("Error previewing file:", error);
+    }
+
+  };
+  // end
+   uploadFileInput.addEventListener('change', (event:any) =>
+    handleFileChange(event))
+
+   // Set Label For upload file
+   const label = document.createElement("label");
+   label.setAttribute("htmlFor", 'fileInput');
+   label.textContent = 'Upload File';
+   
+   uploadFileDiv.appendChild(label);
+   uploadFileDiv.appendChild(uploadFileInput);
+  
+  // Div for columns input
+  const column1 = document.createElement('div');
+  column1.className = 'column column1 p-3';
+
+  // Add form to the first column
+  const form = document.createElement('form');
+  form.id = 'formSelector';
+  const formHeading = document.createElement('h1');
+  formHeading.textContent = 'Edit file';
+  form.appendChild(formHeading);
+  column1.appendChild(form);
+  
+  
+
+  // Dynamically create input fields from the array
+  resultArrayThatContainstheColumnDetails.forEach((field, index) => {
+
+  const inputContainer = document.createElement("div"); 
+  inputContainer.className = "input-container";
+  // Create a label
+  const label = document.createElement('label');
+  label.textContent = field.label;
+  label.setAttribute('htmlFor', `${field.label}`);
+  // form.appendChild(label);
+
+   // Add a red asterisk if the field is required
+   if (field.required) {
+    const asterisk = document.createElement("span");
+    asterisk.textContent = " *";
+    asterisk.style.color="red";
+    asterisk.style.fontWeight="bold";
+    label.appendChild(asterisk);
+}
+inputContainer.appendChild(label);
+
+  // let modifiedType = field.type.replace(/\s+/g, '').toLowerCase();
+
+  let modifiedType = (field.type || "").replace(/\s+/g, '').toLowerCase();
+
+  // Create the input field based on its type
+  let input: HTMLInputElement | null = null;
+  if (
+    modifiedType === "singlelineoftext"
+    || 
+    modifiedType === "multiplelineoftext" 
+    || 
+    modifiedType === 'text'
+){
+  input = document.createElement("input");
+  input.type = "text";
+} else if (
+  modifiedType === "number"
+) {
+  input = document.createElement("input");
+  input.type = "number";
+} else if (
+  modifiedType === "date&time"
+) {
+  input = document.createElement("input");
+  input.type = "date";
+} else if (
+  modifiedType === "yesorno"
+) {
+  input = document.createElement("input");
+  input.type = "checkbox";
+}
+
+if (input) {
+  input.className="dynamic-input";
+  input.value = field.value;
+  input.id = field.label;
+  input.name = field.label;
+  input.required=field.required;
+  inputContainer.appendChild(input); 
+  form.appendChild(inputContainer);  
+}
+});
+  // append the file input start
+  form.appendChild(uploadFileDiv);
+  // end
+
+  // Create the second column
+  const column2 = document.createElement('div');
+  column2.className = 'column column2 p-3';
+
+  // Create the spinner div
+  const spinner = document.createElement('div');
+  spinner.id = 'spinner'; 
+  spinner.textContent = 'Loading...'; 
+  spinner.style.display = 'none';
+
+  
+
+  replaceButton.type="submit";
+  replaceButton.id="replaceButton";
+  replaceButton.addEventListener('click',(event)=>{
+    event.preventDefault();
+    console.log("replace button called");
+    clickedReplace=true;
+    const uploadFile=document.getElementById('uploadFileDiv')
+    const iframe = document.getElementById('filePreview');
+    if(uploadFile){
+      uploadFile.style.display='block';
+    }
+    if(iframe){
+      iframe.style.display='none';
+    }
+    // myRequest(null,null,null);
+   })
+   replaceButton.textContent="Replace"
+  
+
+  // Add heading to the second column
+  const column2Heading = document.createElement('h1');
+  column2Heading.textContent = 'File Preview';
+  column2.appendChild(column2Heading);
+  column2.appendChild(replaceButton);
+
+  // append the spinner start
+  column2.appendChild(spinner);
+  // end
+
+  const previewfileframe = document.createElement('iframe') 
+  previewfileframe.id = 'filePreview'
+  previewfileframe.style.width = '930px'
+  previewfileframe.style.height = '500px'
+
+  const segments = filePath.split('/');
+  // extarct the current entity start
+  const currentSubsite = segments[3]; 
+  // end
+  // Find the index of 'sites'
+  const sitesIndex = segments.indexOf('sites');
+
+  // If 'sites' is found and there are enough segments after it
+  let myactualdoclib
+  if (sitesIndex !== -1 && segments.length > sitesIndex + 3) {
+    myactualdoclib = segments[sitesIndex + 3];
+    // console.log(myactualdoclib , "myactualdoclib")
+    // return segments[sitesIndex + 3];  // The document library is the 4th segment after 'sites'
+  } 
+  
+  // Extract the parent folder correctly
+  const parentFolder = filePath.substring(0, filePath.lastIndexOf('/'));
+  console.log(parentFolder, "parentFolder");
+  
+  // Correctly encode the parent folder
+  const encodedParentFolder = encodeURIComponent(parentFolder);
+  
+  // Get the base site URL
+  const siteUrl = window.location.origin;
+  console.log(siteUrl, "siteUrl");
+  
+  // const previewUrl = `${siteUrl}/sites/AlRostmani/${currentSubsite}/${myactualdoclib}/Forms/AllItems.aspx?id=${filePath}&parent=${encodedParentFolder}`;
+  const previewUrl = `${siteUrl}${locationPath}/${currentSubsite}/${myactualdoclib}/Forms/AllItems.aspx?id=${filePath}&parent=${encodedParentFolder}`;
+
+  if(previewUrl){
+    previewfileframe.src = previewUrl;
+    column2.appendChild(previewfileframe);
+  }
+
+  // Append columns to the main container
+  mainContainer.appendChild(column1);
+  mainContainer.appendChild(column2);
+
+
+   // Submit Button property
+   submitButton.type="submit";
+  //  submitButton.addEventListener('click',async(event)=>{
+  //   event.preventDefault();
+  //   console.log("submit button called");
+
+  //   // Extract the last part after the last '/'
+  //   const fileName:any = filePath.substring(filePath.lastIndexOf('/') + 1);
+  //   alert(fileName);
+  //   // console.log("fileName",fileName);
+  //   // Extract the rest of the path
+  //   const folderPath = filePath.substring(0, filePath.lastIndexOf('/'));
+  //   // console.log("folderPath",folderPath);
+
+  //   const formSelector = document.getElementById("formSelector") as HTMLFormElement;
+  //   if (!formSelector.checkValidity()) {
+  //       checkValidation(`Fill mandatory fields`)
+  //       return;
+  //   }
+
+  // // Prepare the payload for SharePoint dynamically
+  // const inputs = document.querySelectorAll('.dynamic-input');
+  // const payload: any = {};
+
+  // inputs.forEach((input) => {
+  //     const inputElement = input as HTMLInputElement;
+  //     const fieldName = inputElement.id;
+  //     if (!fieldName) return; // Skip if field name is invalid
+
+  //     if (inputElement.type === "checkbox") {
+  //         // console.log("fieldName",fieldName.includes(' '));
+  //         payload[fieldName] = inputElement.checked;
+  //     } else if (inputElement.type !== "file") {
+  //         if(inputElement.value === ""){
+  //            console.log("skip");
+  //         }else{
+  //           // if(fieldName.includes(' '))
+  //           // console.log("fieldName",fieldName.includes(' '));
+  //           payload[fieldName] = inputElement.value;
+  //         }
+          
+  //     }
+  //   });
+   
+  //   if(clickedReplace){
+  //     const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+  //     const selectedFile = fileInput?.files?.[0]; 
+
+  //     if (!selectedFile) {
+  //         console.error("No file selected.");
+  //         // alert("Please select the file...");
+  //         checkValidation(`Fill mandatory fields`)
+  //         return;
+  //     }
+
+  //     const documentLibraryInWhichWeUploadTheFile = web.getFolderByServerRelativePath(folderPath);
+  //     // const uploadResult = await documentLibraryInWhichWeUploadTheFile.files.addChunked(selectedFile.name, selectedFile,true);
+  //     const uploadResult = await documentLibraryInWhichWeUploadTheFile.files.update(
+  //       fileName,
+  //       selectedFile,
+  //       null,
+  //       true
+  //     );
+  
+  //     const listItem = await uploadResult.file.getItem();
+  //     const result =await listItem.update(payload);
+  //     console.log("fileupdated ",result);
+  //   }else{
+
+  //   }
+  //   const file =sp.web.getFileByServerRelativePath(filePath);
+   
+    
+  //   // myRequest(null,null,null);
+  //  })
+  // submitButton.addEventListener('click', async (event) => {
+  //   event.preventDefault();
+  //   console.log("submit button called");
+   
+  
+  //   const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+  //   console.log("fileName", fileName);
+  
+   
+  //   const folderPath = filePath.substring(0, filePath.lastIndexOf('/'));
+  //   console.log("folderPath", folderPath);
+   
+  //   const formSelector = document.getElementById("formSelector") as HTMLFormElement;
+  //   if (!formSelector.checkValidity()) {
+  //     checkValidation('Fill mandatory fields');
+  //     return;
+  //   }
+   
+  //   // Prepare the payload for SharePoint dynamically
+  //   const inputs = document.querySelectorAll('.dynamic-input');
+  //   const payload:any = {};
+   
+  //   inputs.forEach((input) => {
+  //     const inputElement = input as HTMLInputElement;
+  //     const fieldName:any = inputElement.id;
+  //     if (!fieldName) return;
+   
+  //     if (inputElement.type === "checkbox") {
+  //       payload[fieldName] = inputElement.checked;
+  //     } else if (inputElement.type !== "file") {
+  //       if (inputElement.value !== "") {
+  //         payload[fieldName] = inputElement.value;
+  //       }
+  //     }
+  //   });
+   
+  //   let selectedFile;
+  //   if (clickedReplace) {
+  //     const fileInput= document.getElementById('fileInput') as HTMLInputElement;
+  //     selectedFile = fileInput?.files?.[0];
+   
+  //     if (!selectedFile) {
+  //       console.error("No file selected.");
+  //       checkValidation('Fill mandatory fields');
+  //       return;
+  //     }
+   
+  //     try {
+  //       const documentLibraryInWhichWeUploadTheFile = sp.web.getFolderByServerRelativePath(folderPath);
+  
+  //       const uploadResult = await documentLibraryInWhichWeUploadTheFile.files.addChunked(
+  //         fileName,
+  //         selectedFile,
+  //         null,
+  //         true 
+  //       );
+   
+   
+  //       const listItem = await uploadResult.file.getItem();
+  //       const result = await listItem.update(payload);
+  //       console.log("file updated", result);
+  //     } catch (error) {
+  //       console.error("Error replacing file:", error);
+  //     }
+  //   }
+  // });
+
+  submitButton.addEventListener('click',async(event)=>{
+      event.preventDefault();
+      console.log("submit button called");
+  
+      // Extract the last part after the last '/'
+      const fileName:any = filePath.substring(filePath.lastIndexOf('/') + 1);
+      // alert(fileName);
+      // console.log("fileName",fileName);
+      // Extract the rest of the path
+      const folderPath = filePath.substring(0, filePath.lastIndexOf('/'));
+      console.log("folderPath",folderPath);
+  
+      const formSelector = document.getElementById("formSelector") as HTMLFormElement;
+      if (!formSelector.checkValidity()) {
+          checkValidation(`Fill mandatory fields`)
+          return;
+      }
+  
+    // Prepare the payload for SharePoint dynamically
+    const inputs = document.querySelectorAll('.dynamic-input');
+    const payload: any = {};
+  
+    inputs.forEach((input) => {
+        const inputElement = input as HTMLInputElement;
+        const fieldName = inputElement.id;
+        if (!fieldName) return; // Skip if field name is invalid
+  
+        if (inputElement.type === "checkbox") {
+            // console.log("fieldName",fieldName.includes(' '));
+            payload[fieldName] = inputElement.checked;
+        } else if (inputElement.type !== "file") {
+            if(inputElement.value === ""){
+               console.log("skip");
+            }else{
+              // if(fieldName.includes(' '))
+              // console.log("fieldName",fieldName.includes(' '));
+              payload[fieldName] = inputElement.value;
+            }
+            
+        }
+      });
+     
+    if(clickedReplace){
+        const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+        const selectedFile = fileInput?.files?.[0]; 
+  
+        if (!selectedFile) {
+            console.error("No file selected.");
+            // alert("Please select the file...");
+            checkValidation(`Fill mandatory fields`)
+            return;
+        }
+  
+        // const documentLibraryInWhichWeUploadTheFile = web.getFolderByServerRelativePath(folderPath);
+        // // const uploadResult = await documentLibraryInWhichWeUploadTheFile.files.addChunked(selectedFile.name, selectedFile,true);
+        // const uploadResult = await documentLibraryInWhichWeUploadTheFile.files.addChunked(
+        //   fileName,
+        //   selectedFile,
+        //   null,
+        //   true
+        // );
+    
+        // const listItem = await uploadResult.file.getItem();
+        // const result =await listItem.update(payload);
+        // console.log("fileupdated ",result);
+         
+        // Get the target file
+        // const file =sp.web.getFileByServerRelativePath(filePath);
+ 
+        // // Check out the file
+        // await file.checkout();
+ 
+        // // Upload the new file
+        // const uploadedFile = await file.getParentFolder().files.add(
+        //   `${selectedFile.name.replace(/\.[^.]+$/, '.docx')}`,
+        //   selectedFile
+        // );
+ 
+        // // Update the properties of the new file
+        // await uploadedFile.item.update(payload);
+ 
+        // // Check in the file
+        // await uploadedFile.checkin();
+ 
+        // console.log('File replaced successfully!');
+        // Get the target file
+        console.log("selectedFile.name",selectedFile.name) 
+        const fileExtensionOfSelectedFile = selectedFile.name.split('.').pop();
+        const fileExtensionOfOldFile =fileName.split('.').pop();
+        // for same file extension
+        // if(fileExtensionOfSelectedFile === fileExtensionOfOldFile){
+        //     // alert("Same file extension");
+        //     const file = web.getFileByServerRelativePath(filePath);
+        //       await file.setContentChunked(selectedFile);
+        //       if (file.exists) {
+        //         const fileToUpdate = await file.getItem();
+        //         const uploadResult = await fileToUpdate.update(payload);
+        //         console.log("uploadResult",uploadResult);
+        //       }
+        //     showReplaceMessage('File replaced successfully.');
+        //     myRequest(null,null,null);
+        // }else{
+          // alert("file extension are not same");
+          const folderInWhichWeUploadTheFile=web.getFolderByServerRelativePath(folderPath);
+          const uploadResult = await folderInWhichWeUploadTheFile.files.addChunked(selectedFile.name, selectedFile);
+          const listItem = await uploadResult.file.getItem();
+          (payload as any).Status="Pending";
+
+          const parentFolder = uploadResult.data.ServerRelativeUrl.substring(0, uploadResult.data.ServerRelativeUrl.lastIndexOf('/'));
+          const siteUrl = window.location.origin;
+          const encodedFilePath = encodeURIComponent(uploadResult.data.ServerRelativeUrl);
+          // const previewUrl = `${siteUrl}/sites/AlRostmani/${siteName}/${documentLibrary}/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodeURIComponent(parentFolder)}`;
+          const previewUrl = `${siteUrl}${locationPath}/${siteName}/${documentLibrary}/Forms/AllItems.aspx?id=${encodedFilePath}&parent=${encodeURIComponent(parentFolder)}`;
+
+          await listItem.update(payload);
+          // Get the file details
+          const fetchData=await masterWeb.lists.getByTitle(`DMS${siteName}FileMaster`).items.select("ID","FileName","RequestNo").filter(`SiteName eq '${siteName}' and DocumentLibraryName eq '${documentLibrary}' and CurrentUser eq '${currentUserEmailRef.current}'  and FileUID eq '${fileId}'`)();
+          console.log("fetchData",fetchData);
+
+          const newItem = await masterWeb.lists.getByTitle(`DMS${siteName}FileMaster`).items.add({
+            FileName: String(uploadResult.data.Name),
+            FileSize: String(uploadResult.data.Length),
+            FileVersion: String(uploadResult.data.MajorVersion),
+            CurrentFolderPath: String(folderPath),
+            FileUID: String(uploadResult.data.UniqueId),
+            CurrentUser: String(currentUserEmailRef.current),
+            SiteID: String(siteId),
+            Status: "Pending",
+            FilePreviewURL : String(previewUrl),
+            DocumentLibraryName:String(documentLibrary),
+            SiteName : String(siteName),
+            MyRequest:true,
+            RequestNo:String(fetchData[0].RequestNo)
+        });
+        
+
+      //   const AddIteminDMSFileApprovalList = await sp.web.lists.getByTitle('DMSFileApprovalList').items.add({
+      //     SiteName : String(siteName),  
+      //      DocumentLibraryName : String(documentLibrary),
+      //      RequestedBy  : String(currentUserEmailRef.current),
+      //      FileName: String(uploadResult.data.Name),
+      //      FileUID: String(uploadResult.data.UniqueId),
+      //     //  FilePreviewUrl: String(previewUrl),
+      //      Status: String('Pending'),
+      //      FolderPath : String(folderPath),
+      //      ApproveAction : String('Submitted'),
+      //      ApprovedLevel : 1
+      // })
+
+      // delete the file from the document library
+      const deletedfile =  await web.getFileById(fileId).delete();
+      console.log("deletedfile",deletedfile);
+      
+      await masterWeb.lists.getByTitle(`DMS${siteName}FileMaster`).items.getById(fetchData[0].ID).delete();
+      console.log(`file has been deleted successfully.`);
+
+      const fetchDatafromapprovalist=await masterWeb.lists.getByTitle(`DMSFileApprovalList`).items.select("ID","FileName").filter(`SiteName eq '${siteName}' and DocumentLibraryName eq '${documentLibrary}' and FileUID eq '${fileId}'`)();
+      
+      await masterWeb.lists.getByTitle('DMSFileApprovalList').items.getById(fetchDatafromapprovalist[0].ID).update({
+        FileName:String(uploadResult.data.Name),
+        FileUID:String(uploadResult.data.UniqueId),
+        Status: String('Pending'),
+        FilePreviewUrl:String(previewUrl),
+        ApproveAction:String('Submitted'),
+        CurrentLevel:1
+        
+      });
+      // await masterWeb.lists.getByTitle(`DMSFileApprovalList`).items.getById(fetchDatafromapprovalist[0].ID).delete();
+      console.log(`file has been deleted updated fetchDatafromapprovalist.`);
+
+      // Fetch data from DMSSharewithother 
+      const fetchDataFromDMSShareWithOtherMaster=await masterWeb.lists.getByTitle(`DMSShareWithOtherMaster`).items.select("ID","FileName").filter(`SiteName eq '${siteName}' and DocumentLibraryName eq '${documentLibrary}' and FileUID eq '${fileId}'`)();
+
+      // delete the record if that file is share 
+      if(fetchDataFromDMSShareWithOtherMaster.length > 0){
+        fetchDataFromDMSShareWithOtherMaster.forEach(async(shareRecord)=>{
+          try {
+            await masterWeb.lists.getByTitle(`DMSShareWithOtherMaster`).items.getById(shareRecord.ID).delete();
+            console.log(`file has been deleted successfully.`);
+  
+          } catch (error) {
+            console.log("Error in deleting the share record from DMSShareWithOthersMaster",error);
+          }
+        })
+      }
+      
+      showReplaceMessage('File replaced successfully.');
+    // }
+        
+          // console.log('File replaced successfully!');
+          
+          // if (file.exists) {
+          //   const fileToUpdate = await file.getItem();
+          //   const uploadResult = await fileToUpdate.update({
+          //     // FileLeafRef: fileToUpdate.,
+          //     File: selectedFile,
+          //   });
+          // } else {
+
+        // const fileInfo = await file.select("ServerRelativeUrl")();
+        // const parentFolderUrl = fileInfo.ServerRelativeUrl.substring(0, fileInfo.ServerRelativeUrl.lastIndexOf("/"));
+        // console.log("Parent Folder URL:", parentFolderUrl)y
+
+        // const parentFolder = web.getFolderByServerRelativePath(parentFolderUrl);
+
+        //   // Upload the new file
+        //   const uploadedFile = await parentFolder.files.addUsingPath(
+        //     `${parentFolderUrl}/${fileName.replace(/\.[^.]+$/, '.docx')}`,
+        //     selectedFile,
+        //     { Overwrite: true }
+        //   );
+
+        //   // Update the properties of the new file
+        //   const uploadedFileItem = await uploadedFile.file.getItem();
+        //   await uploadedFileItem.update(payload);
+
+
+         
+        //   // const uploadResult = await documentLibraryInWhichWeUploadTheFile.files.addChunked(
+        //   //   fileName,
+        //   //   selectedFile,
+        //   //   null,
+        //   //   true
+        //   // );
+        // }
+
+        // Check out the file
+        // await file.checkout();
+        // Check if the file path is valid
+        // try {
+        //   await file.checkout();
+        // } catch (error) {
+        //   console.error("Error checking out the file:", error);
+        //   throw new Error(`Invalid file path: ${filePath}`);
+        // }
+
+        // Get the parent folder's URL
+        // const fileInfo = await file.select('ServerRelativeUrl')();
+        // const parentFolderUrl = fileInfo.ServerRelativeUrl.substring(0, fileInfo.ServerRelativeUrl.lastIndexOf('/'));
+        // Get folder URL
+        // const fileInfo = await file.select("ServerRelativeUrl")();
+        // const parentFolderUrl = fileInfo.ServerRelativeUrl.substring(0, fileInfo.ServerRelativeUrl.lastIndexOf("/"));
+        // console.log("Parent Folder URL:", parentFolderUrl)
+
+       
+        // Get the parent folder
+        // const parentFolder = web.getFolderByServerRelativePath(parentFolderUrl);
+        // Convert the file content to ArrayBuffer
+        // const fileContent = await selectedFile.arrayBuffer();
+
+        // Upload the new file
+        // const uploadedFile = await parentFolder.files.addUsingPath(
+        //   `${parentFolderUrl}/${fileName.replace(/\.[^.]+$/, '.docx')}`,
+        //   selectedFile,
+        //   { Overwrite: true }
+        // );
+
+        // Update the properties of the new file
+        // const uploadedFileItem = await uploadedFile.file.getItem();
+        // await uploadedFileItem.update(payload);
+
+        // Check in the file
+        // await uploadedFile.file.checkin('Checked in by script', 1); // 1 for Major version
+ 
+    }else{
+      // Without replacing the file only metadeta update
+      const file = web.getFileByServerRelativePath(filePath);
+      if (file.exists) {
+        const fileToUpdate = await file.getItem();
+        const uploadResult = await fileToUpdate.update(payload);
+        console.log("uploadResult",uploadResult);
+      }
+      showReplaceMessage('File updated successfully.')
+    }
+    // const file =sp.web.getFileByServerRelativePath(filePath);
+   
+   
+    // myRequest(null,null,null);
+   })
+
+
+ submitButton.textContent="Submit"
+ form.appendChild(submitButton);
+
+librarydiv.innerHTML = "";
+mainContainer.appendChild(backButton)
+librarydiv.appendChild(mainContainer)
+
+
+
+}
+  // sourish 20/8/25
+  // const deleteFolder = async (file: any) => {
+  //   try {
+  //     if (!file?.FolderPath || !file?.__siteUrl) {
+  //       console.error("Missing folder path or site URL");
+  //       return;
+  //     }
+
+  //     // Delete Folder
+
+  //     // Build correct web URL for the subsite
+  //     const fullWebUrl = `${file.__siteUrl}/${encodeURIComponent(file.SiteTitle)}`;
+  //     const sp = spfi(fullWebUrl).using(SPFx(context));
+
+  //     // FolderPath is already server-relative, so just use it directly
+  //     const finalPath = file.FolderPath;
+
+  //     console.log("Deleting from:", fullWebUrl);
+  //     console.log("Final server-relative path:", finalPath);
+
+  //     await sp.web.getFolderByServerRelativePath(finalPath).delete();
+
+
+  //     // Delete corresponding item from list in site collection root
+  //     const spRoot = spfi(file.__siteUrl).using(SPFx(context));
+
+  //     console.log("Deleting list item from site:", file.__siteUrl, " List: DMSFolderMaster, ID:", file.ID);
+
+  //     await spRoot.web.lists.getByTitle("DMSFolderMaster").items.getById(file.ID).delete();
+
+  //     const refreshed = await loadViewData("MyFolders");
+  //     setSelectedFiles(refreshed);
+  //     setActiveView("My Folders");
+  //     setBreadcrumbs([
+  //       { key: "my-folders", title: "My Folders", type: "view", siteUrl: "" },
+  //     ]);
+  //     setCurrentPage(1);
+
+
+  //   } catch (err) {
+  //     console.error("Error deleting folder:", err);
+  //   }
+  // };
+
+  // Addhyan 16/4/26
+  const deleteFolder = async (file: any) => {
+  try {
+    if (!file?.FolderPath || !file?.__siteUrl) {
+      console.error("Missing folder path or site URL");
+      return;
+    }
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "want to delete this folder?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
+ 
+    if (!result.isConfirmed) return;
+ 
+    const fullWebUrl = `${file.__siteUrl}/${encodeURIComponent(file.SiteTitle)}`;
+    const sp = spfi(fullWebUrl).using(SPFx(context));
+    const finalPath = file.FolderPath;
+    console.log("Deleting from:", fullWebUrl);
+    console.log("Final server-relative path:", finalPath);
+    const spRoot = spfi(file.__siteUrl).using(SPFx(context));
+    const pathParts = file.FolderPath.split("/");
+    const libraryName = pathParts[3]; // Migarationtest
+    const dynamicListName = `DMS${libraryName}FileMaster`;
+    console.log("Dynamic List:", dynamicListName);
+    const items = await spRoot.web.lists
+  .getByTitle(dynamicListName)
+  .items
+  .filter(`startswith(CurrentFolderPath,'${file.FolderPath}')`)
+  .select("Id")();   
+    console.log("Metadata items found:", items.length);
+    for (let item of items) {
+      await spRoot.web.lists
+        .getByTitle(dynamicListName)
+        .items.getById(item.Id)
+        .delete();
+    }
+    await sp.web.getFolderByServerRelativePath(finalPath).delete();
+    console.log("Deleting list item from site:", file.__siteUrl, " List: DMSFolderMaster, ID:", file.ID);
+    await spRoot.web.lists
+      .getByTitle("DMSFolderMaster")
+      .items.getById(file.ID)
+      .delete();
+ 
+      Swal.fire({
+      title: "Deleted!",
+      text: "Folder successfully deleted.",
+      icon: "success",
+    });
+ 
+    const refreshed = await loadViewData("MyFolders");
+    setSelectedFiles(refreshed);
+    setActiveView("My Folders");
+    setBreadcrumbs([
+      { key: "my-folders", title: "My Folders", type: "view", siteUrl: "" },
+    ]);
+    setCurrentPage(1);
+ 
+  } catch (err) {
+    console.error("Error deleting folder:", err);
+    Swal.fire({
+      title: "Error!",
+      text: "Failed to delete folder.",
+      icon: "error",
+    });
+  }
+};
 
   // sourish 21/8/25
   const renameFolder = async () => {
@@ -6237,6 +7174,18 @@ const handleSaveRename = async () => {
                                                 <span> <FontAwesomeIcon icon={faEye} /> </span> Preview File
                                               </button>
                                             </li>
+{/* // Ritik 16/4/26 */}
+                                              <li>
+  <button type="button" className="newbuttontext"
+    onClick={() => {
+      setMenuOpenIdx(null);
+      setShareFile(file);
+      setShowShareModal(true);
+    }}
+  >
+    <span><FontAwesomeIcon icon={faShareAlt} /></span> Share
+  </button>
+</li>
                                             {/* // addhyan 24/2/26 */}
                                             <li>
                                               <button type="button"
@@ -6274,9 +7223,18 @@ const handleSaveRename = async () => {
     onClick={() => {
       // Extract the required fields from your file object
       // Note: Ensure your 'file' object has these properties (adjust names if necessary)
+      // 1. Get the domain (https://officeindia.sharepoint.com)
+      const origin = window.location.origin;
+
+      // 2. Construct the URL by finding the path up to the SiteName
+      // This ensures even if you are deep in a folder, the URL stops at the subsite level
+      const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+      const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
+
+      console.log("Target Subsite URL:", finalSiteUrl);
       window.ManageFilePermission(
          file.FileUID,            // fileId
-        file.SiteID,             // siteId (Your data shows this is the URL)
+        finalSiteUrl,             // siteId (Your data shows this is the URL)
         file.DocumentLibraryName, // documentLibraryName
         file.SiteName            // siteTitle (Used for the Admin Group naming)
       );
@@ -6286,6 +7244,7 @@ const handleSaveRename = async () => {
     <span> <FontAwesomeIcon icon={faFileAlt} /> </span> Manage File Permission
   </button>
 </li>
+
                                             <li>
                                               <button type="button"
                                                 className="newbuttontext"
@@ -6315,15 +7274,12 @@ const handleSaveRename = async () => {
                                                 <span> <FontAwesomeIcon icon={faTrashAlt} /> </span> Delete File
                                               </button>
                                             </li>
-
-                                            {/* // add Button for share file url modal - Addhyan 13/4/26 start */}
-                                                  <li><button type="button" onClick={() => {
+                                              {/* Addhyan  */}
+                                            <li><button type="button" onClick={() => {
                                                     setMenuOpenIdx(null);
                                                     setShareUrlFile(file);
                                                     setShowShareUrlModal(true);
                                                   }}><FontAwesomeIcon icon={faShareAlt} /> Share file url</button></li>
- 
-                                                   {/* // add button for share file url modal - Addhyan 13/4/26 end */}
                                             <li>
                                               <button type="button"
                                                 className="newbuttontext"
@@ -6548,17 +7504,48 @@ const handleSaveRename = async () => {
                                                    {/* srs 10/4/26 */}
                                                    <li><button onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
-                                                    setMenuOpenIdx(null);
-                                                    // this is to hide li options in every tab (addhyan)
                                                     // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-use-before-define
+                                                    // 1. Get the domain (https://officeindia.sharepoint.com)
+      const origin = window.location.origin;
+
+      // 2. Construct the URL by finding the path up to the SiteName
+      // This ensures even if you are deep in a folder, the URL stops at the subsite level
+      const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+      const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
+
+      console.log("Target Subsite URL:", finalSiteUrl);
                                                      window.ManageFilePermission(
           file.FileUID,            // fileId
-        file.SiteID,             // siteId (Your data shows this is the URL)
+        finalSiteUrl,             // siteId (Your data shows this is the URL)
         file.DocumentLibraryName, // documentLibraryName
         file.SiteName            // siteTitle (Used for the Admin Group naming)
       );
                                                     setMenuOpenIdx(null);
                                                   }}><FontAwesomeIcon icon={faFileAlt} /> Manage File Permission</button></li>
+                                                  {/* srs 15/4/26 */}
+                                                  {file.Status === "Rework" && (
+  <li>
+  <button 
+    type="button"
+    className="newbuttontext"
+    onClick={() => {
+      // Extract the required fields from your file object
+      // Note: Ensure your 'file' object has these properties (adjust names if necessary)
+       const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
+      window.rework(
+      file.FileUID,          // 1. GUID (e.g. "afaec963...")
+  file.SiteID,           // 2. URL (e.g. "https://officeindia...")
+  file.DocumentLibraryName, 
+  file.SiteName, 
+  constructedPath
+      );
+      setMenuOpenIdx(null);
+    }}
+  >
+    <span> <FontAwesomeIcon icon={faFileAlt} /> </span> Edit File
+  </button>
+</li>
+)}
                                                   <li><button type="button" onClick={() => {
                                                     setMenuOpenIdx(null);
                                                     setShareFile(file);
@@ -6975,12 +7962,27 @@ const handleSaveRename = async () => {
       <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faShareAlt} /> Share</button></li>
       <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} /> Audit History</button></li>
        {/* srs 10/4/26 */}
-      <li><button type="button" onClick={() => {  window.ManageFilePermission(
+      <li><button type="button" onClick={() => { 
+        // 1. Get the domain (https://officeindia.sharepoint.com)
+      const origin = window.location.origin;
+
+      // 2. Construct the URL by finding the path up to the SiteName
+      // This ensures even if you are deep in a folder, the URL stops at the subsite level
+      const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+      const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
+
+      console.log("Target Subsite URL:", finalSiteUrl);
+       window.ManageFilePermission(
           file.FileUID,            // fileId
-        file.SiteID,             // siteId (Your data shows this is the URL)
+        finalSiteUrl,             // siteId (Your data shows this is the URL)
         file.DocumentLibraryName, // documentLibraryName
         file.SiteName            // siteTitle (Used for the Admin Group naming)
       ); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} /> Manage File Permission</button></li>
+      <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareUrlFile(file);
+                                                    setShowShareUrlModal(true);
+                                                  }}><FontAwesomeIcon icon={faShareAlt} /> Share file url</button></li>
       <li><button type="button" onClick={() => { setModalFile(file); setShowVersionModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faHistory} /> Version History</button></li>
       <li><button type="button" onClick={async () => { await deleteFileFolder(file, currentSiteUrl, context); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faTrashAlt} /> Delete File</button></li>
       <li>
@@ -6999,17 +8001,56 @@ const handleSaveRename = async () => {
           <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
           <li><button type="button" onClick={() => { handleAuditHistory(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} />  Audit History</button></li>
           {/* srs 10/4/26 */}
-          <li><button type="button" onClick={() => {  window.ManageFilePermission(
+          <li><button type="button" onClick={() => { 
+            // 1. Get the domain (https://officeindia.sharepoint.com)
+      const origin = window.location.origin;
+
+      // 2. Construct the URL by finding the path up to the SiteName
+      // This ensures even if you are deep in a folder, the URL stops at the subsite level
+      const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+      const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
+
+      console.log("Target Subsite URL:", finalSiteUrl);
+       window.ManageFilePermission(
           file.FileUID,            // fileId
-        file.SiteID,             // siteId (Your data shows this is the URL)
+        finalSiteUrl,             // siteId (Your data shows this is the URL)
         file.DocumentLibraryName, // documentLibraryName
         file.SiteName            // siteTitle (Used for the Admin Group naming)
       ); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} />  Manage File Permission</button></li>
+      {/* srs 15/4/26 */}
+      {file.Status === "Rework" && (
+  <li>
+  <button 
+    type="button"
+    className="newbuttontext"
+    onClick={() => {
+      // Extract the required fields from your file object
+      // Note: Ensure your 'file' object has these properties (adjust names if necessary)
+       const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
+      window.rework(
+      file.FileUID,          // 1. GUID (e.g. "afaec963...")
+  file.SiteID,           // 2. URL (e.g. "https://officeindia...")
+  file.DocumentLibraryName, 
+  file.SiteName, 
+  constructedPath
+      );
+      setMenuOpenIdx(null);
+    }}
+  >
+    <span> <FontAwesomeIcon icon={faFileAlt} /> </span>Edit File
+  </button>
+</li>
+)}
           <li><button type="button" onClick={() => { setShareFile(file); setShowShareModal(true); setMenuOpenIdx(null); }}> <FontAwesomeIcon icon={faShareAlt} />  Share</button></li>
           {/* <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faDownload} />  Download</button></li> */}
           {/* ririk  */}
           <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); setTimeout(() => setDirectDownloadFile(null), 3000);}}><FontAwesomeIcon icon={faDownload} />  Download</button></li>
           <li><button type="button" onClick={() => { setModalFile(file); setShowVersionModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faHistory} /> Version History</button></li>
+          <li><button type="button" onClick={() => {
+                                                    setMenuOpenIdx(null);
+                                                    setShareUrlFile(file);
+                                                    setShowShareUrlModal(true);
+                                                  }}><FontAwesomeIcon icon={faShareAlt} /> Share file url</button></li>
           {/* Addhyan 19/2/26 */}
           {/* <li><button type="button" onClick={() => { handleRenameFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEdit} />  Rename File</button></li> */}
         </>
@@ -8034,6 +9075,7 @@ const handleSaveRename = async () => {
                     setShowPreviewModal(false);
                     setPreviewFile(null);
                     setDirectDownloadFile(null); // Ritik added 23/2/26
+                    isDeepLinkPreview.current = false; // addhyan 16/4/26
                   }}
                 />
               )}

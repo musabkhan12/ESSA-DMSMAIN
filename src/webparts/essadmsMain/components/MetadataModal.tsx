@@ -577,10 +577,10 @@ const MetadataModal: React.FC<{
                                                 <div style={{ color: "#666" }}>{col.ColumnType || "-"}</div> */}
                                                  {/* Aman 25/3/26 - Priority to IsRename, then fallback to ColumnName/Title */}
                                                     <div>
-                                                        {col.IsRename || col.ColumnName || (col as any).columnname || col.Title || "No Metadata Available"}
+                                                        {col.IsRename || col.ColumnName || (col as any).columnname || col.Title}
                                                     </div>
                                                     <div style={{ color: "#666" }}>
-                                                        {col.ColumnType || (col as any).columntype || "No Metadata Available"}
+                                                        {col.ColumnType || (col as any).columntype}
                                                     </div>
                                             </div>
                                         ))}
