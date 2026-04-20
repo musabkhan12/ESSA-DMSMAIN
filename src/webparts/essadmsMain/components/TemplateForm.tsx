@@ -40,6 +40,13 @@ const TemplateForm: React.FC<Props> = ({ selectedTemplate, onSave, onCancel, con
  
 //addhyan - 13/03/2026
    const [selectedSite, setSelectedSite] = useState("");
+   const [selectedSubSite, setSelectedSubSite] = useState("");
+ 
+   const siteSubsiteMap: { [key: string]: string[] } = {
+     AlRostmaniSpfx2: ["ALROSTMANITRANS", "AlROSTAMANITEMP", "TransmittalTest"],
+     edcspfx: ["ESSATRANS", "ESSATRANS2", "TransmittalTest"],
+     Intranetdemos: ["ESSADMS3", "ESSA32", "TransmittalTest"],
+   };
  
 //addhyan - 13/03/2026
   // Data lists state
@@ -101,16 +108,16 @@ const TemplateForm: React.FC<Props> = ({ selectedTemplate, onSave, onCancel, con
 //addhyan - 13/03/2026
  
 useEffect(() => {
-  if (selectedSite) {
+  if (selectedSubSite) {
     resetForm();
     copyfile();
     companyclassification();
     getApprovals();
     fetchAllUsers();
   }
-}, [selectedSite]);
+}, [selectedSubSite]);
  
- 
+
 const resetForm = () => {
   setTransmittalNumber("");
   setToUser(null);
@@ -120,6 +127,9 @@ const resetForm = () => {
   setDescription("");
   setDocumentUrl("");
   setUploadedItemId(null);
+  setUploadedFileResponse(null);
+  setApprovalHierachy([]);
+  setAllUsers([]);
 };
 //addhyan - 13/03/2026
  
@@ -173,7 +183,7 @@ const resetForm = () => {
     /* ---------------- DESTINATION SITE ---------------- */
     // const destSitePath = "/sites/AlRostmaniSpfx2/TransmittalTest"; - addhyan
     //addhyan - 13/03/2026
-    const destSitePath = `/sites/${selectedSite}/TransmittalTest`;
+    const destSitePath = `/sites/${selectedSite}/${selectedSubSite}`;
     const destWeb = Web([sp.web, `${window.location.origin}${destSitePath}`]);
     const folderPath = `${destSitePath}/TransmittalTemplate`;
 //addhyan - 13/03/2026
@@ -296,7 +306,7 @@ const companyclassification = async () => {
       });
  
       
-      const url =`https://officeindia.sharepoint.com/sites/${selectedSite}/`
+      const url =`https://officeindia.sharepoint.com/sites/${selectedSite}/${selectedSubSite}/`
  
       const otherSiteSP = spfi(url).using(SPFx((sp as any)._context));
       const users = await otherSiteSP.web.siteUsers();
@@ -347,20 +357,12 @@ const companyclassification = async () => {
  
  
  
-useEffect(() => {
- 
-  getApprovals();
-}, []);
- 
- 
- 
 //addhyan - 13/03/2026
  
 const getApprovals = async () => {
         try {
  
-          // const destSitePath = "/sites/AlRostmaniSpfx2/"; -addhyan
-          const destSitePath = `/sites/${selectedSite}/`;
+          const destSitePath = `/sites/${selectedSite}`;
     const destWeb = Web([sp.web, `${window.location.origin}${destSitePath}`]);
     console.log("addhyan a", destSitePath)
     console.log("addhyan b", destWeb)
@@ -375,7 +377,7 @@ const getApprovals = async () => {
     "ApprovalUser/EMail"
   )
   .expand("ApprovalUser")
-  .filter(`SiteName eq 'TransmittalTest' and DocumentLibraryName eq 'TransmittalTemplate'`)
+  .filter(`SiteName eq '${selectedSubSite}' and DocumentLibraryName eq 'TransmittalTemplate'`)
   .orderBy("Level", true)
   .getAll();
  
@@ -408,7 +410,21 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
  
  
   const handleSubmit = async () => {
+
+
+    if (!selectedSubSite) {
+    Swal.fire({
+      icon: "warning",
+      title: "Select Department",
+      text: "Please select a department before creating the document",
+    });
+    return; 
+  }
+
   try {
+
+
+
     console.log(fromUser)
  
     Swal.fire({
@@ -434,7 +450,7 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
     // const destSitePath = "/sites/AlRostmaniSpfx2/TransmittalTest";
   //addhyan - 13/03/2026
     
-    const destSitePath = `/sites/${selectedSite}/TransmittalTest`;    //addhyan - 13/03/2026
+    const destSitePath = `/sites/${selectedSite}/${selectedSubSite}`;    //addhyan - 13/03/2026
     const destWeb = Web([sp.web, `${window.location.origin}${destSitePath}`]);
  
           const currentUserEmail = (await destWeb.currentUser()).Email;
@@ -453,37 +469,37 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
        
       });
  
-      const destSitePaths = `/sites/${selectedSite}/`; //addhyan - 13/03/2026
+      const destSitePaths = `/sites/${selectedSite}`; //addhyan - 13/03/2026
     const destWebs = Web([sp.web, `${window.location.origin}${destSitePaths}`]);
  
  
  
-      await destWebs.lists.getByTitle("DMSTransmittalTestFileMaster").items.add({
+      await destWebs.lists.getByTitle(`DMS${selectedSubSite}FileMaster`).items.add({
         FileName: String(uploadedFileResponse.data.Name),
         FileSize: String(uploadedFileResponse.data.Length),
         FileVersion: String(uploadedFileResponse.data.MajorVersion),
-        CurrentFolderPath: `/sites/${selectedSite}/TransmittalTest/TransmittalTemplate`,
+        CurrentFolderPath: `/sites/${selectedSite}/${selectedSubSite}/TransmittalTemplate`,
         FileUID: String(uploadedFileResponse.data.UniqueId),
         CurrentUser: String(currentUserEmail),
         SiteID: siteID,
         Status: "Pending",
         FilePreviewURL: documentUrl,
         DocumentLibraryName: "TransmittalTemplate",
-        SiteName: "TransmittalTest",
+        SiteName: selectedSubSite,
         MyRequest: true,
         Processname: "New File Request",
         RequestNo: `${"file"}${fileCounter}`,
       });
  
       await destWebs.lists.getByTitle("DMSFileApprovalList").items.add({
-        SiteName: "TransmittalTest",
+        SiteName: selectedSubSite,
         DocumentLibraryName: "TransmittalTemplate",
         RequestedBy: String(currentUserEmail),
         FileName: String(uploadedFileResponse.data.Name),
         FileUID: String(uploadedFileResponse.data.UniqueId),
         FilePreviewUrl: documentUrl,
         Status: "Pending",
-        FolderPath: `/sites/${selectedSite}/TransmittalTest/TransmittalTemplate`,
+        FolderPath: `/sites/${selectedSite}/${selectedSubSite}/TransmittalTemplate`,
         ApproveAction: "Submitted",
         ApprovedLevel: 1,
         RequestNo: `${"file"}${fileCounter}`,
@@ -513,27 +529,50 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
     <>
  
     <div className="col-md-6 mb-3">
-  <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
-    Select Site
-  </label>
- 
-  <select
-    className="form-control"
-    value={selectedSite}
-    onChange={(e) => setSelectedSite(e.target.value)}
-  >
-    <option value="">Select SiteCollection</option>
-    <option value="AlRostmaniSpfx2">Alrosmanispfx2</option>
-    <option value="edcspfx">edcspfx</option>
-    <option value="Intranetdemos">intranetdemos</option>
-  </select>
-</div>
-{/* addhyan - 13/03/2026 */}
-    
-    
-    { selectedSite && (
- 
-<div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", padding: '20px' }}>
+      <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+        Select Location
+      </label>
+      <select
+        className="form-control"
+        value={selectedSite}
+        onChange={(e) => {
+          setSelectedSite(e.target.value);
+          setSelectedSubSite("");
+          resetForm();
+          setIsEditorOpen(false);
+          setDocumentUrl("");
+        }}
+      >
+        <option value="">Select Location</option>
+        <option value="AlRostmaniSpfx2">AlRostmaniSpfx2</option>
+        <option value="edcspfx">edcspfx</option>
+        <option value="Intranetdemos">intranetdemos</option>
+      </select>
+    </div>
+
+    {selectedSite && (
+      <div className="col-md-6 mb-3">
+        <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+          Select Department 
+        </label>
+        <select
+          className="form-control"
+          value={selectedSubSite}
+          onChange={(e) => setSelectedSubSite(e.target.value)}
+        >
+          <option value="">Select Department</option>
+          {(siteSubsiteMap[selectedSite] || []).map((subsite) => (
+            <option key={subsite} value={subsite}>
+              {subsite}
+            </option>
+          ))}
+        </select>
+      </div>
+    )}
+
+    {/* {selectedSubSite && ( */}
+      {selectedSite && (
+      <div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", padding: '20px' }}>
       <h3 className="font-16 m-0 mb-3">
         New from template: {selectedTemplate?.DocumentCategory}
       </h3>
@@ -725,8 +764,11 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
                         boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
                         marginBottom: "20px"
                     }}>
- 
-<iframe
+
+                      
+    
+{ selectedSubSite && (
+  <iframe
                             id="wordEditorFrame"
                             src={documentUrl}
                             style={{
@@ -742,11 +784,13 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
                             title="Document Template"
                             allowFullScreen
                         ></iframe>
+)}
+
  
       </div>
  
- 
-           <div className="card mar-90">
+ { selectedSubSite && (
+   <div className="card mar-90">
                     <div className="card-body">
                         <h3 className="mb-1 fw-bold text-dark header-title"
                         >
@@ -837,6 +881,8 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
                    
                 </div>
  
+  )}
+          
  
       
  

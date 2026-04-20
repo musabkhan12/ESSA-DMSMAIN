@@ -32,6 +32,7 @@ interface CreateFolderProps {
   context: WebPartContext;
   // onReturnToMain: () => void;
   // myRequest: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onCloseForm: () => void;    // aman 20/04/26 - to close the form on cancel button click 
 }
 
 let togglecolumneDetails = true;
@@ -40,7 +41,7 @@ let togglefolderPrivacy = true;
 // let toggleApprovalForFolder=true;
 
 const CreateFolder: React.FC<CreateFolderProps> = ({
-  OthProps, context
+  OthProps, context, onCloseForm,  // aman 20/04/26 - added onCloseForm in props to close the form on cancel button click
   // onReturnToMain,
 }) => {
   console.log(OthProps, "oth props");
@@ -1120,7 +1121,7 @@ if (OthProps.DocumentLibrary !== "") {
     <Modal.Body className="text-center p-4">
       <div style={{ position: "relative" }}>
         <button
-          onClick={() => setShowLoader(false)}
+          onClick={() => {setShowLoader(false), onCloseForm() }}
           style={{ position: "absolute", top: -20, right: -10, background: "none", border: 0, cursor: "pointer", padding: 0 }}
         >
           <svg width="32" height="32" viewBox="0 0 32 32">

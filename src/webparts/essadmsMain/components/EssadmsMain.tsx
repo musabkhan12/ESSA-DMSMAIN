@@ -39,7 +39,7 @@ import Provider from "../../../GlobalContext/provider";
 import Select from "react-select";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { icon } from '@fortawesome/fontawesome-svg-core';
-import {faRedo, faUser,faFilePdf, faCloud,  faFolder as faFolders,  faGlobeAsia, faLock, faHeart as faHearts, faShareSquare,faTrash,faFile ,faDownload,faHistory,  faShareAlt, faCalendar, faClock, faCheckCircle, faFileWord, faFileExcel,faFileImage, faFileArchive, faFileVideo,faShoppingBag, } from '@fortawesome/free-solid-svg-icons';
+import {faRedo, faUser,faFilePdf, faCloud,  faFolder as faFolders,  faGlobeAsia, faLock, faHeart as faHearts, faShareSquare,faTrash,faFile ,faDownload,faHistory,  faShareAlt, faCalendar, faClock, faCheckCircle, faFileWord, faFileExcel,faFileImage, faFileArchive, faFileVideo,faShoppingBag, faSort } from '@fortawesome/free-solid-svg-icons';
 import { faFolder, faHeart, faCalendarAlt as faCalendars, faTrashAlt, faEye,  faFileAlt,faEdit, faPaperPlane  } from '@fortawesome/free-regular-svg-icons';
 // srs 6/3/26
 import { faArchive } from '@fortawesome/free-solid-svg-icons';
@@ -89,6 +89,68 @@ interface BreadcrumbItem {
   libraryTitle?: string;
   folderPath?: string;
 }
+
+// Ritik - 20/04/26 start
+
+const FilePermUserSearch: React.FC<{
+  users: any[];
+  onSelect: (user: { id: string; title: string }) => void;
+}> = ({ users, onSelect }) => {
+  const [val, setVal] = React.useState('');
+  const [open, setOpen] = React.useState(false);
+ 
+  const list = (users || []).filter((u: any) =>
+    val.trim() &&
+    (
+      (u.Title || '').toLowerCase().includes(val.toLowerCase()) ||
+      (u.Email || '').toLowerCase().includes(val.toLowerCase())
+    )
+  );
+ 
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        type="text"
+        className="form-control"
+        placeholder="Type name..."
+        value={val}
+        style={{ fontSize: '14px' }}
+        onChange={(e) => { setVal(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+      />
+      {open && list.length > 0 && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0,
+          background: 'white', border: '1px solid #d9d9d9',
+          maxHeight: '180px', overflowY: 'auto',
+          zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }}>
+          {list.map((u: any) => (
+            <div
+              key={u.Id}
+              onMouseDown={() => {
+                onSelect({ id: String(u.Id), title: u.Title });
+                setVal('');
+                setOpen(false);
+              }}
+              style={{
+                padding: '10px', cursor: 'pointer',
+                borderBottom: '1px solid #f4f4f4'
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: '13px' }}>{u.Title}</div>
+              <div style={{ fontSize: '11px', color: '#777' }}>{u.Email}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Ritik - 20/04/26 end
+
 
 
 const ArgPoc = ({ context }: { context: WebPartContext }) => {
@@ -176,6 +238,24 @@ const [currentPage, setCurrentPage] = useState(1);
   const [modalFile, setModalFile] = useState<any>(null);
   // create folder modal state
   const [activeComponent, setActiveComponent] = useState(false);
+
+
+  // Aman 20/4/26 start
+const isCreateAllowed = React.useMemo(() => {
+  return !!selectedCurrentNode && selectedCurrentNode.type !== "site";
+}, [selectedCurrentNode]);
+ 
+// Aman 20/4/26
+const isUploadAllowed = React.useMemo(() => {
+  return (
+    !!selectedCurrentNode &&
+    (selectedCurrentNode.type === "library" ||
+     selectedCurrentNode.type === "folder")
+  );
+}, [selectedCurrentNode]);
+
+
+// aman - 20/04/26 end
   // preview file state
   const [previewFile, setPreviewFile] = useState<any>(null);
   // preview modal state
@@ -222,6 +302,10 @@ const [loadingColumns, setLoadingColumns] = useState(false);
   const [mpLoading, setMpLoading] = useState<boolean>(false);
   const [mpError, setMpError] = useState<string>("");
   const [mpSiteUsers, setMpSiteUsers] = useState<{ id: number; title: string; email: string; loginName: string }[]>([]);
+//20/04/26 Added state for filter in folder hirarchy in list view 
+  const [columnSearch, setColumnSearch] = useState<{name: string; size: string; library: string; status: string}>({
+    name: '', size: '', library: '', status: ''
+  });
   
 // Ritik 20/2/26 for manage permission folder
   const [rowsForPermission, setRowsForPermission] = useState<{id: number; selectedUserForPermission: any[]; selectedPermission: any}[]>([
@@ -241,9 +325,19 @@ const fpItemsPerPage = 10;
 
 const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
 
+// Sorting states
+const [sortColumn, setSortColumn] = useState<string>("");
+const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
 // add useState for share file url modal - Addhyan 13/4/26 start
   const [showShareUrlModal, setShowShareUrlModal] = useState(false);
   const [shareUrlFile, setShareUrlFile] = useState<any>(null);
+
+
+  // ritik - 20/04/26 start
+const [showFilePermModal, setShowFilePermModal] = useState(false);
+const [filePermState, setFilePermState] = useState<any>(null);
+  // ritik - 20/04/26 end
   const isDeepLinkPreview = useRef<Boolean>(false);
 
   useEffect(() => {
@@ -429,6 +523,16 @@ useEffect(() => {
 }, [activeView, selectedCurrentNode]);
 // ✅ END close all modal when clicking outside the modal
  
+// aman 20/04/26 - start 
+
+useEffect(() => {
+  setActiveComponent(false);
+  setShowUploadPanel(false);
+}, [selectedCurrentNode]);
+
+// aman 20/04/26 - end  
+
+
 
 // 2. Add click outside handler
 useEffect(() => {
@@ -1439,6 +1543,11 @@ console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles
         await expandPathToNode(node.key);
 
         if (node.type === "subsite") {
+          // aman 20/04/26 start 
+           setSelectedCurrentNode(node);
+ 
+          // aman 20/04/26 end  
+
           // Load libraries instead of files
           await toggleNode(node); // Expands and loads children (libraries)
           setSelectedFiles([]); // Clear file list so only sidebar shows folders
@@ -3345,240 +3454,291 @@ const metadata: any = {
  
   /* ----------------- end handleAuditHistory ------------------ */
   // srs 10/4/26
+
+  // ritik 20/04/26 - this code replace by ritik for manage permission function (start)
+// window.ManageFilePermission = async (
+//     fileId: string,
+//     siteUrl: string, 
+//     documentLibraryName: string,
+//     siteTitle: string
+// ) => {
+//     try {
+//         const web = Web(siteUrl).using(AssignFrom(sp.web));
+
+//         // 1. Fetch File and Item
+//         const file = web.getFileById(fileId);
+//         const item = await file.getItem();
+        
+//         // 2. Fresh check for Inheritance
+//         const itemQuery = item.select("HasUniqueRoleAssignments", "Id");
+//         itemQuery.query.set("v", Date.now().toString());
+//         const itemInfo: any = await itemQuery();
+        
+//         const isUnique = itemInfo.HasUniqueRoleAssignments === true;
+
+//         // 3. Fetch assignments - Cast to any[] to avoid the 'Member' property error
+//         const currentAssignments: any[] = await item.roleAssignments
+//             .expand("Member", "RoleDefinitionBindings")();
+
+//         const allUsers = await web.siteUsers.select("Id", "Title", "Email")();
+//         const filteredUsers = allUsers.filter(u => u.Email && !u.Title.includes("System"));
+
+//         let selectedUsers: Array<{ id: string, title: string }> = [];
+
+//         // 4. Management Dialog
+//         const { value: formValues, isDenied: revertClicked } = await Swal.fire({
+//             title: 'Manage File Permission',
+//             width: '600px',
+//             padding: '1rem',
+//             backdrop: false,
+//             showCloseButton: true,
+//             customClass: { popup: 'sharepoint-style-shadow' },
+//             html: `
+//                 <style>
+//                     .sharepoint-style-shadow { box-shadow: 0 0 20px rgba(0,0,0,0.2) !important; border: 1px solid #ddd !important; }
+//                     .user-option:hover { background-color: #f3f2f1 !important; color: #0078d4; }
+//                     .status-indicator { 
+//                         margin-bottom: 15px; margin-top:8px; text-align:left; padding: 10px; font-size: 12px; border-radius: 4px; 
+//                         border: 1px solid ${isUnique ? '#fbc7c7' : '#c7ebc7'}; 
+//                         background: ${isUnique ? '#fff4f4' : '#f3fbf3'}; 
+//                         color: ${isUnique ? '#d13438' : '#107c10'}; 
+//                     }
+//                     .selected-tags-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; min-height: 35px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: #faf9f8; }
+//                     .user-tag { background: #0078d4; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+//                     .remove-tag { cursor: pointer; font-weight: bold; }
+//                     .user-management-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; border: 1px solid #eee; }
+//                     .user-management-table th { background: #f3f2f1; padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+//                     .user-management-table td { padding: 6px 8px; text-align:left; border-bottom: 1px solid #eee; }
+//                     .delete-user-btn { color: #d13438; cursor: pointer; font-size: 18px; background: none; border: none; font-weight: bold; }
+//                 </style>
+
+//                 <div>
+//                     <div class="status-indicator">
+//                         <strong>Current Status:</strong> ${isUnique ? '⚠️ Unique Permissions' : '✅ Inheriting Permissions'}
+//                     </div>
+//                     <label style="font-weight: 600; display: block; margin-bottom: 5px; text-align:left;">Add New Users:</label>
+//                     <div id="selected-users-tags" class="selected-tags-container">
+//                         <span style="color: #999; font-size: 12px;">Search and click users...</span>
+//                     </div>
+//                     <div style="position: relative;">
+//                         <input type="text" id="user-search-input" class="swal2-input" placeholder="Type name..." style="width: 100%; margin: 0; font-size: 14px;">
+//                         <div id="user-dropdown-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #d9d9d9; max-height: 180px; overflow-y: auto; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+//                             ${filteredUsers.map(u => `
+//                                 <div class="user-option" data-id="${u.Id}" data-title="${u.Title}" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f4f4f4;">
+//                                     <div style="font-weight: 600; text-align:left; font-size: 13px; color:#000">${u.Title}</div>
+//                                     <div style="font-size: 11px; color: #777; text-align:left;">${u.Email}</div>
+//                                 </div>
+//                             `).join('')}
+//                         </div>
+//                     </div>
+//                     <label style="font-weight: 600; display: block; margin: 20px 0 5px 0; text-align:left;">Permission Level:</label>
+//                     <select id="swal-permission-level" class="swal2-select" style="width: 100%; margin: 0; font-size: 14px; margin-bottom: 20px;">
+//                         <option value="Full Control">Full Control</option>
+//                         <option value="Edit">Edit</option>
+//                         <option value="Contribute">Contribute</option>
+//                         <option value="Read" selected>Read</option>
+//                     </select>
+
+//                     ${isUnique ? `
+//                     <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+//                     <label style="font-weight: 600; display: block; margin-bottom: 5px; text-align:left">Existing Access:</label>
+//                     <div style="max-height: 150px; overflow-y: auto;">
+//                         <table class="user-management-table">
+//                             <thead>
+//                                 <tr><th>User</th><th>Permission</th><th style="text-align:center">Action</th></tr>
+//                             </thead>
+//                             <tbody>
+//                                 ${currentAssignments
+//                                     .filter(a => (a.Member?.Title || "").trim() !== "DMSSuper_Admin")
+//                                     .map(a => `
+//                                     <tr>
+//                                         <td style="text-align:left">
+//                                             <div style="font-weight:600">${a.Member?.Title || 'Unknown'}</div>
+//                                             <div style="font-size:10px; color:#666">${a.Member?.Email || ''}</div>
+//                                         </td>
+//                                         <td style="text-align:left">${a.RoleDefinitionBindings.map((r: any) => r.Name).join(', ')}</td>
+//                                         <td style="text-align:center">
+//                                             <button class="delete-user-btn" data-pid="${a.PrincipalId}">&times;</button>
+//                                         </td>
+//                                     </tr>`).join('')}
+//                             </tbody>
+//                         </table>
+//                     </div>
+//                     ` : ''}
+//                 </div>
+//             `,
+//             showCancelButton: true,
+//             confirmButtonText: 'Grant Access',
+//             confirmButtonColor: '#0078d4',
+//             showDenyButton: !!isUnique,
+//             denyButtonText: 'Restore Inheritance',
+//             denyButtonColor: '#6e7881',
+//             didOpen: () => {
+//                 const input = document.getElementById('user-search-input') as HTMLInputElement;
+//                 const list = document.getElementById('user-dropdown-list') as HTMLDivElement;
+//                 const tagsContainer = document.getElementById('selected-users-tags') as HTMLDivElement;
+//                 const options = list.querySelectorAll('.user-option');
+
+//                 document.querySelectorAll('.delete-user-btn').forEach(btn => {
+//                     btn.addEventListener('click', async (e) => {
+//                         const pid = (e.currentTarget as HTMLElement).getAttribute('data-pid');
+//                         Swal.close(); 
+//                         const confirm = await Swal.fire({ title: 'Remove User?', icon: 'warning', showCancelButton: true });
+//                         if (confirm.isConfirmed) {
+//                             await item.roleAssignments.getById(parseInt(pid!)).delete();
+//                             window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
+//                         } else {
+//                             window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
+//                         }
+//                     });
+//                 });
+
+//                 const renderTags = () => {
+//                     if (selectedUsers.length === 0) {
+//                         tagsContainer.innerHTML = '<span style="color: #999; font-size: 12px;">Search and click users...</span>';
+//                         return;
+//                     }
+//                     tagsContainer.innerHTML = selectedUsers.map(u => `
+//                         <span class="user-tag">${u.title} <span class="remove-tag" data-id="${u.id}">&times;</span></span>
+//                     `).join('');
+//                     tagsContainer.querySelectorAll('.remove-tag').forEach(btn => {
+//                         btn.addEventListener('click', (e) => {
+//                             const id = (e.target as HTMLElement).getAttribute('data-id');
+//                             selectedUsers = selectedUsers.filter(user => user.id !== id);
+//                             renderTags();
+//                         });
+//                     });
+//                 };
+
+//                 input.addEventListener('input', () => {
+//                     const val = input.value.toLowerCase();
+//                     list.style.display = val ? 'block' : 'none';
+//                     options.forEach((opt: any) => {
+//                         const text = opt.innerText.toLowerCase();
+//                         opt.style.display = text.includes(val) ? 'block' : 'none';
+//                     });
+//                 });
+
+//                 options.forEach((opt: any) => {
+//                     opt.addEventListener('click', () => {
+//                         const id = opt.getAttribute('data-id');
+//                         const title = opt.getAttribute('data-title');
+//                         if (!selectedUsers.find(u => u.id === id)) {
+//                             selectedUsers.push({ id, title });
+//                             renderTags();
+//                         }
+//                         input.value = "";
+//                         list.style.display = 'none';
+//                     });
+//                 });
+//             },
+//             preConfirm: () => {
+//                 const permission = (document.getElementById('swal-permission-level') as HTMLSelectElement).value;
+//                 if (selectedUsers.length === 0) {
+//                     Swal.showValidationMessage('Please select at least one user');
+//                     return false;
+//                 }
+//                 return { users: selectedUsers, permission };
+//             }
+//         });
+
+//         // 5. ACTION: RESTORE INHERITANCE
+//         if (revertClicked) {
+//             Swal.fire({ title: 'Restoring...', didOpen: () => Swal.showLoading()});
+//             await item.resetRoleInheritance();
+//             window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
+//             return;
+//         }
+
+//         // 6. ACTION: GRANT ACCESS (WITH CLEAN BREAK LOGIC)
+//         if (formValues) {
+//             Swal.fire({ title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+//             const adminGroupName = `${siteTitle}_Admin`.trim();
+//             const superAdminName = "DMSSuper_Admin";
+
+//             if (!isUnique) {
+//                 await item.breakRoleInheritance(true); 
+
+//                 // FIX: Cast assignments to any[] to allow accessing Member property
+//                 const assignments: any[] = await item.roleAssignments.expand("Member").select("PrincipalId", "Member/Title")();
+
+//                 for (const assignment of assignments) {
+//                     const title = (assignment.Member?.Title || "").trim();
+//                     if (title !== superAdminName && title !== adminGroupName) {
+//                         try {
+//                             await item.roleAssignments.getById(assignment.PrincipalId).delete();
+//                         } catch (e) {
+//                             console.warn(`Cleanup: Could not remove ${title}`);
+//                         }
+//                     }
+//                 }
+//             }
+
+//             const roleDef = await web.roleDefinitions.getByName(formValues.permission)();
+//             for (const user of formValues.users) {
+//                 await item.roleAssignments.add(parseInt(user.id), roleDef.Id);
+//             }
+
+//             Swal.fire({ icon: 'success', title: 'Permissions Set', timer: 1500, showConfirmButton: false }).then(() => {
+//                 window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
+//             });
+//         }
+
+//     } catch (error) {
+//         console.error("Permission Logic Error:", error);
+//         Swal.fire({ icon: "error", title: "Operation Failed", text: error.message });
+//     }
+// };
+
 window.ManageFilePermission = async (
     fileId: string,
-    siteUrl: string, 
+    siteUrl: string,
     documentLibraryName: string,
     siteTitle: string
-) => {
+  ) => {
     try {
-        const web = Web(siteUrl).using(AssignFrom(sp.web));
-
-        // 1. Fetch File and Item
-        const file = web.getFileById(fileId);
-        const item = await file.getItem();
-        
-        // 2. Fresh check for Inheritance
-        const itemQuery = item.select("HasUniqueRoleAssignments", "Id");
-        itemQuery.query.set("v", Date.now().toString());
-        const itemInfo: any = await itemQuery();
-        
-        const isUnique = itemInfo.HasUniqueRoleAssignments === true;
-
-        // 3. Fetch assignments - Cast to any[] to avoid the 'Member' property error
-        const currentAssignments: any[] = await item.roleAssignments
-            .expand("Member", "RoleDefinitionBindings")();
-
-        const allUsers = await web.siteUsers.select("Id", "Title", "Email")();
-        const filteredUsers = allUsers.filter(u => u.Email && !u.Title.includes("System"));
-
-        let selectedUsers: Array<{ id: string, title: string }> = [];
-
-        // 4. Management Dialog
-        const { value: formValues, isDenied: revertClicked } = await Swal.fire({
-            title: 'Manage File Permission',
-            width: '600px',
-            padding: '1rem',
-            backdrop: false,
-            showCloseButton: true,
-            customClass: { popup: 'sharepoint-style-shadow' },
-            html: `
-                <style>
-                    .sharepoint-style-shadow { box-shadow: 0 0 20px rgba(0,0,0,0.2) !important; border: 1px solid #ddd !important; }
-                    .user-option:hover { background-color: #f3f2f1 !important; color: #0078d4; }
-                    .status-indicator { 
-                        margin-bottom: 15px; margin-top:8px; text-align:left; padding: 10px; font-size: 12px; border-radius: 4px; 
-                        border: 1px solid ${isUnique ? '#fbc7c7' : '#c7ebc7'}; 
-                        background: ${isUnique ? '#fff4f4' : '#f3fbf3'}; 
-                        color: ${isUnique ? '#d13438' : '#107c10'}; 
-                    }
-                    .selected-tags-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; min-height: 35px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: #faf9f8; }
-                    .user-tag { background: #0078d4; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
-                    .remove-tag { cursor: pointer; font-weight: bold; }
-                    .user-management-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; border: 1px solid #eee; }
-                    .user-management-table th { background: #f3f2f1; padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-                    .user-management-table td { padding: 6px 8px; text-align:left; border-bottom: 1px solid #eee; }
-                    .delete-user-btn { color: #d13438; cursor: pointer; font-size: 18px; background: none; border: none; font-weight: bold; }
-                </style>
-
-                <div>
-                    <div class="status-indicator">
-                        <strong>Current Status:</strong> ${isUnique ? '⚠️ Unique Permissions' : '✅ Inheriting Permissions'}
-                    </div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 5px; text-align:left;">Add New Users:</label>
-                    <div id="selected-users-tags" class="selected-tags-container">
-                        <span style="color: #999; font-size: 12px;">Search and click users...</span>
-                    </div>
-                    <div style="position: relative;">
-                        <input type="text" id="user-search-input" class="swal2-input" placeholder="Type name..." style="width: 100%; margin: 0; font-size: 14px;">
-                        <div id="user-dropdown-list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #d9d9d9; max-height: 180px; overflow-y: auto; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                            ${filteredUsers.map(u => `
-                                <div class="user-option" data-id="${u.Id}" data-title="${u.Title}" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f4f4f4;">
-                                    <div style="font-weight: 600; text-align:left; font-size: 13px; color:#000">${u.Title}</div>
-                                    <div style="font-size: 11px; color: #777; text-align:left;">${u.Email}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <label style="font-weight: 600; display: block; margin: 20px 0 5px 0; text-align:left;">Permission Level:</label>
-                    <select id="swal-permission-level" class="swal2-select" style="width: 100%; margin: 0; font-size: 14px; margin-bottom: 20px;">
-                        <option value="Full Control">Full Control</option>
-                        <option value="Edit">Edit</option>
-                        <option value="Contribute">Contribute</option>
-                        <option value="Read" selected>Read</option>
-                    </select>
-
-                    ${isUnique ? `
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-                    <label style="font-weight: 600; display: block; margin-bottom: 5px; text-align:left">Existing Access:</label>
-                    <div style="max-height: 150px; overflow-y: auto;">
-                        <table class="user-management-table">
-                            <thead>
-                                <tr><th>User</th><th>Permission</th><th style="text-align:center">Action</th></tr>
-                            </thead>
-                            <tbody>
-                                ${currentAssignments
-                                    .filter(a => (a.Member?.Title || "").trim() !== "DMSSuper_Admin")
-                                    .map(a => `
-                                    <tr>
-                                        <td style="text-align:left">
-                                            <div style="font-weight:600">${a.Member?.Title || 'Unknown'}</div>
-                                            <div style="font-size:10px; color:#666">${a.Member?.Email || ''}</div>
-                                        </td>
-                                        <td style="text-align:left">${a.RoleDefinitionBindings.map((r: any) => r.Name).join(', ')}</td>
-                                        <td style="text-align:center">
-                                            <button class="delete-user-btn" data-pid="${a.PrincipalId}">&times;</button>
-                                        </td>
-                                    </tr>`).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                    ` : ''}
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Grant Access',
-            confirmButtonColor: '#0078d4',
-            showDenyButton: !!isUnique,
-            denyButtonText: 'Restore Inheritance',
-            denyButtonColor: '#6e7881',
-            didOpen: () => {
-                const input = document.getElementById('user-search-input') as HTMLInputElement;
-                const list = document.getElementById('user-dropdown-list') as HTMLDivElement;
-                const tagsContainer = document.getElementById('selected-users-tags') as HTMLDivElement;
-                const options = list.querySelectorAll('.user-option');
-
-                document.querySelectorAll('.delete-user-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const pid = (e.currentTarget as HTMLElement).getAttribute('data-pid');
-                        Swal.close(); 
-                        const confirm = await Swal.fire({ title: 'Remove User?', icon: 'warning', showCancelButton: true });
-                        if (confirm.isConfirmed) {
-                            await item.roleAssignments.getById(parseInt(pid!)).delete();
-                            window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
-                        } else {
-                            window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
-                        }
-                    });
-                });
-
-                const renderTags = () => {
-                    if (selectedUsers.length === 0) {
-                        tagsContainer.innerHTML = '<span style="color: #999; font-size: 12px;">Search and click users...</span>';
-                        return;
-                    }
-                    tagsContainer.innerHTML = selectedUsers.map(u => `
-                        <span class="user-tag">${u.title} <span class="remove-tag" data-id="${u.id}">&times;</span></span>
-                    `).join('');
-                    tagsContainer.querySelectorAll('.remove-tag').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = (e.target as HTMLElement).getAttribute('data-id');
-                            selectedUsers = selectedUsers.filter(user => user.id !== id);
-                            renderTags();
-                        });
-                    });
-                };
-
-                input.addEventListener('input', () => {
-                    const val = input.value.toLowerCase();
-                    list.style.display = val ? 'block' : 'none';
-                    options.forEach((opt: any) => {
-                        const text = opt.innerText.toLowerCase();
-                        opt.style.display = text.includes(val) ? 'block' : 'none';
-                    });
-                });
-
-                options.forEach((opt: any) => {
-                    opt.addEventListener('click', () => {
-                        const id = opt.getAttribute('data-id');
-                        const title = opt.getAttribute('data-title');
-                        if (!selectedUsers.find(u => u.id === id)) {
-                            selectedUsers.push({ id, title });
-                            renderTags();
-                        }
-                        input.value = "";
-                        list.style.display = 'none';
-                    });
-                });
-            },
-            preConfirm: () => {
-                const permission = (document.getElementById('swal-permission-level') as HTMLSelectElement).value;
-                if (selectedUsers.length === 0) {
-                    Swal.showValidationMessage('Please select at least one user');
-                    return false;
-                }
-                return { users: selectedUsers, permission };
-            }
-        });
-
-        // 5. ACTION: RESTORE INHERITANCE
-        if (revertClicked) {
-            Swal.fire({ title: 'Restoring...', didOpen: () => Swal.showLoading()});
-            await item.resetRoleInheritance();
-            window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
-            return;
-        }
-
-        // 6. ACTION: GRANT ACCESS (WITH CLEAN BREAK LOGIC)
-        if (formValues) {
-            Swal.fire({ title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            const adminGroupName = `${siteTitle}_Admin`.trim();
-            const superAdminName = "DMSSuper_Admin";
-
-            if (!isUnique) {
-                await item.breakRoleInheritance(true); 
-
-                // FIX: Cast assignments to any[] to allow accessing Member property
-                const assignments: any[] = await item.roleAssignments.expand("Member").select("PrincipalId", "Member/Title")();
-
-                for (const assignment of assignments) {
-                    const title = (assignment.Member?.Title || "").trim();
-                    if (title !== superAdminName && title !== adminGroupName) {
-                        try {
-                            await item.roleAssignments.getById(assignment.PrincipalId).delete();
-                        } catch (e) {
-                            console.warn(`Cleanup: Could not remove ${title}`);
-                        }
-                    }
-                }
-            }
-
-            const roleDef = await web.roleDefinitions.getByName(formValues.permission)();
-            for (const user of formValues.users) {
-                await item.roleAssignments.add(parseInt(user.id), roleDef.Id);
-            }
-
-            Swal.fire({ icon: 'success', title: 'Permissions Set', timer: 1500, showConfirmButton: false }).then(() => {
-                window.ManageFilePermission(fileId, siteUrl, documentLibraryName, siteTitle);
-            });
-        }
-
-    } catch (error) {
-        console.error("Permission Logic Error:", error);
-        Swal.fire({ icon: "error", title: "Operation Failed", text: error.message });
+      const web = Web(siteUrl).using(AssignFrom(sp.web));
+      const file = web.getFileById(fileId);
+      const item = await file.getItem();
+  
+      const itemQuery = item.select("HasUniqueRoleAssignments", "Id");
+      itemQuery.query.set("v", Date.now().toString());
+      const itemInfo: any = await itemQuery();
+      const isUnique = itemInfo.HasUniqueRoleAssignments === true;
+  
+      const currentAssignments: any[] = await item.roleAssignments
+        .expand("Member", "RoleDefinitionBindings")();
+  
+      const allUsers = await web.siteUsers.select("Id", "Title", "Email")();
+      const filteredUsers = allUsers.filter(
+        (u: any) => u.Email && !u.Title.includes("System")
+      );
+  
+      setFilePermState({
+        fileId,
+        siteUrl,
+        documentLibraryName,
+        siteTitle,
+        isUnique,
+        currentAssignments,
+        filteredUsers,
+        selectedUsers: [] as Array<{id: string; title: string}>,
+        permission: "Read",
+      });
+      setShowFilePermModal(true);
+  
+    } catch (error: any) {
+      console.error("Permission Logic Error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Operation Failed",
+        text: error.message,
+      });
     }
-};
+  };
+
+// ritik 20/04/26 end 
 
 
 // srs 15/4/26
@@ -5015,21 +5175,44 @@ const fpLoadDefaultValue = async (flag: string | null, folder: any) => {
           setFpIsPrivateId(folderItems[0].Id);
         }
       } else {
-        const libItems = await spRoot.web.lists
-          .getByTitle("DMSPreviewFormMaster")
-          .items
-          .select("Id", "IsPrivate", "DocumentLibraryName")
-          .filter(`DocumentLibraryName eq '${docLibName}' and IsDocumentLibrary eq 1`)
-          .top(1)();
+
+          // rohit - 20/04/26 Start 
+    //     const libItems = await spRoot.web.lists
+    //       .getByTitle("DMSPreviewFormMaster")
+    //       .items
+    //       .select("Id", "IsPrivate", "DocumentLibraryName")
+    //       .filter(`DocumentLibraryName eq '${docLibName}' and IsDocumentLibrary eq 1`)
+    //       .top(1)();
  
-        if (libItems && libItems.length > 0) {
-          isPrivate = !!libItems[0].IsPrivate;
-          setFpIsPrivateLibId(libItems[0].Id);
+    //     if (libItems && libItems.length > 0) {
+    //       isPrivate = !!libItems[0].IsPrivate;
+    //       setFpIsPrivateLibId(libItems[0].Id);
+    //     }
+    //   }
+    // } catch (e) {
+    //   console.warn("IsPrivate check failed", e);
+    // }
+
+
+    const libItems = await spRoot.web.lists
+    .getByTitle("DMSFolderMaster")        // Rohit change list for DMSFolderMaster for library level permission check
+    .items
+    .select("Id", "IsPrivate", "DocumentLibraryName")
+    // Adjust filter as needed – e.g., if IsLibrary column identifies root folders
+    .filter(`DocumentLibraryName eq '${docLibName}' and IsLibrary eq 1`)
+    .top(1)();
+ 
+  if (libItems && libItems.length > 0) {
+    isPrivate = !!libItems[0].IsPrivate;
+    setFpIsPrivateLibId(libItems[0].Id);
         }
       }
     } catch (e) {
       console.warn("IsPrivate check failed", e);
     }
+
+
+    // rohit - 20/04/26 end 
  
     // ===== STEP 2: Public hai to "No" set karo =====
     if (!isPrivate && flag !== "force") {
@@ -5178,7 +5361,7 @@ const fpSetPrivate = async () => {
  
     if (folderName === "null") {
       if (fpIsPrivateLibId !== null) {
-        await spRoot.web.lists.getByTitle("DMSPreviewFormMaster")
+        await spRoot.web.lists.getByTitle("DMSFolderMaster")          // rohit - 20/04/26 ("DmsformpreviewMaster") change list for DMSFolderMaster for library level permission check
           .items.getById(fpIsPrivateLibId).update({ IsPrivate: true });
       }
     } else {
@@ -5209,13 +5392,36 @@ const fpSetPrivate = async () => {
       await lib.roleAssignments.add(ensured.data.Id, fullControlDef.Id);
     }
  
-    await fpLoadDefaultValue("force", selectedFolder);
+
+    // rohit - 20/04/26 start
+//     await fpLoadDefaultValue("force", selectedFolder);
+ 
+//   } catch (e) {
+//     console.error("fpSetPrivate error", e);
+//     Swal.fire('Error', 'Failed to set private permission.', 'error');
+//   }
+// };
+
+await fpLoadDefaultValue("force", selectedFolder);
+    // Rohit FIX: Update selectedFiles so the card badge reflects "Private" immediately
+    const folderKey = selectedFolder.FolderPath || selectedFolder.folderpath || selectedFolder.DocumentLibraryName || "";
+    setSelectedFiles((prev: any[]) =>
+      prev.map((f: any) => {
+        const fKey = f.FolderPath || f.folderpath || f.DocumentLibraryName || "";
+        if (fKey && fKey === folderKey) {
+          return { ...f, IsPrivate: true };
+        }
+        return f;
+      })
+    );
  
   } catch (e) {
     console.error("fpSetPrivate error", e);
     Swal.fire('Error', 'Failed to set private permission.', 'error');
   }
 };
+
+// rohit - 20/04/26 end
  
 const fpValidate = (): boolean => {
   let isValid = true;
@@ -5944,15 +6150,78 @@ Swal.fire({
         );
       }
     });
-  //
+  
 
   const pageSize = 12;
   let location: string = "";
   const paginatedFiles = useMemo(() => {
+    // Apply sorting to filteredFiles
+    let sortedFiles = [...filteredFiles];
+    if (sortColumn) {
+      sortedFiles.sort((a, b) => {
+        let aValue: any, bValue: any;
+
+        switch (sortColumn) {
+          case "name":
+            aValue = (a.FileName || a.Name || a.FolderName || "").toLowerCase();
+            bValue = (b.FileName || b.Name || b.FolderName || "").toLowerCase();
+            break;
+          case "size":
+            aValue = parseFloat(a.Length || a.FileSize || "0") || 0;
+            bValue = parseFloat(b.Length || b.FileSize || "0") || 0;
+            break;
+          case "library":
+            aValue = (a.DocumentLibraryName || "").toLowerCase();
+            bValue = (b.DocumentLibraryName || "").toLowerCase();
+            break;
+          case "createdDate":
+            aValue = new Date(a.TimeCreated || a.Created || 0).getTime();
+            bValue = new Date(b.TimeCreated || b.Created || 0).getTime();
+            break;
+          case "status":
+            aValue = (a.Status || "").toLowerCase();
+            bValue = (b.Status || "").toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    // Apply pagination
     const start = (currentPage - 1) * pageSize;
     const end = start + pageSize;
-    return filteredFiles.slice(start, end);
-  }, [filteredFiles, currentPage]);
+    return sortedFiles.slice(start, end);
+  }, [filteredFiles, currentPage, sortColumn, sortDirection]);
+  const columnFilteredFiles = useMemo(() => {
+    return paginatedFiles.filter((file: any) => {
+      const nameMatch = !columnSearch.name || 
+        (file.FileName || file.Name || file.FolderName || "").toLowerCase().includes(columnSearch.name.toLowerCase());
+      const sizeMatch = !columnSearch.size || 
+        (file.FileSize || (file.Length ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB` : "")).toLowerCase().includes(columnSearch.size.toLowerCase());
+      const libMatch = !columnSearch.library || 
+        (file.DocumentLibraryName || (file.TimeCreated ? new Date(file.TimeCreated).toLocaleDateString() : "")).toLowerCase().includes(columnSearch.library.toLowerCase());
+      const statusMatch = !columnSearch.status || 
+        (file.Status || "").toLowerCase().includes(columnSearch.status.toLowerCase());
+      return nameMatch && sizeMatch && libMatch && statusMatch;
+    });
+  }, [paginatedFiles, columnSearch]);
+  
+
+  // Handle sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -5963,6 +6232,7 @@ Swal.fire({
     setSearchTerm("");
     setSearchInput("");
     setCurrentPage(1);
+    setColumnSearch({ name: '', size: '', library: '', status: '' }); // ✅ column search reset
   }, [activeView]);
 
 
@@ -6263,19 +6533,59 @@ const handleSaveRename = async () => {
         <div className="d-flex gap-3">
           <button 
             type="button"
-            onClick={() => setActiveComponent(true)}
-            disabled={!selectedCurrentNode || selectedCurrentNode.type === "site"}
-            style={{ background: 'none',   marginTop:'0px',  border: 'none', padding: 0, opacity: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 0.4 : 1, cursor: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 'not-allowed' : 'pointer' }}
-          >
+
+                      // aman -20/04/26 start 
+
+
+                              onClick={() => {
+                if (!isCreateAllowed) return;
+                setActiveComponent(true);
+                setShowUploadPanel(false);
+              }}
+              disabled={!isCreateAllowed}
+              style={{
+                background: 'none',
+                marginTop:'0px',
+                border: 'none',
+                padding: 0,
+                opacity: !isCreateAllowed ? 0.4 : 1,
+                cursor: !isCreateAllowed ? 'not-allowed' : 'pointer'
+              }}
+
+          //   onClick={() => setActiveComponent(true)}
+          //   disabled={!selectedCurrentNode || selectedCurrentNode.type === "site"}
+          //   style={{ background: 'none',   marginTop:'0px',  border: 'none', padding: 0, opacity: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 0.4 : 1, cursor: (!selectedCurrentNode || selectedCurrentNode.type === "site") ? 'not-allowed' : 'pointer' }}
+          // >
+       
+            >
             <span className="mb-1 mt-2" data-tooltip="Create Folder">
             <img src={require("../assets/createnew.png")} alt="Create" /></span>
           </button>
 
           <button 
             type="button"
-            onClick={() => {setShowUploadPanel(true); setActiveComponent(false)}}
-            disabled={!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")}
-            style={{ background: 'none',  marginTop:'0px', border: 'none', padding: 0, opacity: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 0.4 : 1, cursor: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 'not-allowed' : 'pointer' }}
+                onClick={() => {
+                  if (
+                    !selectedCurrentNode ||
+                    !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")
+                  ) return;
+                
+                  setShowUploadPanel(true);
+                  setActiveComponent(false);
+                }}
+                disabled={!isUploadAllowed}
+                style={{
+                  background: 'none',
+                  marginTop:'0px',
+                  border: 'none',
+                  padding: 0,
+                  opacity: !isUploadAllowed ? 0.4 : 1,
+                  cursor: !isUploadAllowed ? 'not-allowed' : 'pointer'
+                }}
+            // onClick={() => {setShowUploadPanel(true); setActiveComponent(false)}}
+            // disabled={!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")}
+            // style={{ background: 'none',  marginTop:'0px', border: 'none', padding: 0, opacity: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 0.4 : 1, cursor: (!selectedCurrentNode || !(selectedCurrentNode.type === "library" || selectedCurrentNode.type === "folder")) ? 'not-allowed' : 'pointer' }}
+          
           >
              <span className="mb-1 mt-2" data-tooltip="Upload File">
             <img src={require("../assets/uploafnew.png")} alt="Upload" /></span>
@@ -6283,7 +6593,7 @@ const handleSaveRename = async () => {
         </div>
                 <span style={{ fontSize: '14px',  color: '#333', marginTop: '5px' }}>Create</span>
       </div>
-
+   {/* // aman -20/04/26 end  */}
       {/* srs 31/3/26 comment Ask Ai  */}
       {/* Group 2: ASK AI */}
       {/* <div className="d-flex flex-column align-items-center" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
@@ -6641,7 +6951,7 @@ const handleSaveRename = async () => {
       </div>
 
       {/* --- Create Folder Component --- */}
-      <CreateFolder
+      <CreateFolder 
         OthProps={{
           "Entity": `${currentSiteUrl.split("/sites/")[1]?.split("/")[1] || ""}`,
           "Entityurl": currentSiteUrl,
@@ -6654,6 +6964,7 @@ const handleSaveRename = async () => {
           "IsFolderDeligationUser": "false",
         }}
         context={context}
+        onCloseForm={() => setActiveComponent(false)} // aman 20/04/26 added onCloseForm to reset activeComponent state when folder creation is done or cancelled
       />
 
       {/* --- Back Button --- */}
@@ -7123,14 +7434,27 @@ const handleSaveRename = async () => {
 
 
 
-                                    <div className="text-muted font-12">
+                                    {/* <div className="text-muted font-12">
                                       {file.Length
                                         ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
                                         : ""}
-                                    </div>
+                                    </div> */}
+                                    <div className="text-muted font-12">
+  {file.Length
+    ? (() => {
+        const sizeInBytes = parseInt(file.Length);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
+</div>
                                     <div className="text-muted font-12">
                                       {file.TimeCreated
-                                        ? new Date(file.TimeCreated).toLocaleDateString()
+                                        ? new Date(file.TimeCreated).toLocaleDateString("en-GB")
                                         : ""}
                                     </div>
 
@@ -7331,7 +7655,22 @@ const handleSaveRename = async () => {
                                                <div dangerouslySetInnerHTML={{
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
-                                            <div className="text-muted font-12"> <FontAwesomeIcon icon={faShoppingBag}  className="me-1" /> {file.FileSize}</div>
+                                            {/* <div className="text-muted font-12"> <FontAwesomeIcon icon={faShoppingBag}  className="me-1" /> {file.FileSize}</div> */}
+                                            <div className="text-muted font-12">
+  <FontAwesomeIcon icon={faShoppingBag} className="me-1" />
+
+  {file.FileSize
+    ? (() => {
+        const sizeInBytes = parseInt(file.FileSize);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
+</div>
                                             </div>
                                            
  
@@ -7341,12 +7680,17 @@ const handleSaveRename = async () => {
                                             </div>
  
                                             <div style={{borderTop:'1px solid #f1f5f9', paddingTop:'10px'}} className="d-flex align-items-center justify-content-between">
-                                            <div className="text-muted font-12 gap-1"> <FontAwesomeIcon icon={faCalendar}  className="me-1"/>
+                                            {/* <div className="text-muted font-12 gap-1"> <FontAwesomeIcon icon={faCalendar}  className="me-1"/>
     {new Date(file.Created).toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
     year: "numeric",
   })}
+</div> */}
+<div className="text-muted font-12 gap-1">
+  <FontAwesomeIcon icon={faCalendar} className="me-1" />
+  
+  {new Date(file.Created).toLocaleDateString("en-GB")}
 </div>
                                             {file.Status=== "Pending" && (
                                               <div className=" font-12 status_new" style={{ backgroundColor: '#fffbeb', color:'#b45309', border:'1px solid #fde68a' }}><FontAwesomeIcon icon={faClock} /> {file.Status}</div>  
@@ -7383,21 +7727,30 @@ const handleSaveRename = async () => {
 
 
                                             <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
-                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                            {/* <div className="text-muted font-12">{file.FileSize}</div> */}
+                                            <div className="text-muted font-12">
+  <FontAwesomeIcon icon={faShoppingBag} className="me-1" />
+
+  {file.FileSize
+    ? (() => {
+        const sizeInBytes = parseInt(file.FileSize);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
+</div>
                                           </>
                                         ) : activeView === "My Folders" ? (
                                          <>
-                                          {console.log("Addhyan file in my folders",file)}
+                                         
                                           {file.IsLibrary ? <div style={{ fontWeight: 600, fontSize: "15px", display:'flex', alignItems:'center',gap:'10px' }}>
-                                           <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div> {file.DisplayName} <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-US", {
-                                                                        month: "short",
-                                                                     day: "2-digit",
-                                                                      year: "numeric",
-                                                                   })}</div></div></div> : <div style={{ fontWeight: 600, fontSize: "15px", display:'flex', alignItems:'center',gap:'10px'  }}> <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div>  {file.FolderName}   <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-US", {
-                                                                        month: "short",
-                                                                     day: "2-digit",
-                                                                      year: "numeric",
-                                                                   })}</div></div> </div>}
+                                           <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div> {file.DisplayName} <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> 
+                                            <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-GB")}</div></div></div> : <div style={{ fontWeight: 600, fontSize: "15px", display:'flex', alignItems:'center',gap:'10px'  }}> <span className="folder-icon"><FontAwesomeIcon icon={faFolders} /> </span> <div>  {file.FolderName}   <div style={{fontWeight:'400'}} className="font-12 text-muted  mt-0"> 
+                                              <FontAwesomeIcon icon={faCalendars} /> {new Date(file.Created).toLocaleDateString("en-GB")}</div></div> </div>}
                                             {/* <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.FolderName}</div> */}
                                             {/* <div style={{ fontWeight: 600, fontSize: "20px" }}>📁{file.documentLibraryName}</div> */}
                                         
@@ -7422,7 +7775,21 @@ const handleSaveRename = async () => {
                                             }} />
 
                                             <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
-                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                           <div className="text-muted font-12">
+  <FontAwesomeIcon icon={faShoppingBag} className="me-1" />
+
+  {file.FileSize
+    ? (() => {
+        const sizeInBytes = parseInt(file.FileSize);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
+</div>
                                           </>
                                         ) : activeView === "Share with other" ? (
                                           <>
@@ -7430,7 +7797,22 @@ const handleSaveRename = async () => {
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
                                             <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
-                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                            {/* <div className="text-muted font-12">{file.FileSize}</div> */}
+                                            <div className="text-muted font-12">
+  <FontAwesomeIcon icon={faShoppingBag} className="me-1" />
+
+  {file.FileSize
+    ? (() => {
+        const sizeInBytes = parseInt(file.FileSize);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
+</div>
                                           </>
                                         ) : activeView === "Recycle bin" ? (
                                           <>
@@ -7438,7 +7820,21 @@ const handleSaveRename = async () => {
                                               __html: createFileExtensionHtml(getActualFileName(file))
                                             }} />
                                             <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
-                                            <div className="text-muted font-12">{file.FileSize}</div>
+                                            <div className="text-muted font-12">
+  <FontAwesomeIcon icon={faShoppingBag} className="me-1" />
+
+  {file.FileSize
+    ? (() => {
+        const sizeInBytes = parseInt(file.FileSize);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
+</div>
                                           </>
                                         )
                                         // srs 6/3/26 
@@ -7449,6 +7845,7 @@ const handleSaveRename = async () => {
                                             }} />
                                             <div style={{ fontWeight: 600, fontSize: "15px" }} className="onelinetrim">{file.FileName}</div>
                                             <div className="text-muted font-12">{file.FileSize}</div>
+                                           
                                           </>
                                         ) : null
                                       }
@@ -7609,7 +8006,7 @@ const handleSaveRename = async () => {
                                                     setMenuOpenIdx(null);
                                                     setShareFile(file);
                                                     setShowShareModal(true);
-                                                  }}><FontAwesomeIcon icon={faFileAlt} /> Share</button></li>
+                                                  }}><FontAwesomeIcon icon={faShareAlt} /> Share</button></li>
                                                   <li><button type="button" onClick={() => {
                                                     // this is to hide li options in every tab (addhyan)
                                                     setMenuOpenIdx(null);
@@ -7819,28 +8216,82 @@ const handleSaveRename = async () => {
                           {activeLayout === "list" && (
                             <div>
                               <table className="mtablenew">
-                                <thead>
-                                  <tr >
-                                    <th style={{ minWidth: '50px', maxWidth: '50px', }}>S.No</th>
-                                    <th style={{ minWidth: '250px', maxWidth: '250px', }}>Name</th>
-                                    {/* <th >Size</th> */}
-                                    <th style={{ minWidth: '80px', maxWidth: '80px' }}>Size</th>
-                                    {/* <th>Library</th> */}
-                                    <th style={{ minWidth: '150px', maxWidth: '150px' }}>
-                                      {paginatedFiles.some((f) => f.DocumentLibraryName)
-                                        ? "Library"
-                                        : "Created Date"}
-                                    </th>
-                                    {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
-                                      <th style={{ minWidth: '118px', maxWidth: '118px', }}>Status</th>
-                                    )}
-                                    {/* <th style={{minWidth:'80px',maxWidth:'80px',}}>Status</th> */}
-                                    <th style={{ textAlign: "center",minWidth: '80px', maxWidth: '80px' }}>Action</th> {/* New column */}
-                                  </tr>
-                                </thead>
+                              <thead>
+  <tr>
+    <th style={{ minWidth: '50px', maxWidth: '50px' }}>S.No</th>
+    <th style={{ minWidth: '250px', maxWidth: '250px', cursor: 'pointer' }}
+      onClick={() => handleSort("name")}>
+      Name <FontAwesomeIcon icon={faSort} />
+    </th>
+    <th style={{ minWidth: '80px', maxWidth: '80px', cursor: 'pointer' }}
+      onClick={() => handleSort("size")}>
+      Size <FontAwesomeIcon icon={faSort} />
+    </th>
+    <th style={{ minWidth: '150px', maxWidth: '150px', cursor: 'pointer' }}
+      onClick={() => handleSort(paginatedFiles.some((f) => f.DocumentLibraryName) ? "library" : "createdDate")}>
+      {paginatedFiles.some((f) => f.DocumentLibraryName)
+        ? <>Library <FontAwesomeIcon icon={faSort} /></>
+        : <>Created Date <FontAwesomeIcon icon={faSort} /></>}
+    </th>
+    {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+      <th style={{ minWidth: '118px', maxWidth: '118px', cursor: 'pointer' }}
+        onClick={() => handleSort("status")}>
+        Status <FontAwesomeIcon icon={faSort} />
+      </th>
+    )}
+    <th style={{ textAlign: "center", minWidth: '80px', maxWidth: '80px' }}>Action</th>
+  </tr>
+  {/* ✅ Search Row */}
+  <tr>
+    <th style={{ minWidth: '50px', maxWidth: '50px' }}></th>
+    <th style={{ minWidth: '250px', maxWidth: '250px' }}>
+      <input
+        type="text"
+        placeholder="Search name..."
+        value={columnSearch.name}
+        onChange={(e) => setColumnSearch(prev => ({ ...prev, name: e.target.value }))}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: '100%', padding: '4px 6px', fontSize: 12, border: '1px solid #ddd', borderRadius: 4, boxSizing: 'border-box' }}
+      />
+    </th>
+    <th style={{ minWidth: '80px', maxWidth: '80px' }}>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={columnSearch.size}
+        onChange={(e) => setColumnSearch(prev => ({ ...prev, size: e.target.value }))}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: '100%', padding: '4px 6px', fontSize: 12, border: '1px solid #ddd', borderRadius: 4, boxSizing: 'border-box' }}
+      />
+    </th>
+    <th style={{ minWidth: '150px', maxWidth: '150px' }}>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={columnSearch.library}
+        onChange={(e) => setColumnSearch(prev => ({ ...prev, library: e.target.value }))}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: '100%', padding: '4px 6px', fontSize: 12, border: '1px solid #ddd', borderRadius: 4, boxSizing: 'border-box' }}
+      />
+    </th>
+    {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
+      <th style={{ minWidth: '118px', maxWidth: '118px' }}>
+        <input
+          type="text"
+          placeholder="Search status..."
+          value={columnSearch.status}
+          onChange={(e) => setColumnSearch(prev => ({ ...prev, status: e.target.value }))}
+          onClick={(e) => e.stopPropagation()}
+          style={{ width: '100%', padding: '4px 6px', fontSize: 12, border: '1px solid #ddd', borderRadius: 4, boxSizing: 'border-box' }}
+        />
+      </th>
+    )}
+    <th style={{ minWidth: '80px', maxWidth: '80px' }}></th>
+  </tr>
+</thead>
 
-                                <tbody>
-                                  {paginatedFiles.map((file, idx) => (
+<tbody>
+{columnFilteredFiles.map((file, idx) => (
                                     <tr key={file.Id || idx}>
                                       <td style={{ minWidth: '50px', maxWidth: '50px', }}> <span className="indexdesign">{file.SNo || idx + 1} </span> </td>
                                       {/* <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td> */}
@@ -7865,19 +8316,32 @@ const handleSaveRename = async () => {
 </td>
                                       <td style={{minWidth: '80px', maxWidth: '80px'}}>
                                         {file.FileSize
-                                          ? file.FileSize
-                                          : file.Length
-                                            ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB`
-                                            : "-"}
+    ? (() => {
+        const sizeInBytes = parseInt(file.FileSize);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
                                       </td>
-                                      {/* <td >{file.DocumentLibraryName}</td> */}
+                                     
                                       <td  style={{minWidth: '150px', maxWidth: '150px'}}>
-                                        {file.DocumentLibraryName
-                                          ? file.DocumentLibraryName
-                                          : file.TimeCreated
-                                            ? new Date(file.TimeCreated).toLocaleDateString()
-                                            : "-"}
+                                        {file.Length
+    ? (() => {
+        const sizeInBytes = parseInt(file.Length);
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        return sizeInMB < 1
+          ? `${Math.floor(sizeInKB)} KB`
+          : `${sizeInMB.toFixed(2)} MB`;
+      })()
+    : ""}
                                       </td>
+                                       <td >{file.DocumentLibraryName}</td>
                                       {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
                                      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
                                         <td style={{ minWidth: '118px', maxWidth: '118px', }}>
@@ -8101,7 +8565,7 @@ const handleSaveRename = async () => {
       {activeView === "Share with me" && (
         <>
           <li><button type="button" onClick={() => { setPreviewFile(file); setShowPreviewModal(true); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faEye} /> Preview File</button></li>
-          <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faTrashAlt} /> Download File</button></li>
+          <li><button type="button" onClick={() => { setDirectDownloadFile(file); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faDownload} /> Download File</button></li>
         </>
       )}
 
@@ -8250,6 +8714,7 @@ const handleSaveRename = async () => {
                                   "IsFolderDeligationUser": "false",
                                 }}
                                 context={context}
+                                onCloseForm={() => setActiveComponent(false)} // aman 20/04/26 to close modal after folder creation
                               // onReturnToMain={handleReturnToMain}
                               />
                             )}
@@ -8312,10 +8777,11 @@ const handleSaveRename = async () => {
                             >
                               <button
                                 style={{
+                                  
                                   padding: "6px 12px",
                                   borderRadius: "6px",
                                   border: "1px solid #ccc",
-                                  background: "#f5f5f5",
+                                  background: "red",
                                   cursor: "pointer",
                                 }}
                                 onClick={() => setRenameModalOpen(false)}
@@ -8547,6 +9013,10 @@ const handleSaveRename = async () => {
                         currentSiteUrl={currentSiteUrl}
                       />
 
+
+
+
+
 {/* // add call for share file url modal - Addhyan 13/4/26 start */}
                       <ShareFileUrlModal
                         show={showShareUrlModal}
@@ -8558,7 +9028,278 @@ const handleSaveRename = async () => {
                           setShareUrlFile(null);
                         }}
                       />
+
+
+
+
+                      {/* // ritik 20/04/26 - start  */}
+
+
+                      {showFilePermModal && filePermState && (
+  <Modal
+    show={showFilePermModal}
+    onHide={() => setShowFilePermModal(false)}
+    size="lg"
+    container={() => document.getElementById('filelistcontainer')}
+    backdrop={true}
+    centered
+  >
+    <Modal.Header closeButton>
+      <Modal.Title>Manage File Permission</Modal.Title>
+    </Modal.Header>
  
+    <Modal.Body style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+ 
+      {/* Status */}
+      <div style={{
+        marginBottom: '15px',
+        marginTop: '8px',
+        padding: '10px',
+        fontSize: '12px',
+        borderRadius: '4px',
+        border: `1px solid ${filePermState.isUnique ? '#fbc7c7' : '#c7ebc7'}`,
+        background: filePermState.isUnique ? '#fff4f4' : '#f3fbf3',
+        color: filePermState.isUnique ? '#d13438' : '#107c10',
+      }}>
+        <strong>Current Status:</strong>{' '}
+        {filePermState.isUnique ? '⚠️ Unique Permissions' : '✅ Inheriting Permissions'}
+      </div>
+ 
+      {/* Add New Users label */}
+      <label style={{ fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+        Add New Users:
+      </label>
+ 
+      {/* Selected user tags */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: '5px',
+        marginBottom: '10px', minHeight: '35px',
+        border: '1px solid #ddd', padding: '5px',
+        borderRadius: '4px', background: '#faf9f8'
+      }}>
+        {filePermState.selectedUsers.length === 0
+          ? <span style={{ color: '#999', fontSize: '12px' }}>Search and click users...</span>
+          : filePermState.selectedUsers.map((u: any) => (
+              <span key={u.id} style={{
+                background: '#0078d4', color: 'white',
+                padding: '2px 8px', borderRadius: '12px',
+                fontSize: '12px', display: 'flex',
+                alignItems: 'center', gap: '5px'
+              }}>
+                {u.title}
+                <span
+                  style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                  onClick={() => setFilePermState((prev: any) => ({
+                    ...prev,
+                    selectedUsers: prev.selectedUsers.filter((su: any) => su.id !== u.id)
+                  }))}
+                >
+                  &times;
+                </span>
+              </span>
+            ))
+        }
+      </div>
+ 
+      {/* User search */}
+      <FilePermUserSearch
+        users={filePermState.filteredUsers}
+        onSelect={(user: any) => {
+          setFilePermState((prev: any) => {
+            if (prev.selectedUsers.find((u: any) => u.id === user.id)) return prev;
+            return { ...prev, selectedUsers: [...prev.selectedUsers, user] };
+          });
+        }}
+      />
+ 
+      {/* Permission dropdown */}
+      <label style={{ fontWeight: 600, display: 'block', margin: '20px 0 5px 0' }}>
+        Permission Level:
+      </label>
+      <select
+        className="form-select"
+        value={filePermState.permission}
+        onChange={(e) => setFilePermState((prev: any) => ({
+          ...prev, permission: e.target.value
+        }))}
+        style={{ width: '100%', marginBottom: '20px', fontSize: '14px', padding: '6px' }}
+      >
+        <option value="Full Control">Full Control</option>
+        <option value="Edit">Edit</option>
+        <option value="Contribute">Contribute</option>
+        <option value="Read">Read</option>
+      </select>
+ 
+      {/* Existing access table — only if unique */}
+      {filePermState.isUnique && (
+        <>
+          <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '15px 0' }} />
+          <label style={{ fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+            Existing Access:
+          </label>
+          <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #eee' }}>
+              <thead>
+                <tr>
+                  <th style={{ background: '#f3f2f1', padding: '8px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>User</th>
+                  <th style={{ background: '#f3f2f1', padding: '8px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Permission</th>
+                  <th style={{ background: '#f3f2f1', padding: '8px', textAlign: 'center', borderBottom: '1px solid #ddd' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filePermState.currentAssignments
+                  .filter((a: any) => (a.Member?.Title || '').trim() !== 'DMSSuper_Admin')
+                  .map((a: any) => (
+                    <tr key={a.PrincipalId}>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #eee' }}>
+                        <div style={{ fontWeight: 600 }}>{a.Member?.Title || 'Unknown'}</div>
+                        <div style={{ fontSize: '10px', color: '#666' }}>{a.Member?.Email || ''}</div>
+                      </td>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #eee' }}>
+                        {a.RoleDefinitionBindings.map((r: any) => r.Name).join(', ')}
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid #eee' }}>
+                        <button
+                          type="button"
+                          style={{
+                            color: '#d13438', cursor: 'pointer',
+                            fontSize: '18px', background: 'none',
+                            border: 'none', fontWeight: 'bold'
+                          }}
+                          onClick={async () => {
+                            try {
+                              const web2 = Web(filePermState.siteUrl).using(AssignFrom(sp.web));
+                              const item2 = await web2.getFileById(filePermState.fileId).getItem();
+                              await item2.roleAssignments.getById(a.PrincipalId).delete();
+                              // Refresh
+                              const newAssignments: any[] = await item2.roleAssignments
+                                .expand("Member", "RoleDefinitionBindings")();
+                              setFilePermState((prev: any) => ({
+                                ...prev,
+                                currentAssignments: newAssignments
+                              }));
+                            } catch (err: any) {
+                              Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+                            }
+                          }}
+                        >
+                          &times;
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+ 
+    </Modal.Body>
+ 
+    <Modal.Footer>
+      {/* Restore Inheritance button */}
+      {filePermState.isUnique && (
+        <Button
+          variant="secondary"
+          className="mt-0"
+          onClick={async () => {
+            try {
+              const web3 = Web(filePermState.siteUrl).using(AssignFrom(sp.web));
+              const item3 = await web3.getFileById(filePermState.fileId).getItem();
+              await item3.resetRoleInheritance();
+              setShowFilePermModal(false);
+              // Reopen to refresh
+              window.ManageFilePermission(
+                filePermState.fileId,
+                filePermState.siteUrl,
+                filePermState.documentLibraryName,
+                filePermState.siteTitle
+              );
+            } catch (err: any) {
+              Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+            }
+          }}
+        >
+          Restore Inheritance
+        </Button>
+      )}
+ 
+      <Button
+        variant="secondary"
+        className="mt-0"
+        onClick={() => setShowFilePermModal(false)}
+      >
+        Cancel
+      </Button>
+ 
+      {/* Grant Access button */}
+      <Button
+        variant="primary"
+        className="mt-0"
+        onClick={async () => {
+          if (filePermState.selectedUsers.length === 0) {
+            Swal.fire({ icon: 'warning', title: 'Please select at least one user' });
+            return;
+          }
+          try {
+            const web4 = Web(filePermState.siteUrl).using(AssignFrom(sp.web));
+            const item4 = await web4.getFileById(filePermState.fileId).getItem();
+ 
+            const adminGroupName = `${filePermState.siteTitle}_Admin`.trim();
+            const superAdminName = "DMSSuper_Admin";
+ 
+            if (!filePermState.isUnique) {
+              await item4.breakRoleInheritance(true);
+              const assignments: any[] = await item4.roleAssignments
+                .expand("Member")
+                .select("PrincipalId", "Member/Title")();
+              for (const assignment of assignments) {
+                const title = (assignment.Member?.Title || '').trim();
+                if (title !== superAdminName && title !== adminGroupName) {
+                  try {
+                    await item4.roleAssignments.getById(assignment.PrincipalId).delete();
+                  } catch (e) {
+                    console.warn(`Cleanup: Could not remove ${title}`);
+                  }
+                }
+              }
+            }
+ 
+            const roleDef = await web4.roleDefinitions
+              .getByName(filePermState.permission)();
+            for (const user of filePermState.selectedUsers) {
+              await item4.roleAssignments.add(parseInt(user.id), roleDef.Id);
+            }
+ 
+            setShowFilePermModal(false);
+            Swal.fire({
+              icon: 'success',
+              title: 'Permissions Set',
+              timer: 1500,
+              showConfirmButton: false,
+            }).then(() => {
+              window.ManageFilePermission(
+                filePermState.fileId,
+                filePermState.siteUrl,
+                filePermState.documentLibraryName,
+                filePermState.siteTitle
+              );
+            });
+ 
+          } catch (err: any) {
+            console.error("Grant Access Error:", err);
+            Swal.fire({ icon: 'error', title: 'Operation Failed', text: err.message });
+          }
+        }}
+      >
+        Grant Access
+      </Button>
+    </Modal.Footer>
+  </Modal>
+)}
+
+
+{/* ritik - 20/04/26 - end  */}
 {/* // add call for share file url modal - Addhyan 13/4/26 start */}
 
 {/* Aman 13/4/26 */}
@@ -8781,7 +9522,7 @@ const handleSaveRename = async () => {
               </button>
               <button type="button" className="btncolorCreate1" onClick={() => { setShowPermissionModal(false); setTogglePermission(undefined); }}>
                 <span className="mb-1 mt-2" data-tooltip="Cancel">
-                  {/* <img src={require("../assets/cancelnew.png")} alt="cancel" /> */}
+                  {/* <img src="" alt="cancel" style={{color:"red", fontWeight:"bold"}}> X</img> */}
                 </span>
               </button>
             </div>
