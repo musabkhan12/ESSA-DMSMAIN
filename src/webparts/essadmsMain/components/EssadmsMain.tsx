@@ -3418,18 +3418,31 @@ const customFields = Object.fromEntries(
 // STEP 2: final metadata (ADD THIS 👇)
 const metadata: any = {
   ...customFields,
-
-  Modified:
-    src?.Modified
-      ? new Date(src.Modified).toLocaleString()
-      : src?.TimeLastModified
-      ? new Date(src.TimeLastModified).toLocaleString()
-      : fileProps?.TimeLastModified
-      ? new Date(fileProps.TimeLastModified).toLocaleString()
-      : file?.Modified
-      ? new Date(file.Modified).toLocaleString()
-      : "-",
-
+// aman comment this to make data fomrat dd/mm/yyyy
+  // Modified:
+  //   src?.Modified
+  //     ? new Date(src.Modified).toLocaleString()
+  //     : src?.TimeLastModified
+  //     ? new Date(src.TimeLastModified).toLocaleString()
+  //     : fileProps?.TimeLastModified
+  //     ? new Date(fileProps.TimeLastModified).toLocaleString()
+  //     : file?.Modified
+      // ? new Date(file.Modified).toLocaleString() 
+      
+      // : "-",
+      // aman comment this to make data fomrat dd/mm/yyyy
+Modified: (() => {
+    const rawDate = src?.Modified || src?.TimeLastModified || fileProps?.TimeLastModified || file?.Modified;
+    if (!rawDate || rawDate === "-") return "-";
+   
+    const d = new Date(rawDate);
+    // Format to dd/mm/yyyy
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const year = d.getFullYear();
+   
+    return `${day}/${month}/${year}`;
+  })(),
   ModifiedBy:
     src?.Editor?.Title ||
     src?.ModifiedBy?.Title ||
@@ -5361,7 +5374,7 @@ const fpSetPrivate = async () => {
  
     if (folderName === "null") {
       if (fpIsPrivateLibId !== null) {
-        await spRoot.web.lists.getByTitle("DMSFolderMaster")          // rohit - 20/04/26 ("DmsformpreviewMaster") change list for DMSFolderMaster for library level permission check
+        await spRoot.web.lists.getByTitle("DMSFolderMaster")          // rohit 20/04/26 ("DmsformpreviewMaster") change list for DMSFolderMaster for library level permission check
           .items.getById(fpIsPrivateLibId).update({ IsPrivate: true });
       }
     } else {
@@ -5393,7 +5406,7 @@ const fpSetPrivate = async () => {
     }
  
 
-    // rohit - 20/04/26 start
+    // Rohit 20/04/26 start
 //     await fpLoadDefaultValue("force", selectedFolder);
  
 //   } catch (e) {
@@ -5403,7 +5416,7 @@ const fpSetPrivate = async () => {
 // };
 
 await fpLoadDefaultValue("force", selectedFolder);
-    // Rohit FIX: Update selectedFiles so the card badge reflects "Private" immediately
+    // Rohit 20/04/2026 FIX: Update selectedFiles so the card badge reflects "Private" immediately
     const folderKey = selectedFolder.FolderPath || selectedFolder.folderpath || selectedFolder.DocumentLibraryName || "";
     setSelectedFiles((prev: any[]) =>
       prev.map((f: any) => {
@@ -5421,7 +5434,7 @@ await fpLoadDefaultValue("force", selectedFolder);
   }
 };
 
-// rohit - 20/04/26 end
+// Rohit 20/04/26 end
  
 const fpValidate = (): boolean => {
   let isValid = true;
@@ -6151,8 +6164,7 @@ Swal.fire({
       }
     });
   
-
-  const pageSize = 12;
+  const [pageSize, setPageSize] = useState(12); //Rohit 23/04/2026
   let location: string = "";
   const paginatedFiles = useMemo(() => {
     // Apply sorting to filteredFiles
@@ -6196,20 +6208,81 @@ Swal.fire({
     const start = (currentPage - 1) * pageSize;
     const end = start + pageSize;
     return sortedFiles.slice(start, end);
-  }, [filteredFiles, currentPage, sortColumn, sortDirection]);
-  const columnFilteredFiles = useMemo(() => {
-    return paginatedFiles.filter((file: any) => {
-      const nameMatch = !columnSearch.name || 
-        (file.FileName || file.Name || file.FolderName || "").toLowerCase().includes(columnSearch.name.toLowerCase());
-      const sizeMatch = !columnSearch.size || 
-        (file.FileSize || (file.Length ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB` : "")).toLowerCase().includes(columnSearch.size.toLowerCase());
-      const libMatch = !columnSearch.library || 
-        (file.DocumentLibraryName || (file.TimeCreated ? new Date(file.TimeCreated).toLocaleDateString() : "")).toLowerCase().includes(columnSearch.library.toLowerCase());
-      const statusMatch = !columnSearch.status || 
-        (file.Status || "").toLowerCase().includes(columnSearch.status.toLowerCase());
-      return nameMatch && sizeMatch && libMatch && statusMatch;
-    });
-  }, [paginatedFiles, columnSearch]);
+  }, [filteredFiles, currentPage, sortColumn, sortDirection,pageSize]);
+  //Rohit 22/04/2026 ----------------start
+  const getQuickViewRenderKey = (file: any, idx: number) => {
+    return [
+      file.FileUID,
+      file.UniqueId,
+      file.__siteUrl,
+      file.__fileMasterList,
+      file.Id ?? file.ID ?? idx,
+    ]
+      .filter((value) => value !== undefined && value !== null && value !== "")
+      .join("__");
+  };
+  //Rohit 22/04/2026 ------------------end
+  //Rohit 22/04/2026------------------start
+  
+  // AFTER:
+const columnFilteredFiles = useMemo(() => {
+  const hasColumnFilter = columnSearch.name || columnSearch.size || columnSearch.library || columnSearch.status;
+  
+  // If column filters active, search across ALL filtered files (not just current page)
+  const sourceFiles = hasColumnFilter ? filteredFiles : paginatedFiles;
+  
+  const filtered = sourceFiles.filter((file: any) => {
+    const nameMatch = !columnSearch.name || 
+      (file.FileName || file.Name || file.FolderName || "").toLowerCase().includes(columnSearch.name.toLowerCase());
+    const sizeMatch = !columnSearch.size || 
+      (file.FileSize || (file.Length ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB` : "")).toLowerCase().includes(columnSearch.size.toLowerCase());
+    const libMatch = !columnSearch.library || 
+      (file.DocumentLibraryName || (file.TimeCreated ? new Date(file.TimeCreated).toLocaleDateString() : "")).toLowerCase().includes(columnSearch.library.toLowerCase());
+    const statusMatch = !columnSearch.status || 
+      (file.Status || "").toLowerCase().includes(columnSearch.status.toLowerCase());
+    return nameMatch && sizeMatch && libMatch && statusMatch;
+  });
+
+  // If column filters active, apply sorting + pagination here
+  if (hasColumnFilter) {
+    let sorted = [...filtered];
+    if (sortColumn) {
+      sorted.sort((a, b) => {
+        let aValue: any, bValue: any;
+        switch (sortColumn) {
+          case "name":    aValue = (a.FileName || a.Name || a.FolderName || "").toLowerCase(); bValue = (b.FileName || b.Name || b.FolderName || "").toLowerCase(); break;
+          case "size":    aValue = parseFloat(a.Length || a.FileSize || "0") || 0; bValue = parseFloat(b.Length || b.FileSize || "0") || 0; break;
+          case "library": aValue = (a.DocumentLibraryName || "").toLowerCase(); bValue = (b.DocumentLibraryName || "").toLowerCase(); break;
+          case "createdDate": aValue = new Date(a.TimeCreated || a.Created || 0).getTime(); bValue = new Date(b.TimeCreated || b.Created || 0).getTime(); break;
+          case "status":  aValue = (a.Status || "").toLowerCase(); bValue = (b.Status || "").toLowerCase(); break;
+          default: return 0;
+        }
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    const start = (currentPage - 1) * pageSize;
+    return sorted.slice(start, start + pageSize);
+  }
+
+  return filtered;
+}, [filteredFiles, paginatedFiles, columnSearch, sortColumn, sortDirection, currentPage, pageSize]);
+
+  const paginationTotalCount = useMemo(() => {
+  const hasColumnFilter = columnSearch.name || columnSearch.size || columnSearch.library || columnSearch.status;
+  if (!hasColumnFilter) return filteredFiles.length;
+  // Count total matches across all pages when column filter is active
+  return filteredFiles.filter((file: any) => {
+    const nameMatch = !columnSearch.name || (file.FileName || file.Name || file.FolderName || "").toLowerCase().includes(columnSearch.name.toLowerCase());
+    const sizeMatch = !columnSearch.size || (file.FileSize || (file.Length ? `${(parseInt(file.Length) / (1024 * 1024)).toFixed(2)} MB` : "")).toLowerCase().includes(columnSearch.size.toLowerCase());
+    const libMatch  = !columnSearch.library || (file.DocumentLibraryName || "").toLowerCase().includes(columnSearch.library.toLowerCase());
+    const statusMatch = !columnSearch.status || (file.Status || "").toLowerCase().includes(columnSearch.status.toLowerCase());
+    return nameMatch && sizeMatch && libMatch && statusMatch;
+  }).length;
+}, [filteredFiles, columnSearch]);
+
+  //Rohit 22/04/2026------------------end
   
 
   // Handle sorting
@@ -6225,20 +6298,20 @@ Swal.fire({
 
   useEffect(() => {
     setCurrentPage(1);
+    setColumnSearch({ name: '', size: '', library: '', status: '' });  //Rohit 22/04/2026
   }, [searchTerm]);
+
+  useEffect(() => {            //Rohit 23/04/2026
+  setCurrentPage(1);
+}, [pageSize]);
 
   // 🧩 ✅ Clear search when section changes
   useEffect(() => {
     setSearchTerm("");
     setSearchInput("");
     setCurrentPage(1);
-    setColumnSearch({ name: '', size: '', library: '', status: '' }); // ✅ column search reset
+    setColumnSearch({ name: '', size: '', library: '', status: '' }); // column search reset
   }, [activeView]);
-
-
-
-
-
   const extensionColors: any = {
     doc: "#105abe", // Blue
     docx: "#105abe",
@@ -7138,6 +7211,7 @@ const handleSaveRename = async () => {
                           <span
                             onClick={() => {
                               setSearchTerm(searchInput.trim()); // ✅ search yahan trigger hoga
+                              setColumnSearch({ name: '', size: '', library: '', status: '' });  //Rohit 22/04/2026
                               setCurrentPage(1);
                             }}
                             style={{
@@ -7237,61 +7311,209 @@ const handleSaveRename = async () => {
                                     ))}
                                   </ul>
 
+                                  {/* //rohit 23/04/2026 ---start */}
                                   {browseFiltered.length > pageSize && (
-                                    <div
-                                      style={{
-                                        margin: "10px 0",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "end",
-                                      }}
-                                    >
-                                      <button
-                                        type="button"
-                                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                                        disabled={currentPage === 1}
-                                        style={{
-                                          marginRight: "10px",
-                                          padding: "5px 12px", marginTop:'0px',
-                                          borderRadius: "4px",
-                                          border: "1px solid #ccc",
-                                          background: currentPage === 1 ? "#eee" : "#1d4ed8",
-                                          cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                                        }}
-                                      >
-                                        Prev
-                                      </button>
-                                      <span style={{ margin: "0 10px" }}>
-                                        Page {currentPage} of {Math.ceil(browseFiltered.length / pageSize) || 1}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          setCurrentPage((p) =>
-                                            p < Math.ceil(browseFiltered.length / pageSize) ? p + 1 : p
-                                          );
-                                        }}
-                                        disabled={currentPage === Math.ceil(browseFiltered.length / pageSize)}
-                                        style={{
-                                          marginLeft: "10px",
-                                          padding: "5px 12px",
-                                          borderRadius: "4px", marginTop:'0px',
-                                          border: "1px solid #ccc",
-                                          background:
-                                            currentPage === Math.ceil(browseFiltered.length / pageSize)
-                                              ? "#eee"
-                                              : "#1d4ed8",
-                                          cursor:
-                                            currentPage === Math.ceil(browseFiltered.length / pageSize)
-                                              ? "not-allowed"
-                                              : "pointer",
-                                        }}
-                                      >
-                                        Next
-                                      </button>
-                                    </div>
-                                  )}
+  <div
+    style={{
+      margin: "10px 0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "end",
+      gap: "6px",
+      flexWrap: "wrap",
+    }}
+  >
+    <button
+      type="button"
+      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+      disabled={currentPage === 1}
+      style={{
+        marginRight: "4px",
+        padding: "5px 12px",
+        marginTop: "0px",
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        background: currentPage === 1 ? "#eee" : "#1d4ed8",
+        color: currentPage === 1 ? "#666" : "#fff",
+        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+      }}
+    >
+      Previous
+    </button>
+
+    {/* Page numbers (existing pill logic) */}
+    {/* ... keep the existing page number generation code ... */}
+
+    <button
+      type="button"
+      onClick={() =>
+        setCurrentPage((p) =>
+          p < Math.ceil(browseFiltered.length / pageSize) ? p + 1 : p
+        )
+      }
+      disabled={currentPage === Math.ceil(browseFiltered.length / pageSize)}
+      style={{
+        marginLeft: "4px",
+        padding: "5px 12px",
+        marginTop: "0px",
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        background: currentPage === Math.ceil(browseFiltered.length / pageSize) ? "#eee" : "#1d4ed8",
+        color: currentPage === Math.ceil(browseFiltered.length / pageSize) ? "#666" : "#fff",
+        cursor: currentPage === Math.ceil(browseFiltered.length / pageSize) ? "not-allowed" : "pointer",
+      }}
+    >
+      Next
+    </button>
+
+    <select
+      value={pageSize}
+      onChange={(e) => {
+        setPageSize(Number(e.target.value));
+        setCurrentPage(1);
+      }}
+      style={{
+        padding: "4px 8px",
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        fontSize: "13px",
+        cursor: "pointer",
+        marginLeft: "4px",
+        height: "30px",
+      }}
+    >
+      {[10, 20, 40, 80, 100].map((n) => (
+        <option key={n} value={n}></option>
+      ))}
+    </select>
+      {/* //Rohit 23/04/2026 ---remove the total numbers*/}
+    {/* <span style={{ fontSize: "13px", color: "#555", marginLeft: "4px" }}>
+      {browseFiltered.length} records
+    </span> */}   
+  </div>
+)}
+                                  {/* //rohit 23/04/2026 ---end */}
+  <div
+    style={{
+      margin: "10px 0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "end",
+      gap: "6px",
+      flexWrap: "wrap",
+    }}
+  >
+    {/* Records per page dropdown - Rohit 23/04/2026 */}
+
+    <button
+      type="button"
+      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+      disabled={currentPage === 1}
+      style={{
+        marginRight: "4px",
+        padding: "5px 12px", marginTop: '0px',
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        background: currentPage === 1 ? "#eee" : "#1d4ed8",
+        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+      }}
+    >
+      Prev
+    </button>
+    
+
+    {/* Page number pills */}
+    {(() => {
+      const total = Math.ceil(browseFiltered.length / pageSize) || 1;
+      const pages: any[] = [];
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(total, start + 4);
+      if (end - start < 4) start = Math.max(1, end - 4);
+
+      if (start > 1) {
+        pages.push(
+          <button key="p1" type="button"
+            onClick={() => setCurrentPage(1)}
+            style={{ padding: "4px 9px", marginTop: "0px", borderRadius: "4px", border: "1px solid #ccc", background: "#fff", color: "#333", cursor: "pointer", fontSize: "13px" }}>
+            1
+          </button>
+        );
+        if (start > 2) pages.push(<span key="e1" style={{ padding: "0 2px", fontSize: "13px", color: "#555" }}>…</span>);
+      }
+
+      for (let p = start; p <= end; p++) {
+        pages.push(
+          <button key={p} type="button"
+            onClick={() => setCurrentPage(p)}
+            style={{
+              padding: "4px 9px", marginTop: "0px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              background: currentPage === p ? "#1d4ed8" : "#fff",
+              color: currentPage === p ? "#fff" : "#333",
+              cursor: "pointer",
+              fontWeight: currentPage === p ? "600" : "400",
+              fontSize: "13px",
+            }}>
+            {p}
+          </button>
+        );
+      }
+
+      if (end < total) {
+        if (end < total - 1) pages.push(<span key="e2" style={{ padding: "0 2px", fontSize: "13px", color: "#555" }}>…</span>);
+        pages.push(
+          <button key={`last${total}`} type="button"
+            onClick={() => setCurrentPage(total)}
+            style={{ padding: "4px 9px", marginTop: "0px", borderRadius: "4px", border: "1px solid #ccc", background: "#fff", color: "#1d4ed8", cursor: "pointer", fontSize: "13px" }}>
+            {total}
+          </button>
+        );
+      }
+      return pages;
+    })()}
+
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        setCurrentPage((p) =>
+          p < Math.ceil(browseFiltered.length / pageSize) ? p + 1 : p
+        );
+      }}
+      disabled={currentPage === Math.ceil(browseFiltered.length / pageSize)}
+      style={{
+        marginLeft: "4px",
+        padding: "5px 12px", marginTop: '0px',
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        background: currentPage === Math.ceil(browseFiltered.length / pageSize) ? "#eee" : "#1d4ed8",
+        cursor: currentPage === Math.ceil(browseFiltered.length / pageSize) ? "not-allowed" : "pointer",
+      }}
+    >
+      Next
+    </button>
+    <select
+      value={pageSize}
+      onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+      style={{
+        padding: "4px 8px",
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        fontSize: "13px",
+        cursor: "pointer",
+        marginRight: "4px",
+        height: "30px",
+      }}
+    >
+      {[10, 20, 40, 80, 100].map((n) => (
+        <option key={n} value={n}>{n}</option>
+      ))}
+    </select>
+  </div>
+
+
+                                  {/* //rohit 23/04/2026 -----end */}
                                 </>
                               ) : (
                                 <div
@@ -7385,6 +7607,7 @@ const handleSaveRename = async () => {
                         <span
                           onClick={() => {
                             setSearchTerm(searchInput.trim()); // ✅ SEARCH TRIGGER
+                            setColumnSearch({ name: '', size: '', library: '', status: '' });  // Rohit 22/04/2026
                             setCurrentPage(1);
                           }}
                           style={{
@@ -7399,6 +7622,7 @@ const handleSaveRename = async () => {
                     </div>
                   )}
 
+                  {/* Rohit 22/04/2026 ------------------start */}
                   {/* Quick Views Grid/List */}
                   {!showUploadPanel && activeView !== "browse" && (
                     <>
@@ -7408,11 +7632,14 @@ const handleSaveRename = async () => {
                           {activeLayout === "grid" && (
                             <div className="layoutdesign">
                               {filesLoadedfromnode && paginatedFiles.length > 0 ? (
-                                paginatedFiles.map((file, idx) => (
+                                <>
+                                
+                                {paginatedFiles.map((file, idx) => (
                                   <div
-                                    key={file.Id || file.FileUID || idx}
+                                    key={getQuickViewRenderKey(file, idx)}
                                     className="carddesign"
                                   >
+                                    {/* Rohit 22/04/2026 --------------end*/}
                                     {/* File Content */}
 
 
@@ -7637,16 +7864,22 @@ const handleSaveRename = async () => {
                                       )}
                                     </div>
                                   </div>
-                                ))
+                                  // Rohit 22/04/2026 --------------start
+                                ))}
+                                  
+                                </>
                               ) :
                                 // this is my request and my favourite my recucle bin files ternary operator
                                 (
-                                  paginatedFiles.map((file, idx) => (
+                                  <>
+                                    
+                                  {paginatedFiles.map((file, idx) => (
                                     <div
-                                      key={file.Id || file.FileUID || idx}
+                                      key={getQuickViewRenderKey(file, idx)}
                                       className="carddesign"
 
                                     >
+                                      {/* Rohit 22/04/2026 end ---------*/}
                                       {/* Card Content */}
                                       {
                                         activeView === "My request" ? (
@@ -8205,11 +8438,13 @@ const handleSaveRename = async () => {
                                       </div>
                                     </div>
                                   )
-
-                                  )
+                                  //Rohit 22/04/2026 --------------start
+                                  )}
+                                    
+                                  </>
 
                                 )}
-
+                                {/* Rohit 22/04/2026 end */}
                             </div>
                           )}
 
@@ -8291,9 +8526,12 @@ const handleSaveRename = async () => {
 </thead>
 
 <tbody>
+{/* Rohit 22/04/2026 ----start */}
 {columnFilteredFiles.map((file, idx) => (
-                                    <tr key={file.Id || idx}>
-                                      <td style={{ minWidth: '50px', maxWidth: '50px', }}> <span className="indexdesign">{file.SNo || idx + 1} </span> </td>
+                                    <tr key={getQuickViewRenderKey(file, idx)}>
+{/* //Rohit 22/04/2026  ----end */}
+                                      <td style={{ minWidth: '50px', maxWidth: '50px', }}> <span className="indexdesign">{(currentPage - 1) * pageSize + idx + 1}</span>  </td>
+                                      {/* //Rohit 22/04/2026  end ------ */}
                                       {/* <td style={{minWidth:'250px',maxWidth:'250px',}}>{file.FileName}</td> */}
                                       {/* <td style={{ minWidth: '250px', maxWidth: '250px', }}>{file.FileName || file.Name || file.FolderName}</td> */}
                                       {/* <td >{file.FileSize}</td> */}
@@ -8605,6 +8843,7 @@ const handleSaveRename = async () => {
                                       </td>
                                     </tr>
                                   ))}
+{/* Rohit 22/04/2026 end */}
                                 </tbody>
 
                               </table>
@@ -9717,72 +9956,136 @@ const handleSaveRename = async () => {
                       {/* aman code manage folder permission */}
 
 
-                      {/* Pagination controls - edited by ritik - 13/01/2026 */}
-                      {
+                      {/* Pagination controls - edited by Rohit 23/04/2026 */}
+                      {filteredFiles.length > 0 && (
+  <div
+    style={{
+      margin: "10px 14px 10px 0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "end",
+      gap: "6px",
+      flexWrap: "wrap",
+    }}
+  >
+    {/* Records per page dropdown - Rohit 23/04/2026 */}
+    
+    <button
+      type="button"
+      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+      disabled={currentPage === 1}
+      style={{
+        padding: "5px 12px", marginTop: '0px',
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        background: currentPage === 1 ? "#eee" : "#1d4ed8",
+        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+      }}
+    >
+      Prev
+    </button>
+    
+    {/* //Rohit 23/04/2026 ---remove total count  */}
+    {/* <span style={{ fontSize: "13px", color: "#555", marginLeft: "4px" }}>
+  {paginationTotalCount} records
+</span> */}
 
-                        // selectedFiles
 
+    {/* Page number pills */}
+    {(() => {
+      const total = Math.ceil(paginationTotalCount / pageSize) || 1;
+      const pages: any[] = [];
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(total, start + 4);
+      if (end - start < 4) start = Math.max(1, end - 4);
 
-                        filteredFiles
+      if (start > 1) {
+        pages.push(
+          <button key="p1" type="button"
+            onClick={() => setCurrentPage(1)}
+            style={{ padding: "4px 9px", marginTop: "0px", borderRadius: "4px", border: "1px solid #ccc", background: "#fff", color: "#333", cursor: "pointer", fontSize: "13px" }}>
+            1
+          </button>
+        );
+        if (start > 2) pages.push(<span key="e1" style={{ padding: "0 2px", fontSize: "13px", color: "#555" }}>…</span>);
+      }
 
-                          .length > 0 && (
-                          <div
-                            style={{
-                              margin: "10px 14px 10px 0",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "end",
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                              disabled={currentPage === 1}
-                              style={{
-                                marginRight: "10px",
-                                padding: "5px 12px",marginTop:'0px',
-                                borderRadius: "4px",
-                                border: "1px solid #ccc",
-                                background: currentPage === 1 ? "#eee" : "#1d4ed8",
-                                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                              }}
-                            >
-                              Prev
-                            </button>
-                            <span style={{ margin: "0 10px" }}>
-                              Page {currentPage} of {Math.ceil(filteredFiles.length / pageSize) || 1}
+      for (let p = start; p <= end; p++) {
+        pages.push(
+          <button key={p} type="button"
+            onClick={() => setCurrentPage(p)}
+            style={{
+              padding: "4px 9px", marginTop: "0px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              background: currentPage === p ? "#1d4ed8" : "#fff",
+              color: currentPage === p ? "#fff" : "#333",
+              cursor: "pointer",
+              fontWeight: currentPage === p ? "600" : "400",
+              fontSize: "13px",
+            }}>
+            {p}
+          </button>
+        );
+      }
 
-                            </span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setCurrentPage((p) =>
-                                  p < Math.ceil(filteredFiles.length / pageSize)
-                                    ? p + 1
-                                    : p
-                                );
-                              }}
-                              disabled={currentPage === Math.ceil(filteredFiles.length / pageSize)}
-                              style={{
-                                marginLeft: "10px",
-                                padding: "5px 12px", marginTop:'0px',
-                                borderRadius: "4px",
-                                border: "1px solid #ccc",
-                                background:
-                                  currentPage === Math.ceil(filteredFiles.length / pageSize)
-                                    ? "#eee"
-                                    : "#1d4ed8",
-                                cursor:
-                                  currentPage === Math.ceil(filteredFiles.length / pageSize)
-                                    ? "not-allowed"
-                                    : "pointer",
-                              }}
-                            >
-                              Next
-                            </button>
-                          </div>
-                        )}
+      if (end < total) {
+        if (end < total - 1) pages.push(<span key="e2" style={{ padding: "0 2px", fontSize: "13px", color: "#555" }}>…</span>);
+        pages.push(
+          <button key={`last${total}`} type="button"
+            onClick={() => setCurrentPage(total)}
+            style={{ padding: "4px 9px", marginTop: "0px", borderRadius: "4px", border: "1px solid #ccc", background: "#fff", color: "#1d4ed8", cursor: "pointer", fontSize: "13px" }}>
+            {total}
+          </button>
+        );
+      }
+      return pages;
+    })()}
+
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        setCurrentPage((p) =>
+          p < Math.ceil(paginationTotalCount / pageSize) ? p + 1 : p
+        );
+      }}
+      disabled={currentPage === Math.ceil(paginationTotalCount / pageSize)}
+      style={{
+        padding: "5px 12px", marginTop: '0px',
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        background: currentPage === Math.ceil(paginationTotalCount / pageSize) ? "#eee" : "#1d4ed8",
+        cursor: currentPage === Math.ceil(paginationTotalCount / pageSize) ? "not-allowed" : "pointer",
+      }}
+    >
+      Next
+    </button>
+    <select
+      value={pageSize}
+      onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+      style={{
+        padding: "4px 8px",
+        borderRadius: "4px",
+        border: "1px solid #ccc",
+        fontSize: "13px",
+        cursor: "pointer",
+        marginRight: "4px",
+        height: "30px",
+      }}
+    >
+      {[10, 20, 40, 80, 100].map((n) => (
+        <option key={n} value={n}>{n}</option>
+      ))}
+    </select>
+
+      {/* //Rohit 23/04/2026 total number of record showen */}
+    {/* <span style={{ fontSize: "13px", color: "#555", marginLeft: "4px" }}>
+      {paginationTotalCount} records
+    </span> */}
+  </div>
+)}
+{/* //Rohit 23/04/2026------end*/}
                     </>
                   )
                   }

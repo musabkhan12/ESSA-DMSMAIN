@@ -116,9 +116,14 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
       canceled = true;
     };
   }, [show, file, context]);
-
-  const formatDate = (date: Date) => date.toLocaleString("en-US");
-
+// aman comment this to make data fomrat dd/mm/yyyy
+  // const formatDate = (date: Date) => date.toLocaleString("en-US");
+const formatDate = (date: Date) => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
   const downloadVersion = async (file: any, version: any) => {
     try {
       const tenantUrl =
