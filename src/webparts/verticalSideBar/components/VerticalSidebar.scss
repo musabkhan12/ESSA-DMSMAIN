@@ -1179,7 +1179,7 @@ background-color: rgb(167, 30, 132);
 .main-content-new{
       display: grid;
     grid-template-columns: 320px 1fr;
-    gap: 10px; margin-bottom: 65px;
+    gap: 10px; margin-bottom: 130px;
   
 }
 .me-1{margin-right: 8px;}
@@ -1251,7 +1251,7 @@ margin: 10px 0px !important ;
     text-align: left; border-radius: 0px !important;
     width: 100%;
     width: 100% !important;
-    min-width: 100% !important;padding: 8px 10px;
+    min-width: 100% !important;padding: 4px 10px;
     height: auto ! important;
     justify-content: left;}
   .internalbutton button:hover{background: #f7fbfc !important;}
@@ -1311,6 +1311,9 @@ margin: 10px 0px !important ;
 }
 .btncolorCreate1 [data-tooltip]:after {
     top: 38px;
+}
+#submitBtn2 [data-tooltip]:after {
+    top: 24px;
 }
   .btncolorCreate1,#submitBtn {
     align-items: center;
@@ -2166,6 +2169,12 @@ color: #fff !important;
 }
 .onelinetrim{
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.input-container input[type=checkbox]{
+  -webkit-appearance: auto !important;    height: 26px !important;
+}
+#dynamicMetadataContainer .dynamic-input, .input-container input[type="file"] {
+    padding: 2px 5px !important;
 }
 .mtablenew tbody tr:nth-child(even) {
     background-color: #f1f1f12e  !important;

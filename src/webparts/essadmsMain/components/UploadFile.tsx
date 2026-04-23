@@ -32,6 +32,7 @@ img.alt = "Create";
     // optional
   // optional
   submitButton.style.borderRadius='30px';
+  submitButton.style.float='right';
 img.style.marginRight = "6px";
 submitButton.appendChild(img);
 // submitButton.textContent= buttontext
@@ -2155,13 +2156,13 @@ const breadcrumbParts = useMemo(() => {
                           </div>
                           <span>Loading </span>{" "}
                           </div>
-                          <iframe id="filePreview" style={{background:'transparent'}} width="100%" height="400"></iframe>
+                          <iframe id="filePreview" style={{background:'transparent'}} width="100%" height="100%"></iframe>
                       </div>
                       </div>
                      
                       <div className='col-lg-6'>
                           <form id='formSelector'>
-                              <h1 className="font-16 fw-bold text-dark mb-0">Upload file</h1>
+                              {/* <h1 className="font-16 fw-bold text-dark mb-0">Upload file</h1> */}
                               {/* <label className="switch">
                               <input type="checkbox"/>
                               <span className="slider round"></span>
@@ -2171,11 +2172,8 @@ const breadcrumbParts = useMemo(() => {
  </p>
                              )}
                               {/* srs 19/2/26 */}
-                             <div id="dynamicMetadataContainer"></div> 
-                             {/* srs 19/2/26 */}
-                             <div>
-      {showBulkUpload === false && ( // Show only if IsApproval is false
-      <div style={{display:'flex', justifyContent:'space-between',alignItems:'center'}} className="mt-3 mb-3">
+                                 {showBulkUpload === false && ( // Show only if IsApproval is false
+      <div style={{display:'flex', justifyContent:'space-between',alignItems:'center'}} className="mt-0 mb-3">
         <p className="mb-0 text-dark">Bulk  Upload :</p>
         <div style={{display:'flex', gap:'5px', alignItems:'center'}}>
           <label className="switch">
@@ -2192,6 +2190,10 @@ const breadcrumbParts = useMemo(() => {
      
         
       )}
+                             <div id="dynamicMetadataContainer"></div> 
+                             {/* srs 19/2/26 */}
+                             <div>
+   
        <div>
        {/* srs 19/2/26 */}
       {/* {isChecked && ( */}
@@ -2238,13 +2240,13 @@ const breadcrumbParts = useMemo(() => {
   ))}
 </ul>
 <div style={{display:'flex', justifyContent:'right'}}>
-        <div style={{display:'none', marginTop:'0px'}} id="submitBtn2" className="btncolorCreate1" onClick={handleSubmitBulk}> 
+        <div style={{display:'none', float:'right', marginTop:'0px'}} id="submitBtn2" className="btncolorCreate1" onClick={handleSubmitBulk}> 
         <span className="mb-1" data-tooltip='Bulk Submit'> <img src={require("../assets/submit-new1.png")}    alt="delete" /> </span> </div> 
         </div>
         </div>
       )}
     </div>
-    {!isChecked ?   <h3 className="mt-2 mb-2 font-16 text-dark fw-bold">Tags</h3> : null}
+    {/* {!isChecked ?   <h3 className="mt-2 mb-2 font-16 text-dark fw-bold">Tags</h3> : null} */}
     
     </div>
    

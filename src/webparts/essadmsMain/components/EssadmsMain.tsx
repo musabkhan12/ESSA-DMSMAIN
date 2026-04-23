@@ -6809,7 +6809,7 @@ const handleSaveRename = async () => {
           {/* <div  className="main-content-new">
             <div className="inbox-leftbar"> */}
             {/* Ritik 13/4/26 */}
-                 <div className="main-content-new" style={{display:'flex', height:'calc(100vh - 130px)', overflow:'hidden'}}>
+                 <div className="main-content-new" >
                   <div className="inbox-leftbar" style={{overflowY:'auto', height:'100%'}}>
               {/* Quick Views Panel */}
               <div
@@ -6889,7 +6889,7 @@ const handleSaveRename = async () => {
   className="inbox-rightbar"
   // style={{ position: 'relative', overflow: 'hidden' }}>
   // Ritik 13/4/26
-    style={{ position: 'relative', overflowY: 'auto', flex: 1 }}>  
+    style={{ position: 'relative',  flex: 1 }}>  
               {showTemplateForm && (
                 <TemplateForm
                   selectedTemplate={selectedTemplate}
@@ -8566,7 +8566,7 @@ const handleSaveRename = async () => {
     : ""}
                                       </td>
                                      
-                                      <td  style={{minWidth: '150px', maxWidth: '150px'}}>
+                                      {/* <td  style={{minWidth: '150px', maxWidth: '150px'}}>
                                         {file.Length
     ? (() => {
         const sizeInBytes = parseInt(file.Length);
@@ -8578,8 +8578,8 @@ const handleSaveRename = async () => {
           : `${sizeInMB.toFixed(2)} MB`;
       })()
     : ""}
-                                      </td>
-                                       <td >{file.DocumentLibraryName}</td>
+                                      </td> */}
+                                       <td style={{minWidth: '150px', maxWidth: '150px'}}>{file.DocumentLibraryName}</td>
                                       {/* <td style={{minWidth:'80px',maxWidth:'80px',}}>{file.Status}</td> */}
                                      {paginatedFiles.some((f) => f.Status && f.Status.trim() !== "") && (
                                         <td style={{ minWidth: '118px', maxWidth: '118px', }}>
@@ -8637,8 +8637,8 @@ const handleSaveRename = async () => {
   <div
     style={{
       position: "fixed",
-      top: rect ? rect.bottom + 4 : "auto",
-      right: rect ? window.innerWidth - rect.right : 0,
+      top: rect ? rect.bottom - 50 : "auto",
+      right: rect ? window.innerWidth - rect.right : -0,
       background: "#fff",
       border: "1px solid #ddd",
       borderRadius: "4px",
@@ -9694,10 +9694,10 @@ const handleSaveRename = async () => {
           <table className="mtbalenew mt-3">
             <thead>
               <tr>
-                <th style={{ minWidth: '55px' }}>S.No.</th>
+                <th style={{ minWidth: '55px',maxWidth:'55px' }}>S.No.</th>
                 <th>User/Groups</th>
-                <th>Permission</th>
-                <th style={{ minWidth: '75px' }}>Action</th>
+                <th style={{ minWidth: '100px',maxWidth:'100px' }}>Permission</th>
+                <th style={{ minWidth: '75px',maxWidth: '75px' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -9707,10 +9707,10 @@ const handleSaveRename = async () => {
                   <tr key={item.itemId}>
                     {/* <td><span className="indexdesign">{idx + 1}</span></td> */}
                     {/* // ritik */}
-                    <td><span className="indexdesign">{(fpCurrentPage - 1) * fpItemsPerPage + idx + 1}</span></td>
-                    <td>{item.value}</td>
-                    <td>{item.Permission}</td>
-                    <td>
+                    <td style={{ minWidth: '55px',maxWidth:'55px' }}><span className="indexdesign">{(fpCurrentPage - 1) * fpItemsPerPage + idx + 1}</span></td>
+                    <td >{item.value}</td>
+                    <td style={{ minWidth: '100px',maxWidth:'100px' }}>{item.Permission}</td>
+                    <td style={{ minWidth: '75px',maxWidth: '75px' }}>
                       {/* Ritik 20/02/2026 changes for folder permission manage add trash icon */}
   <button
     type="button"
@@ -9721,7 +9721,7 @@ const handleSaveRename = async () => {
       border: 'none',
       cursor: 'pointer',
       color: '#dc3545',
-      padding: '4px 6px',
+      padding: '0px', marginTop:'0px'
     }}
   >
     <FontAwesomeIcon icon={faTrash} size="sm" />
