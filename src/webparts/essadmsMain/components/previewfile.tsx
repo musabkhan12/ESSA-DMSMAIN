@@ -44,21 +44,41 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
  
   let previewUrlS = "";
  
-  // Editable Logic (My Requests, Folders etc.)
-  if (newpreviewUrl && typeof newpreviewUrl === 'string' && newpreviewUrl.includes("?")) {
-    const url = newpreviewUrl;
-    const params = new URLSearchParams(url.split("?")[1]);
-    const encodedId = params.get("id");
-    const decodedId = decodeURIComponent(encodedId || "");
+  // // Editable Logic (My Requests, Folders etc.)
+  // if (newpreviewUrl && typeof newpreviewUrl === 'string' && newpreviewUrl.includes("?")) {
+  //   const url = newpreviewUrl;
+  //   const params = new URLSearchParams(url.split("?")[1]);
+  //   const encodedId = params.get("id");
+  //   const decodedId = decodeURIComponent(encodedId || "");
    
-    previewUrlS = `${fileUrl.__siteUrl}/${fileUrl.SiteName}/_layouts/15/Doc.aspx?sourcedoc=${decodedId}`;
-  } else {
-    // FIX FOR DOWNLOAD ISSUE: Added ?Web=1 to force browser preview
-    previewUrlS = fileUrl.FilePreviewURL
-      ? fileUrl.FilePreviewURL
-      : `https://officeindia.sharepoint.com${fileUrl.ServerRelativeUrl}?Web=1`;
-  }
+  //   previewUrlS = `${fileUrl.__siteUrl}/${fileUrl.SiteName}/_layouts/15/Doc.aspx?sourcedoc=${decodedId}`;
+  // } else {
+  //   // FIX FOR DOWNLOAD ISSUE: Added ?Web=1 to force browser preview
+  //   previewUrlS = fileUrl.FilePreviewURL
+  //     ? fileUrl.FilePreviewURL
+  //     : `https://officeindia.sharepoint.com${fileUrl.ServerRelativeUrl}?Web=1`;
+  // }
  
+if (newpreviewUrl && typeof newpreviewUrl === 'string' && !newpreviewUrl.includes("id=")) {
+  previewUrlS = newpreviewUrl;
+}
+
+
+else if (newpreviewUrl && typeof newpreviewUrl === 'string' && newpreviewUrl.includes("id=")) {
+  const params = new URLSearchParams(newpreviewUrl.split("?")[1]);
+  const encodedId = params.get("id");
+  const decodedId = decodeURIComponent(encodedId || "");
+
+  previewUrlS = `${fileUrl.__siteUrl}/${fileUrl.SiteName}/_layouts/15/Doc.aspx?sourcedoc=${decodedId}`;
+}
+
+
+else {
+  previewUrlS = `https://officeindia.sharepoint.com${fileUrl.ServerRelativeUrl}?Web=1`;
+}
+
+
+
   console.log("Previews URL:", previewUrlS);
  
   const checkAndHideButton = () => {

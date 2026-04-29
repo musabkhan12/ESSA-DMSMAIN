@@ -1838,6 +1838,15 @@ const getUniqueRequestNo = async () => {
 // aman 16/3/26
 const handleSubmitBulk = async (event: any) => {
   event.preventDefault();
+   if (!uploadedFiles || uploadedFiles.length === 0) {
+    Swal.fire({
+      icon: 'error',
+      title: 'No Files Selected',
+      text: 'Please select at least one file before submitting.',
+    });
+    return;
+  }
+
   console.log("Bulk upload button clicked");
   const submitBtn = document.getElementById("submitBtn2") as HTMLButtonElement;
   submitBtn.disabled = true;

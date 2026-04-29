@@ -48,6 +48,7 @@ import ShareFileUrlModal from "./ShareFileUrlModal";
 // Aman 13/4/26
 import BreadcrumbSharePopup from "./BreadcrumbSharePopup";
 import FolderSharePopup from "./FolderSharePopup";
+import { startOfDay } from "date-fns";
  
 
 
@@ -75,10 +76,12 @@ interface TreeNode {
   folderPath?: string;
   parentKey?: string;
 }
-// this was by om revoke user permission
+// ritik chnages for manage permission folder 29/04/26
 interface SharedUser {
   userId: string;
-  permission: string;
+ userEmail: string;  
+  userTitle: string;
+  roles: string[];
 }
 
 interface BreadcrumbItem {
@@ -1394,15 +1397,39 @@ const visibleFiles = (files || [])
   .map((f: any) => {
     const extraData = masterDataMap.get(f.Name);
     return {
-      ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
-      ID: extraData.id, // Inject the List ID
-      Status: extraData.status, // Inject the Status
-      // srs 10/4/26
-      // --- ADD THESE LINES TO FIX PERMISSIONS ---
-      FileUID: f.UniqueId,             // Maps library GUID to the expected property
-      SiteID: node.siteUrl,            // Passes the current subsite URL
+
+          // ritik chnage - 29/04/26 start
+
+    //   ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
+    //   ID: extraData.id, // Inject the List ID
+    //   Status: extraData.status, // Inject the Status
+    //   // srs 10/4/26
+    //   // --- ADD THESE LINES TO FIX PERMISSIONS ---
+    //   FileUID: f.UniqueId,             // Maps library GUID to the expected property
+    //   SiteID: node.siteUrl,            // Passes the current subsite URL
+    //   DocumentLibraryName: node.libraryTitle,
+    //   SiteName: entityName             // Used for Admin Group naming logic
+    // };
+
+
+
+    ...f,
+      ID: extraData.id,
+      Status: extraData.status,
+      FileUID: f.UniqueId,
+      SiteID: node.siteUrl,
+      __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
+      CurrentFolderPath: serverRel.replace(`/${f.Name}`, ""),
       DocumentLibraryName: node.libraryTitle,
-      SiteName: entityName             // Used for Admin Group naming logic
+      SiteName: entityName,
+      FileName: f.Name,
+      // FilePreviewURL: `${window.location.origin}${f.ServerRelativeUrl}`,
+      FilePreviewURL: (() => {
+        const serverRel = f.ServerRelativeUrl || "";
+        const parentFolder = serverRel.substring(0, serverRel.lastIndexOf("/"));
+        return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRel)}&parent=${encodeURIComponent(parentFolder)}`;
+      })(),
+      // ritik chnage - 29/04/26 end 
     };
   });
 
@@ -5929,11 +5956,22 @@ const existingItems = await siteSP.web.lists
   const items = await siteSP.web.lists
     .getByTitle(listName)
     .items
-    .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest", )
-    .filter(
-      `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 0`
-    )();
+
+    // ritik 29/04/26 - start
+    // .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest", )
+    // .filter(
+    //   `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 0`
+    // )();
  
+
+
+    .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest") // Ritik 27/04/26 removed and MyRequest eq 0
+    .filter(
+      `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}'` // Ritik 27/04/26 removed and MyRequest eq 0
+    )();
+
+    // ritik 29/04/26 - start
+
   console.log("Matched Items:", items);
  
   // 🔥 CASE 1: Record not found → Add new
@@ -7779,14 +7817,25 @@ const handleSaveRename = async () => {
 
       // 2. Construct the URL by finding the path up to the SiteName
       // This ensures even if you are deep in a folder, the URL stops at the subsite level
-      const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+
+      // aman - 29/04/26 start
+      // const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+      const pathRef = file.CurrentFolderPath || file.ServerRelativeUrl || "";
+      const pathUntilSite = pathRef.split(file.SiteName)[0];
       const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
 
       console.log("Target Subsite URL:", finalSiteUrl);
       window.ManageFilePermission(
-         file.FileUID,            // fileId
+        //  file.FileUID,            // fileId
+         file.FileUID || file.UniqueId,
+ 
         finalSiteUrl,             // siteId (Your data shows this is the URL)
-        file.DocumentLibraryName, // documentLibraryName
+        // file.DocumentLibraryName, // documentLibraryName
+
+        file.DocumentLibraryName || file.__libraryTitle || file.LibraryName,
+
+        // aman - 29/04/26 end 
+ 
         file.SiteName            // siteTitle (Used for the Admin Group naming)
       );
       setMenuOpenIdx(null);
@@ -8670,14 +8719,21 @@ const handleSaveRename = async () => {
 
       // 2. Construct the URL by finding the path up to the SiteName
       // This ensures even if you are deep in a folder, the URL stops at the subsite level
-      const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+      // const pathUntilSite = file.CurrentFolderPath.split(file.SiteName)[0];
+      // aman - 29/04/26 start
+      const pathRef = file.CurrentFolderPath || file.ServerRelativeUrl || "";
+      const pathUntilSite = pathRef.split(file.SiteName)[0];
       const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
 
       console.log("Target Subsite URL:", finalSiteUrl);
        window.ManageFilePermission(
-          file.FileUID,            // fileId
+          // file.FileUID,            // fileId
+           file.FileUID || file.UniqueId,
         finalSiteUrl,             // siteId (Your data shows this is the URL)
-        file.DocumentLibraryName, // documentLibraryName
+        // file.DocumentLibraryName, // documentLibraryName
+        file.DocumentLibraryName || file.__libraryTitle || file.LibraryName,
+        // aman - 29/04/26 end 
+ 
         file.SiteName            // siteTitle (Used for the Admin Group naming)
       ); setMenuOpenIdx(null); }}><FontAwesomeIcon icon={faFileAlt} /> Manage File Permission</button></li>
       <li><button type="button" onClick={() => {
@@ -9225,8 +9281,10 @@ const handleSaveRename = async () => {
                         onClose={() => setShowRevokeModal(false)}
                         onRevoke={(userId: string) => {
                           console.log("Revoked user ID:", userId);
-                          alert(`Access revoked for user ID: ${userId}`);
+                          // alert(`Access revoked for user ID: ${userId}`);
+                          
                         }}
+                         onSuccess={() => handleViewButtonClick("Share with other")} // ritik add 29/04/26
                       />
 
                       {/* version history */}
@@ -9622,9 +9680,20 @@ const handleSaveRename = async () => {
             This folder is public. Would you like to make it private?
           </h6>
           <div style={{ display: "flex", gap: "10px" }}>
-            <button type="button" className="btn btn-primary" onClick={fpSetPrivate}>
+             {/* //Rohit 27/04/2026  ----start */}
+            {/* <button type="button" className="btn btn-primary" onClick={fpSetPrivate}>
               Set Permission
-            </button>
+            </button> */}
+           
+            <button type="button" className="btn btn-primary" onClick={async () => {
+        // Show the permission UI first — add users before making private
+        await fpFetchUsers(selectedFolder);
+        setFolderPrivacyTableData([]);
+        setTogglePermission("PendingPrivate"); // new intermediate state
+      }}>
+        Set Permission
+      </button>
+      {/* //Rohit 27/04/2026  ----end */}
             <button type="button" className="btn btn-secondary" onClick={() => { setShowPermissionModal(false); setTogglePermission(undefined); }}>
               Cancel
             </button>
@@ -9632,11 +9701,13 @@ const handleSaveRename = async () => {
         </div>
       )}
  
-      {togglePermission === "Yes" && (
+      {/* {togglePermission === "Yes" && ( //Rohit 29/04/2026 */}
+      {(togglePermission === "Yes" || togglePermission === "PendingPrivate") && (  //Rohit 29/04/2026
+ 
         <div>
           <div className="row mb-2">
             <div className="col-sm-8">
-              <h5 style={{ fontWeight: '600', color: '#4c4c4c' }}>Manage Permission</h5>
+              {/* <h5 style={{ fontWeight: '600', color: '#4c4c4c' }}>Manage Permission</h5> */}
               <div className="font-12 text-muted">{fpPathState}</div>
             </div>
             <div className="col-sm-4 d-flex justify-content-end">
@@ -9754,7 +9825,20 @@ const handleSaveRename = async () => {
               )}
             </div>
             <div className="col-md-4 d-flex justify-content-end gap-2">
-              <button type="button" className="btncolorCreate1 me-2" onClick={fpHandleCreate}>
+
+              {/* //Rohit 27/04/2026 - start */}
+              <button type="button" className="btncolorCreate1 me-2" onClick={async () => {
+  if (togglePermission === ("PendingPrivate" as any)) {
+    // Validate first — only make private if validation passes
+    const isValid = fpValidate();
+    if (!isValid) return; // Stop here, show errors, do NOT make private
+    await fpSetPrivate();
+    await fpHandleCreate();
+  } else {
+    await fpHandleCreate();
+  }
+}}>
+  {/* //Rohit 27/04/2026 - end */}
                 <span className="mb-1 mt-2" data-tooltip="Submit">
                   <img src={require("../assets/submit-new.png")} alt="submit" />
                 </span>
@@ -10281,7 +10365,7 @@ const handleSaveRename = async () => {
                         fontWeight: '600',
                         borderBottom: '0px solid #005a9e'
                       }}>
-                        Action DateTime
+                        Action Date
                       </th>
                       {/* <th style={{
                         padding: '10px',
@@ -10334,13 +10418,7 @@ const handleSaveRename = async () => {
                         <td style={{ padding: '10px', fontSize: '13px' }}>
                           {/* {v.LogHistory || "-"} */}
                           {v.LogHistory
-  ? `${String(new Date(v.LogHistory).getDate()).padStart(2, "0")}/${
-      new Date(v.LogHistory).toLocaleString("en-US", { month: "short" })
-    }/${new Date(v.LogHistory).getFullYear()} ${
-      (new Date(v.LogHistory).getHours() % 12) || 12
-    }:${String(new Date(v.LogHistory).getMinutes()).padStart(2, "0")} ${
-      new Date(v.LogHistory).getHours() >= 12 ? "pm" : "am"
-    }`
+  ? new Date(v.LogHistory).toLocaleDateString("en-GB")
   : "-"}
                         </td>
                         {/* <td style={{

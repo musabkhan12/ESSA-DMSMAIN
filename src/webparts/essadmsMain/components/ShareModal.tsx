@@ -443,8 +443,14 @@ const pathParts = folderPath.split('/');
       }
   
       console.log("Share records added successfully.");
-      Swal.fire('Success', `File shared successfully with ${selectedUsers.length} user(s)`, 'success');
-      onClose();
+      // Ritik 29/4/26  start 
+      // Swal.fire('Success', `File shared successfully with ${selectedUsers.length} user(s)`, 'success');
+      Swal.fire(
+        'Success',
+        `File shared successfully with ${selectedUsers.length} ${selectedUsers.length > 1 ? 'Users' : 'User'}`,
+        'success'
+      );
+      onClose(); // Ritik 29/4/26  end 
   
     } catch (error: any) {
       console.error("Error sharing file:", error);

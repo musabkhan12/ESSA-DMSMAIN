@@ -188,11 +188,13 @@ import "@pnp/sp/site-users/web";
 import "@pnp/sp/security";
 
 import type { WebPartContext } from "@microsoft/sp-webpart-base";
+import Swal from "sweetalert2";
 
 interface SharedUser {
-  userId: string;        // principalId as string
-  userTitle: string;     // user display name
-  roles: string[];       // assigned permission roles
+  userId: string;
+  userEmail: string;   
+  userTitle: string;
+  roles: string[];
 }
 
 interface RevokeProps {
@@ -201,6 +203,7 @@ interface RevokeProps {
   context: WebPartContext;
   onClose: () => void;
   onRevoke?: (userId: string) => void; // <-- change this
+  onSuccess?: () => void;
 }
 
 
@@ -252,7 +255,7 @@ const getItemApi = async (
   }
 };
 
-const Revoke: React.FC<RevokeProps> = ({ show, selectedFolder, context, onClose, onRevoke }) => {
+const Revoke: React.FC<RevokeProps> = ({ show, selectedFolder, context, onClose, onRevoke,onSuccess}) => {
   const [users, setUsers] = useState<SharedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -344,6 +347,7 @@ const Revoke: React.FC<RevokeProps> = ({ show, selectedFolder, context, onClose,
           })
           .map((ra: any) => ({
             userId: String(ra?.Member?.Id),
+            userEmail: ra?.Member?.Email || ra?.Member?.LoginName || "", 
             userTitle: ra?.Member?.Title || "",
             roles: (ra?.RoleDefinitionBindings || []).map((r: any) => r?.Name).filter(Boolean),
           }));
@@ -406,44 +410,106 @@ const Revoke: React.FC<RevokeProps> = ({ show, selectedFolder, context, onClose,
   // };
 
   // Ritik 24/2/26
-const revokeAccess = async (userId: string) => {
-  if (!window.confirm("Are you sure you want to revoke access for this user?")) return;
- 
-  setLoading(true);
-  try {
-    const { webUrl, siteCollectionUrl, serverRel, isFile } = deriveItemContext(selectedFolder, context);
-    const itemApi = await getItemApi(webUrl, serverRel, context, isFile);
- 
-    await itemApi.breakRoleInheritance(true, false);
-    await itemApi.roleAssignments.getById(parseInt(userId)).delete();
- 
-    const spSiteCollection = spfi(siteCollectionUrl).using(SPFx(context));
- 
-    console.log("Deleting from DMSShareWithOtherMaster at:", siteCollectionUrl);
- 
-    const existingItems = await spSiteCollection.web.lists
-      .getByTitle("DMSShareWithOtherMaster")
-      .items
-      .filter(`FileUID eq '${selectedFolder.FileUID || selectedFolder.UniqueId}' and UserID eq '${userId}'`)
-      .select("Id")();
- 
-    for (const item of existingItems) {
-      await spSiteCollection.web.lists
-        .getByTitle("DMSShareWithOtherMaster")
-        .items.getById(item.Id).delete();
-      console.log(`Share record deleted: Id ${item.Id}`);
+  const revokeAccess = async (userId: string) => {
+    // if (!window.confirm("Are you sure you want to revoke access for this user?")) return;
+    const confirmResult = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to revoke access for this user?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, revoke it!",
+      cancelButtonText: "Cancel",
+    });
+    if (!confirmResult.isConfirmed) return;
+  
+    setLoading(true);
+    try {
+      const { webUrl, siteCollectionUrl, serverRel, isFile } = deriveItemContext(selectedFolder, context);
+      const itemApi = await getItemApi(webUrl, serverRel, context, isFile);
+  
+      await itemApi.breakRoleInheritance(true, false);
+      await itemApi.roleAssignments.getById(parseInt(userId)).delete();
+  
+      const remainingAssignments: any[] = await itemApi.roleAssignments
+        .expand("Member", "RoleDefinitionBindings")();
+  
+      const actualUsers = remainingAssignments.filter((ra: any) => {
+        const title = (ra?.Member?.Title || "").toLowerCase();
+        const roles = (ra?.RoleDefinitionBindings || []).map((r: any) => r?.Name);
+        if (roles.includes("Full Control")) return false;
+        if (title.includes("admin")) return false;
+        if (title.includes("system")) return false;
+        if (title.includes("owner")) return false;
+        return true;
+      });
+  
+      console.log("Remaining actual users after revoke:", actualUsers.length);
+  
+      const spSiteCollection = spfi(siteCollectionUrl).using(SPFx(context));
+      const fileUID = selectedFolder.FileUID || selectedFolder.UniqueId;
+  
+      if (actualUsers.length === 0) {
+        console.log("Koi user nahi bacha — saare records delete kar rahe hain");
+  
+        const allRecords = await spSiteCollection.web.lists
+          .getByTitle("DMSShareWithOtherMaster")
+          .items
+          .filter(`FileUID eq '${fileUID}'`)
+          .select("Id")();
+  
+        console.log("DMSShareWithOtherMaster records to delete:", allRecords.length);
+  
+        for (const item of allRecords) {
+          await spSiteCollection.web.lists
+            .getByTitle("DMSShareWithOtherMaster")
+            .items.getById(item.Id).delete();
+          console.log(`Deleted record Id: ${item.Id}`);
+        }
+  
+        const fileMasterListName = `DMS${selectedFolder.SiteName}FileMaster`;
+        console.log("FileMaster list:", fileMasterListName);
+  
+        const fmItems = await spSiteCollection.web.lists
+          .getByTitle(fileMasterListName)
+          .items
+          .filter(`FileUID eq '${fileUID}'`)
+          .select("Id")();
+  
+        console.log("FileMaster records to update:", fmItems.length);
+  
+        for (const fm of fmItems) {
+          await spSiteCollection.web.lists
+            .getByTitle(fileMasterListName)
+            .items.getById(fm.Id)
+            .update({
+              ShareWithMe: null,
+              ShareWithOthers: null,
+            });
+          console.log(`FileMaster cleared: Id ${fm.Id}`);
+        }
+  
+        setUsers([]);
+        if (onRevoke) onRevoke(userId);
+        onClose();
+        Swal.fire("Success!", "All access revoked successfully.", "success");
+        if (onSuccess) onSuccess();
+        
+  
+      } else {
+        setUsers((prev) => prev.filter((u) => u.userId !== userId));
+        if (onRevoke) onRevoke(userId);
+        // alert("Access revoked for this user.");
+        Swal.fire("Success!", "Access revoked for this user.", "success");
+      }
+  
+    } catch (e) {
+      console.error("Failed to revoke access:", e);
+      // alert("Failed to revoke access: " + e);
+      Swal.fire("Error!", "Failed to revoke access: " + e, "error");
+    } finally {
+      setLoading(false);
     }
- 
-    setUsers((prev) => prev.filter((u) => u.userId !== userId));
-    if (onRevoke) onRevoke(userId);
- 
-  } catch (e) {
-    console.error("Failed to revoke access:", e);
-    alert("Failed to revoke access. Check console for details.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   return (
 <Modal 
   show={show} 
@@ -476,7 +542,7 @@ const revokeAccess = async (userId: string) => {
                   <td style={{ padding: "8px" }}>{user.userTitle || user.userId}</td>
                   <td style={{ padding: "8px" }}>{user.roles.join(", ")}</td>
                   <td style={{ padding: "8px", textAlign: "center" }}>
-                    <Button variant="danger" size="sm" onClick={() => revokeAccess(user.userId)}>
+                  <Button variant="danger" size="sm" onClick={() => revokeAccess(user.userId)}>
                       Revoke
                     </Button>
                   </td>
