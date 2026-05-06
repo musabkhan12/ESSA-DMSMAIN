@@ -49,7 +49,7 @@ import ShareFileUrlModal from "./ShareFileUrlModal";
 import BreadcrumbSharePopup from "./BreadcrumbSharePopup";
 import FolderSharePopup from "./FolderSharePopup";
 import { startOfDay } from "date-fns";
- 
+
 
 
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -1367,7 +1367,7 @@ setShowShareModal(false);
 const currentFolder = node.title;
 const fmItems = await spRoot.web.lists
   .getByTitle(`DMS${entityName}FileMaster`)
-  .items.select("ID", "FileName", "IsDeleted", "Status") // Included ID and Status
+  .items.select("ID", "FileName", "IsDeleted", "Status", "IsFavourite", "CurrentUser") //rohit 04/05/2026
   .filter(`DocumentLibraryName eq '${currentFolder}'`)
   .top(5000)();
 
@@ -1384,9 +1384,11 @@ fmItems.forEach(i => {
   const isNotDeleted = !i.IsDeleted; // Adjust if IsDeleted is "Yes"/1
 
   if (hasValidStatus && isNotDeleted) {
+    const existingData = masterDataMap.get(i.FileName); //rohit 04/05/2026
     masterDataMap.set(i.FileName, {
       id: i.ID,
-      status: i.Status
+      status: i.Status,
+      isFavourite: existingData?.isFavourite || (i.IsFavourite === true && (i.CurrentUser || "").toLowerCase() === ((context.pageContext as any)?.user?.email || (context.pageContext as any)?.user?.loginName || "").toLowerCase()) //rohit 04/05/2026
     });
   }
 });
@@ -1416,6 +1418,7 @@ const visibleFiles = (files || [])
     ...f,
       ID: extraData.id,
       Status: extraData.status,
+      IsFavourite: extraData.isFavourite,
       FileUID: f.UniqueId,
       SiteID: node.siteUrl,
       __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
@@ -1427,6 +1430,12 @@ const visibleFiles = (files || [])
       FilePreviewURL: (() => {
         const serverRel = f.ServerRelativeUrl || "";
         const parentFolder = serverRel.substring(0, serverRel.lastIndexOf("/"));
+         const fileName = f.Name || "";
+        const ext = fileName.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
+        if (isImage) {
+    return `${window.location.origin}${serverRel}`;
+  }
         return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRel)}&parent=${encodeURIComponent(parentFolder)}`;
       })(),
       // ritik chnage - 29/04/26 end 
@@ -2595,8 +2604,9 @@ const loadViewData = async (viewType: ViewType): Promise<any[]> => {
  
  
     console.log("File Object:", file);
- 
-    const siteUrls = file.SiteID || file.SiteID || siteUrl;
+
+    // const siteUrls = file.SiteID || file.SiteID || siteUrl; 
+    const siteUrls = file.__siteUrl || siteUrl || file.SiteID; //rohit 04/05/2026 - added fallback to SiteID for older records
     console.log("Determined Site URL:", siteUrls);
  
  
@@ -2619,16 +2629,27 @@ const loadViewData = async (viewType: ViewType): Promise<any[]> => {
     SPFx(context)
   );
  
-  const listName = `DMS${subSiteName}FileMaster`;
- 
+  // const listName = `DMS${subSiteName}FileMaster`;
+  const listName = file.__fileMasterList || `DMS${file.SiteName || subSiteName}FileMaster`; //rohit 04/05/2026 - added fallback to SiteName and subSiteName for older records
+
+//  const items = await siteSP.web.lists
   // ✅ Important Fix: User-wise filter
-  const items = await siteSP.web.lists
-    .getByTitle(listName)
-    .items
-    .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest", )
-    .filter(
-      `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 0`
-    )();
+  //rohit 04/05/2026 ---start
+  const fileItemId = file.Id || file.ID;
+  const items = fileItemId
+    ? [await siteSP.web.lists
+      .getByTitle(listName)
+      .items
+      .getById(fileItemId)
+      .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest")()]
+    : await siteSP.web.lists
+      .getByTitle(listName)
+      .items
+      .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest")
+      .filter(
+        `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 0`
+      )();
+  //rohit 04/05/2026 ---end
  
   console.log("Matched Items:", items);
  
@@ -2643,9 +2664,10 @@ const loadViewData = async (viewType: ViewType): Promise<any[]> => {
     const refreshed = await loadViewData("MyFavourite");
 if (refreshed) {
   setSelectedFiles([...refreshed]);
-} // Refresh the page to reflect changes
-``
-    return true;
+} //rohit 04/05/2026  Refresh the page to reflect changes ---start
+    await refreshViewCount("MyFavourite");
+    return false;
+    //------end-----
   }
  
   // 🔥 CASE 2: Record exists → Toggle
@@ -2668,6 +2690,7 @@ if (refreshed) {
 if (refreshed) {
   setSelectedFiles([...refreshed]);
 }
+await refreshViewCount("MyFavourite"); //rohit 04/05/2026
      
   return newFavouriteValue;
  
@@ -5967,7 +5990,8 @@ const existingItems = await siteSP.web.lists
 
     .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest") // Ritik 27/04/26 removed and MyRequest eq 0
     .filter(
-      `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}'` // Ritik 27/04/26 removed and MyRequest eq 0
+      //rohit 04/05/2026 --- only Add MyRequest eq 0` in below FileUID
+      `FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 0` // Ritik 27/04/26 removed and MyRequest eq 0
     )();
 
     // ritik 29/04/26 - start
@@ -6000,6 +6024,7 @@ const existingItems = await siteSP.web.lists
       .getByTitle(listName)
       .items
       .add(payload);
+    await refreshViewCount("MyFavourite"); //rohit 04/05/2026
  
     console.log("✅ New favourite added");
 
@@ -6034,12 +6059,15 @@ const existingItems = await siteSP.web.lists
 // if (refreshed) {
 //   setSelectedFiles([...refreshed]);
 // }
+//rohit 04/05/2026 ---start
 Swal.fire({
-        title: 'Added to Favourites!',
-        text: 'The file has been successfully added to your favourites.',
+        title: newFavouriteValue ? 'Added to Favourites!' : 'Removed from Favourites!',
+        text: newFavouriteValue ? 'The file has been successfully added to your favourites.' : 'The file has been successfully removed from your favourites.',
         icon: 'success',
         confirmButtonText: 'ok'
       });
+await refreshViewCount("MyFavourite");
+//rohit 04/05/2026 ---end
   return newFavouriteValue;
  
 };
@@ -8602,9 +8630,10 @@ const handleSaveRename = async () => {
   </div>
 </td>
                                       <td style={{minWidth: '80px', maxWidth: '80px'}}>
-                                        {file.FileSize
+                                        {(file.FileSize || file.Length) //rohit 04/05/2026
     ? (() => {
-        const sizeInBytes = parseInt(file.FileSize);
+        if (file.FileSize && /[a-z]/i.test(String(file.FileSize))) return file.FileSize; //rohit 04/05/2026
+        const sizeInBytes = parseInt(file.FileSize || file.Length); //rohit 04/05/2026
         const sizeInKB = sizeInBytes / 1024;
         const sizeInMB = sizeInBytes / (1024 * 1024);
 

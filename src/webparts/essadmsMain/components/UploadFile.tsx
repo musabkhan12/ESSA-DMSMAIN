@@ -40,6 +40,19 @@ submitButton.id="submitBtn";
 submitButton.type="submit";
 // submitButton.style.display='none';
 submitButton.disabled=true
+const resetSubmitButton = () => {
+  const btn = document.getElementById("submitBtn") as HTMLButtonElement;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "";
+    const img2 = document.createElement("img");
+    img2.src = require("../assets/submit-new1.png");
+    img2.alt = "Create";
+    img2.style.marginRight = "6px";
+    btn.innerHTML = "";
+    btn.appendChild(img2);
+  }
+};
 
 const UploadFile: React.FC<UploadFileProps> = ({ currentfolderpath , onReturnToMain, sp  }) => {
   // const sp: SPFI = getSP();
@@ -1651,14 +1664,17 @@ const listItem = subsiteWeb.lists.getByTitle(libraryTitle).items.getById(itemId)
 
     if (newItem) {
       setIsFinalUploading(false);
+      resetSubmitButton();
       Deletemedia();
     }
     // ritik 10/04/26 end 
   } catch (error) {
     console.error("Error during submission:", error);
     setIsFinalUploading(false);
-    submitBtn.disabled = false;
-    submitBtn.innerText = "Submit";
+    // submitBtn.disabled = false;
+    // submitBtn.innerText = "Submit";
+        resetSubmitButton(); //Ritik 5/05/26 reset the submit button
+ 
     
     // Alert the user to the failure
     Swal.fire({
@@ -1850,7 +1866,10 @@ const handleSubmitBulk = async (event: any) => {
   console.log("Bulk upload button clicked");
   const submitBtn = document.getElementById("submitBtn2") as HTMLButtonElement;
   submitBtn.disabled = true;
-  submitBtn.innerText = "Submitting...";
+  // submitBtn.innerText = "Submitting...";
+  submitBtn.disabled = true;
+submitBtn.style.opacity = "0.6";
+submitBtn.style.cursor = "not-allowed";
  
   const iframe = document.getElementById("filePreview") as HTMLIFrameElement;
   const spinner = document.getElementById("spinner") as HTMLElement;
@@ -2021,8 +2040,10 @@ const Deletemedia = () => {
   });
 
 
+
  setTimeout(() => {
     Swal.close();
+    resetSubmitButton();
     onReturnToMain(); 
   }, 3000);
 

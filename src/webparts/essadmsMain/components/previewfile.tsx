@@ -37,6 +37,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   console.log("File Extension:", fileExtension);
  
   const officeExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'];
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
   console.log("Office Extensions:", officeExtensions);
  
   const newpreviewUrl = fileUrl.FilePreviewURL;
@@ -71,7 +72,6 @@ else if (newpreviewUrl && typeof newpreviewUrl === 'string' && newpreviewUrl.inc
 
   previewUrlS = `${fileUrl.__siteUrl}/${fileUrl.SiteName}/_layouts/15/Doc.aspx?sourcedoc=${decodedId}`;
 }
-
 
 else {
   previewUrlS = `https://officeindia.sharepoint.com${fileUrl.ServerRelativeUrl}?Web=1`;
@@ -131,10 +131,14 @@ else {
           </div>
         )} */}
       </div>
- 
       <iframe
         ref={previewFrameRef}
-        src={officeExtensions.includes(fileExtension) ? previewUrlS : previewUrl}
+        //src={officeExtensions.includes(fileExtension) ? previewUrlS : previewUrl}
+      src={
+  officeExtensions.includes(fileExtension) 
+    ? previewUrlS 
+    : (imageExtensions.includes(fileExtension) ? (fileUrl.FilePreviewURL || previewUrl) : previewUrl)
+}
         width="100%"
         height="800"
         style={{ border: "none", padding:'0px 15px 15px 15px' }}
