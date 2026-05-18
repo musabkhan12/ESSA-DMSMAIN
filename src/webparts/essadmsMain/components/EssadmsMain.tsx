@@ -1364,7 +1364,9 @@ setShowShareModal(false);
 // setSelectedFiles(visibleFiles);
  
  // 1. Fetch the Master List data
-const currentFolder = node.title;
+// const currentFolder = node.title;
+const currentFolder = node.type === "folder" ? node.libraryTitle : node.title;
+ 
 const fmItems = await spRoot.web.lists
   .getByTitle(`DMS${entityName}FileMaster`)
   .items.select("ID", "FileName", "IsDeleted", "Status", "IsFavourite", "CurrentUser") //rohit 04/05/2026

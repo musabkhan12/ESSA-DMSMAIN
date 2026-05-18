@@ -1486,6 +1486,7 @@ const handleSubmit = async (event: any) => {
     const targetWebUrl = currentfolderpath.Entityurl;
     const rootSiteMatch = currentfolderpath.Entityurl.match(/.*\/sites\/[^\/]+/);
     const rootSiteUrl = rootSiteMatch ? rootSiteMatch[0] : "";
+    const rootLibraryName = getRootLibraryName(); //15/5/26
 
     // Create web objects
     // Using a clean Web() instance and AssignFrom to avoid Proxy inheritance issues
@@ -1627,7 +1628,8 @@ const listItem = subsiteWeb.lists.getByTitle(libraryTitle).items.getById(itemId)
       SiteID: String(currentfolderpath.siteID),
       Status: statusValue,
       FilePreviewURL: String(previewUrl),
-      DocumentLibraryName: String(currentfolderpath.DocumentLibrary),
+      //DocumentLibraryName: String(currentfolderpath.DocumentLibrary),
+      DocumentLibraryName: String(rootLibraryName), //15/5/26
       SiteName: String(currentfolderpath.Entity),
       MyRequest: true,
       Processname: 'New File Request',
@@ -1638,7 +1640,8 @@ const listItem = subsiteWeb.lists.getByTitle(libraryTitle).items.getById(itemId)
     if (IsApproval === true) {
       await rootWeb.lists.getByTitle('DMSFileApprovalList').items.add({
         SiteName: String(currentfolderpath.Entity),
-        DocumentLibraryName: String(currentfolderpath.DocumentLibrary),
+        //DocumentLibraryName: String(currentfolderpath.DocumentLibrary),
+        DocumentLibraryName: String(rootLibraryName), //15/5/26
         RequestedBy: String(currentUserEmailRef.current),
         FileName: String(uploadResult.data.Name),
         FileUID: String(uploadResult.data.UniqueId),

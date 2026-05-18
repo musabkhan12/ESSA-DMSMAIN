@@ -345,3 +345,8 @@
   color: red;
   margin-top: 4px;
 }
+
+.input-forbidden {
+  border: 2px solid red !important;
+  outline: none !important;
+}

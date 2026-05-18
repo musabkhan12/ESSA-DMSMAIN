@@ -52,6 +52,8 @@ const CreateFolder: React.FC<CreateFolderProps> = ({
   const [toggleApproval, setToggleApproval] = React.useState(false);
   const [approvalOption, setApprovalOption] = useState("");
   console.log("Approval option", approvalOption);
+  const [forbiddenIds, setForbiddenIds] = useState<number[]>([]); //ritik 15/05/26
+  const [emptyFieldTypeIds, setEmptyFieldTypeIds] = useState<number[]>([]);
   // srs 9/4/26
 const [showLoader, setShowLoader] = useState(false);
 const [progress, setProgress] = useState(0);
@@ -201,7 +203,10 @@ const [progress, setProgress] = useState(0);
     setErrorsForUserSelection(newErrors);
     return isValid;
   };
-
+  const forbiddenColumnNames = [
+    "name", "title", "id", "guid", "modified", "created", 
+    "author", "editor", "fileleafref", "fileref", "uniqueid"
+  ];
   //start
   //   store the form field and its type.
   const [formFields, setFormFields] = useState([
@@ -217,13 +222,9 @@ const [progress, setProgress] = useState(0);
         : field
     );
     setFormFields(values);
-
-    // Reset error when user enters a value
-    if (event.target.value.trim() !== '') {
-      setErrors1((prevErrors) => ({
-        ...prevErrors,
-        [id]: { ...prevErrors[id], [event.target.name]: '' }
-      }));
+    const typedValue = event.target.value.trim().toLowerCase(); //Ritik 15/05/26
+    if (!forbiddenColumnNames.includes(typedValue)) {
+      setForbiddenIds(prev => prev.filter(i => i !== id));
     }
   };
 
@@ -244,6 +245,7 @@ const [progress, setProgress] = useState(0);
         [id]: { ...prevErrors[id], selectField: '' }
       }));
     }
+    setEmptyFieldTypeIds(prev => prev.filter(i => i !== id));//ritik 15/05/26
   }
   //   add new field row
   const handleAddFields = (event?: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
@@ -260,19 +262,32 @@ const [progress, setProgress] = useState(0);
   //   remove field row
   const handleRemoveField = (id: number, event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
     event.preventDefault();
-    // console.log("index",id);
-    // console.log("Remove Field Called");
-
-    setFormFields(formFields.filter((field) => field.id !== id));
-
-  }
+    const filtered = formFields.filter((field) => field.id !== id);
+    const reordered = filtered.map((field, index) => ({ ...field, order: index + 1 }));
+    setFormFields(reordered);
+  } //Ritik 15
 
   // Handle validation and error state update
   const validateFields = () => {
 
     let isValid = true;
     const newErrors: { [key: number]: { fieldName?: string; selectField?: string } } = {};
-
+// Forbidden name check
+const forbiddenFound = formFields.filter(f => 
+  forbiddenColumnNames.includes(f.fieldName.trim().toLowerCase())
+);
+if (forbiddenFound.length > 0) {
+  forbiddenFound.forEach(f => {
+    newErrors[f.id] = { ...newErrors[f.id], fieldName: " " };
+  });
+  Swal.fire({
+    title: "Not Allowed!",
+    text: "Some column names are not allowed. Please choose different names.",
+    icon: "error",
+    confirmButtonText: "OK",
+  });
+  isValid = false;
+}
     formFields.forEach((field) => {
       if (!field.fieldName.trim()) {
         newErrors[field.id] = { ...newErrors[field.id], fieldName: 'Field Name is required' };
@@ -571,6 +586,39 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
     //   );
     // }
     else {
+      const forbiddenFound = formFields.filter(f => 
+        forbiddenColumnNames.includes(f.fieldName.trim().toLowerCase())
+      );
+      if (forbiddenFound.length > 0) {
+        Swal.fire({
+          title: "Not Allowed!",
+          text: "Some column names are not allowed. Please choose different names.",
+          icon: "error",
+          confirmButtonText: "OK",
+        }).then(() => {
+          setForbiddenIds(forbiddenFound.map(f => f.id));
+        });
+        return;
+        forbiddenFound.forEach(f => {
+          setErrors1((prevErrors) => ({
+            ...prevErrors,
+            [f.id]: { ...prevErrors[f.id], fieldName: "" }
+          }));
+        });
+        return; 
+      }
+      //Ritik 15
+      const emptyFieldTypes = formFields.filter(f => f.fieldName.trim() !== "" && f.selectField === ""); 
+if (emptyFieldTypes.length > 0) { //Ritik 15
+        setEmptyFieldTypeIds(emptyFieldTypes.map(f => f.id));
+        Swal.fire({
+          title: "Field Required!",
+          text: "Please select field type for all fields.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
         // srs 9/4/26
         let totalSeconds = 0;
         if (OthProps.DocumentLibrary === "") {
@@ -888,18 +936,31 @@ if (OthProps.DocumentLibrary !== "") {
         // })
 
          // srs 9/4/26 Psot sequence number
+      //  for (let i = 0; i < formFields.length; i++) {
+      //     // type.replace(/\s+/g, '').toLowerCase();
+      //     (payloadForPreviewFormMaster as any).ColumnName = formFields[i].fieldName.replace(/\s+/g, '');
+      //     (payloadForPreviewFormMaster as any).ColumnType = formFields[i].selectField;
+      //     // (payloadForPreviewFormMaster as any).Sequence = i + 1;
+      //     // Ritik 10/04/2026 Saves user-defined order instead of loop index, so reordered fields are stored correctly
+      //     (payloadForPreviewFormMaster as any).Sequence = formFields[i].order;
+      //     console.log("Call the Api with this payload", payloadForPreviewFormMaster)
+ 
+      //     const addedItem = await siteSP.web.lists.getByTitle("DMSPreviewFormMaster").items.add(payloadForPreviewFormMaster);
+      //     console.log("Item added successfully in the DMSPreviewFormField", addedItem);
+      //   }
+      //Rohit 15/05/2026 for blank field name and type
        for (let i = 0; i < formFields.length; i++) {
-          // type.replace(/\s+/g, '').toLowerCase();
+          if (!formFields[i].fieldName.trim() || !formFields[i].selectField) {
+            continue;
+          }
           (payloadForPreviewFormMaster as any).ColumnName = formFields[i].fieldName.replace(/\s+/g, '');
           (payloadForPreviewFormMaster as any).ColumnType = formFields[i].selectField;
-          // (payloadForPreviewFormMaster as any).Sequence = i + 1;
-          // Ritik 10/04/2026 Saves user-defined order instead of loop index, so reordered fields are stored correctly
           (payloadForPreviewFormMaster as any).Sequence = formFields[i].order;
-          console.log("Call the Api with this payload", payloadForPreviewFormMaster)
+          console.log("Call the Api with this payload", payloadForPreviewFormMaster);
  
-          const addedItem = await siteSP.web.lists.getByTitle("DMSPreviewFormMaster").items.add(payloadForPreviewFormMaster);
-          console.log("Item added successfully in the DMSPreviewFormField", addedItem);
- 
+          const siteSPForField = spfi(`${OthProps.Entityurl.split("/sites/")[0]}/sites/${OthProps.Entityurl.split("/sites/")[1].split("/")[0]}`).using(SPFx(context));
+          const addedFieldItem = await siteSPForField.web.lists.getByTitle("DMSPreviewFormMaster").items.add(payloadForPreviewFormMaster);
+          console.log("Item added successfully in the DMSPreviewFormField", addedFieldItem);
         }
       }
 
@@ -1324,14 +1385,14 @@ if (OthProps.DocumentLibrary !== "") {
                 
                 {/* Field Name */}
                 <td>
-                  <input
-                    type="text"
-                    className="create-folder-form-control"
-                    placeholder="Enter field name"
-                    value={formField.fieldName}
-                    onChange={(e) => handleInputChange(formField.id, e)}
-                  />
-                  {errors1[formField.id]?.fieldName && (
+                <input
+  type="text"
+  className={`create-folder-form-control ${forbiddenIds.includes(formField.id) ? "input-forbidden" : ""}`}
+  placeholder="Enter field name"
+  value={formField.fieldName}
+  onChange={(e) => handleInputChange(formField.id, e)}
+/>
+                  {errors1[formField.id]?.fieldName && errors1[formField.id].fieldName !== "red" && (
                     <span className="create-folder-error-message">
                       {errors1[formField.id].fieldName}
                     </span>
@@ -1340,11 +1401,11 @@ if (OthProps.DocumentLibrary !== "") {
 
                 {/* Field Type */}
                 <td>
-                  <select
-                    className="create-folder-form-control"
-                    value={formField.selectField}
-                    onChange={(e) => handleSelectedType(formField.id, e)}
-                  >
+                <select
+  className={`create-folder-form-control ${emptyFieldTypeIds.includes(formField.id) ? "input-forbidden" : ""}`} //Ritik 15
+  value={formField.selectField}
+  onChange={(e) => handleSelectedType(formField.id, e)}
+>
                     <option value="">Open this select menu</option>
                     <option value="Single Line of Text">Single Line of Text</option>
                     <option value="Multiple Line of Text">Multiple Line of Text</option>
@@ -1388,7 +1449,7 @@ if (OthProps.DocumentLibrary !== "") {
                 <td className="text-center">
                   {/* {formField.id !== 0 && ( */}
                   {/* Ritik 10/04/2026 allowing deletion of all fields, including the first one, as there is no longer a requirement to keep at least one field */}
-                  {formField.id !== 1 && (
+                  {formField.order !== 1 && ( //Ritik 15
                     <button style={{background:'#fff'}}
                       type="button"
                       onClick={(e) => handleRemoveField(formField.id, e)}
