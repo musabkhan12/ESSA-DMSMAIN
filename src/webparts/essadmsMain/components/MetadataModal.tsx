@@ -6,6 +6,8 @@ import "@pnp/sp/lists";
 import "@pnp/sp/items";
 import "@pnp/sp/fields";
 import { Modal } from "react-bootstrap";
+import Swal from "sweetalert2";
+ 
 
 
 interface FieldInfo {
@@ -356,7 +358,12 @@ const MetadataModal: React.FC<{
 
         const valid = newColumns.filter(c => c.ColumnName.trim());
         if (!valid.length) {
-            alert("⚠️ Please add at least one field!");
+           Swal.fire({
+                title: "Field Required!",
+                text: "Please add at least one field!",
+                icon: "error",
+                confirmButtonText: "OK",
+              });
             return;
         }
 
@@ -406,7 +413,13 @@ const MetadataModal: React.FC<{
             }
 
             console.log("✅ All columns saved!");
-            alert(`✅ Successfully added ${valid.length} field(s) to ${siteInfo.subsiteName}/${siteInfo.documentLibraryName}!`);
+            // alert(`✅ Successfully added ${valid.length} field(s) to ${siteInfo.subsiteName}/${siteInfo.documentLibraryName}!`);
+            Swal.fire({
+                title: "Success!",
+                text: "Successfully added",
+                icon: "success",
+                confirmButtonText: "OK",
+              });
 
             setNewColumns([]);
             await fetchExistingColumns();
