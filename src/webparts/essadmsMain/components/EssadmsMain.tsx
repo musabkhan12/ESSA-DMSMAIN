@@ -1306,7 +1306,49 @@ setShowShareModal(false);
       if (folderPath) {
         const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${folderPath}`;
         console.log("[loadFilesForNode] Fetching files from:", serverRel);
-        const files = await siteSP.web.getFolderByServerRelativePath(serverRel).files();
+        // const files = await siteSP.web.getFolderByServerRelativePath(serverRel).files();  srs 19/05/26
+          //srs 19/5/26
+        // --- LOOP TO FETCH ALL 50,000+ FILES VIA CHUNKED PAGES ---
+        let allRows: any[] = [];
+        let pagingToken = "";
+        let hasNextPage = true;
+       
+        while (hasNextPage) {
+          const listData = await siteSP.web.lists.getByTitle(node.libraryTitle).renderListDataAsStream({
+            FolderServerRelativeUrl: serverRel,
+            ViewXml: `<View><RowLimit Paged="TRUE">5000</RowLimit></View>`,
+            Paging: pagingToken || undefined // Passes the pagination pointer back on subsequent runs
+          });
+ 
+          if (listData && listData.Row) {
+            allRows = [...allRows, ...listData.Row];
+          }
+ 
+          // Check if another page exists
+          if (listData && listData.NextHref) {
+            // NextHref looks like "?Paged=TRUE&p_ID=5000&..."
+            // Strip out the leading "?" to properly convert it into an API-acceptable query parameter string
+            pagingToken = listData.NextHref.startsWith("?")
+              ? listData.NextHref.substring(1)
+              : listData.NextHref;
+          } else {
+            hasNextPage = false; // No more files left to pull
+          }
+        }
+ 
+        // Map the comprehensive multi-page collection to your expected file structure
+        const files = allRows
+          .filter((row: any) => row.FSObjType === "0") // Retain files only (Excludes subfolders)
+          .map((row: any) => ({
+            Name: row.FileLeafRef,
+            UniqueId: row.UniqueId ? row.UniqueId.replace(/[{}]/g, "") : row.GUID,
+            ServerRelativeUrl: row.FileRef,
+            TimeCreated: row.Created,
+            TimeLastModified: row.Modified
+          }));
+        // ---------------------------------------------------------
+        // srs 19/5/26 end
+ 
         console.log("[loadFilesForNode] Files fetched:", files);
         console.log("[loadFilesForNode] Files loaded:", files?.length || 0);
         // setSelectedFiles(files);
@@ -1395,32 +1437,68 @@ fmItems.forEach(i => {
   }
 });
 
+//srs 19/5/26 star comment 
 // 3. Filter and Enrich the files array
+// const visibleFiles = (files || [])
+//   .filter((f: any) => masterDataMap.has(f.Name)) // Only keep if in the "allowed" map
+//   .map((f: any) => {
+//     const extraData = masterDataMap.get(f.Name);
+//     return {
+
+//           // ritik chnage - 29/04/26 start
+
+//     //   ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
+//     //   ID: extraData.id, // Inject the List ID
+//     //   Status: extraData.status, // Inject the Status
+//     //   // srs 10/4/26
+//     //   // --- ADD THESE LINES TO FIX PERMISSIONS ---
+//     //   FileUID: f.UniqueId,             // Maps library GUID to the expected property
+//     //   SiteID: node.siteUrl,            // Passes the current subsite URL
+//     //   DocumentLibraryName: node.libraryTitle,
+//     //   SiteName: entityName             // Used for Admin Group naming logic
+//     // };
+
+
+
+//     ...f,
+//       ID: extraData.id,
+//       Status: extraData.status,
+//       IsFavourite: extraData.isFavourite,
+//       FileUID: f.UniqueId,
+//       SiteID: node.siteUrl,
+//       __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
+//       CurrentFolderPath: serverRel.replace(`/${f.Name}`, ""),
+//       DocumentLibraryName: node.libraryTitle,
+//       SiteName: entityName,
+//       FileName: f.Name,
+//       // FilePreviewURL: `${window.location.origin}${f.ServerRelativeUrl}`,
+//       FilePreviewURL: (() => {
+//         const serverRel = f.ServerRelativeUrl || "";
+//         const parentFolder = serverRel.substring(0, serverRel.lastIndexOf("/"));
+//          const fileName = f.Name || "";
+//         const ext = fileName.split('.').pop().toLowerCase();
+//         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
+//         if (isImage) {
+//     return `${window.location.origin}${serverRel}`;
+//   }
+//         return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRel)}&parent=${encodeURIComponent(parentFolder)}`;
+//       })(),
+//       // ritik chnage - 29/04/26 end 
+//     };
+//   });
+// srs starts
+// 3. Filter and Enrich the files array (Modified to show ALL files)
 const visibleFiles = (files || [])
-  .filter((f: any) => masterDataMap.has(f.Name)) // Only keep if in the "allowed" map
+  // REMOVED: .filter((f: any) => masterDataMap.has(f.Name)) -> This allows bulk-uploaded files to render!
   .map((f: any) => {
-    const extraData = masterDataMap.get(f.Name);
+    const extraData = masterDataMap.get(f.Name); // Will be undefined for bulk-uploaded files
+   
     return {
-
-          // ritik chnage - 29/04/26 start
-
-    //   ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
-    //   ID: extraData.id, // Inject the List ID
-    //   Status: extraData.status, // Inject the Status
-    //   // srs 10/4/26
-    //   // --- ADD THESE LINES TO FIX PERMISSIONS ---
-    //   FileUID: f.UniqueId,             // Maps library GUID to the expected property
-    //   SiteID: node.siteUrl,            // Passes the current subsite URL
-    //   DocumentLibraryName: node.libraryTitle,
-    //   SiteName: entityName             // Used for Admin Group naming logic
-    // };
-
-
-
-    ...f,
-      ID: extraData.id,
-      Status: extraData.status,
-      IsFavourite: extraData.isFavourite,
+      ...f,
+      // Use optional chaining (?.) and fallbacks so unregistered files don't crash the app
+      ID: extraData?.id || null,
+      Status: extraData?.status || "Draft/Unregistered", // Mark them clearly if they have no status yet
+      IsFavourite: extraData?.isFavourite || false,
       FileUID: f.UniqueId,
       SiteID: node.siteUrl,
       __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
@@ -1428,21 +1506,22 @@ const visibleFiles = (files || [])
       DocumentLibraryName: node.libraryTitle,
       SiteName: entityName,
       FileName: f.Name,
-      // FilePreviewURL: `${window.location.origin}${f.ServerRelativeUrl}`,
       FilePreviewURL: (() => {
-        const serverRel = f.ServerRelativeUrl || "";
-        const parentFolder = serverRel.substring(0, serverRel.lastIndexOf("/"));
-         const fileName = f.Name || "";
+        const serverRelUrl = f.ServerRelativeUrl || "";
+        const parentFolder = serverRelUrl.substring(0, serverRelUrl.lastIndexOf("/"));
+        const fileName = f.Name || "";
         const ext = fileName.split('.').pop().toLowerCase();
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
         if (isImage) {
-    return `${window.location.origin}${serverRel}`;
-  }
-        return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRel)}&parent=${encodeURIComponent(parentFolder)}`;
+          return `${window.location.origin}${serverRelUrl}`;
+        }
+        return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRelUrl)}&parent=${encodeURIComponent(parentFolder)}`;
       })(),
-      // ritik chnage - 29/04/26 end 
     };
   });
+// srs end 19/5/26
+
+ 
 
   // ritik 10/04/26 start
 
