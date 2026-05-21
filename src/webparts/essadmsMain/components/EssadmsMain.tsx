@@ -1501,6 +1501,7 @@ const visibleFiles = (files || [])
       IsFavourite: extraData?.isFavourite || false,
       FileUID: f.UniqueId,
       SiteID: node.siteUrl,
+       SiteID2: context.pageContext.site.id.toString(), // srs 20/5/26
       __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
       CurrentFolderPath: serverRel.replace(`/${f.Name}`, ""),
       DocumentLibraryName: node.libraryTitle,
@@ -6042,6 +6043,107 @@ const fpHandleDeleteUser = async (userId: number, itemId: number, permission: st
  
   const listName = `DMS${subSiteName}FileMaster`;
  
+   // srs 20/5/26
+ // 🛠️ SIMPLIFIED INTERCEPT: If bulk-uploaded, register it first so everything else works
+  if (file.Status === "Draft/Unregistered") {
+    const bulkExistingItems = await siteSP.web.lists
+      .getByTitle(listName)
+      .items
+      .select("Id", "FileUID", "IsFavourite", "CurrentUser", "MyRequest")
+      .filter(`FileUID eq '${fileUniqueId}' and CurrentUser eq '${meEmail}' and MyRequest eq 1`)();
+ 
+    // 🔥 SUB-CASE 1: If item ALREADY exists, toggle it instead of posting a new one! (Fixes the unmarking issue)
+    if (bulkExistingItems.length > 0) {
+      const existingBulkItem = bulkExistingItems[0];
+      const newFavouriteValue = !existingBulkItem.IsFavourite;
+ 
+      await siteSP.web.lists
+        .getByTitle(listName)
+        .items
+        .getById(existingBulkItem.Id)
+        .update({
+          IsFavourite: newFavouriteValue,
+          MyRequest: true
+        });
+ 
+      console.log("✅ Bulk file favourite status updated via Toggle branch:", newFavouriteValue);
+ 
+      Swal.fire({
+        title: newFavouriteValue ? 'Added to Favourites!' : 'Removed from Favourites!',
+        text: newFavouriteValue ? 'The file has been successfully added to your favourites.' : 'The file has been successfully removed from your favourites.',
+        icon: 'success',
+        confirmButtonText: 'ok'
+      });
+     
+      await refreshViewCount("MyFavourite");
+      return newFavouriteValue; // Breaks out early, stops the duplicate POST
+    }
+ 
+    // Fallback chains to safely derive proper sizing metrics
+let finalCalculatedSize = "0 KB";
+ 
+  try {
+    // 1️⃣ Dynamically request the live file properties from SharePoint to grab the real byte length
+    const liveFileProps = await siteSP.web
+      .getFileByServerRelativePath(file.ServerRelativeUrl || file.ServerRelativeUrlDecoded)
+      .select("Length")();
+     
+    if (liveFileProps && liveFileProps.Length) {
+      finalCalculatedSize = formatFileSizeForMeta(Number(liveFileProps.Length));
+    }
+  } catch (sizeError) {
+    console.warn("⚠️ Could not fetch active file size from path, using fallback calculation:", sizeError);
+    // Fallback lookups in case property request is throttled
+    const rawFallback = file.Length || file.FileSize || 0;
+    finalCalculatedSize = typeof rawFallback === "number" ? formatFileSizeForMeta(rawFallback) : rawFallback;
+  }
+    const computedRequestNo = file.RequestNo || (file.Name || file.FileName || "").split(".")[0] || `DMS-${fileUniqueId}`;
+ 
+    console.log("📂 Bulk-uploaded file detected. Auto-registering in FileMaster...");
+    const initialPayload = {
+      FileUID: fileUniqueId,
+      FileName: file.Name || file.FileName,
+      // FileSize: file.Length || file.FileSize || "0 KB",
+      DocumentLibraryName: file.DocumentLibraryName || "",
+      CurrentFolderPath: file.CurrentFolderPath || "",
+      SiteID: file.SiteID2,
+      SiteName: lastPart,
+      IsFavourite: true, // Will be flipped to true by the code below
+      CurrentUser: meEmail,
+      FileSize: finalCalculatedSize, // Fixed fallback injection mapping
+      RequestNo: computedRequestNo,
+      Processname: "Bulk Upload Item",
+      Status: "Draft/Unregistered",
+      // MyRequest: false,
+      FilePreviewURL: file.FilePreviewURL || "",      
+          FileVersion: "1",
+        // RequestNo: uploadedFile.Name.split(".")[0],
+          MyRequest: true,       // Yes/No → boolean
+          IsDeleted: null as null, // ✅ DateTime column FIX
+          ShareWithMe: "",
+          ShareWithOthers: "",
+       
+    };
+ 
+   try {
+      await siteSP.web.lists.getByTitle(listName).items.add(initialPayload);
+      await refreshViewCount("MyFavourite");
+      console.log("✅ Bulk file registered directly to Favourites.");
+     
+      Swal.fire({
+        title: 'Added to Favourites!',
+        text: 'The file has been successfully added to your favourites.',
+        icon: 'success',
+        confirmButtonText: 'ok'
+      });
+     
+      return true; // 🚀 CRITICAL: Stops the rest of the function from running and double-posting!
+    } catch (error) {
+      console.error("❌ Failed to register bulk file:", error);
+      return false;
+    }
+  }
+//  srs 20/5/26
  
  
 const existingItems = await siteSP.web.lists
@@ -8319,14 +8421,37 @@ const handleSaveRename = async () => {
     onClick={() => {
       // Extract the required fields from your file object
       // Note: Ensure your 'file' object has these properties (adjust names if necessary)
-       const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
+
+
+      // Rtitik 19/5/26 start
+  //      const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
+  //     window.rework(
+  //     file.FileUID,          // 1. GUID (e.g. "afaec963...")
+  // file.SiteID,           // 2. URL (e.g. "https://officeindia...")
+  // file.DocumentLibraryName, 
+  // file.SiteName, 
+  // constructedPath
+  //     );
+
+  
+const origin = window.location.origin;
+const pathRef = file.CurrentFolderPath || file.ServerRelativeUrl || "";
+const pathUntilSite = pathRef.split(file.SiteName)[0];
+const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
+const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
       window.rework(
-      file.FileUID,          // 1. GUID (e.g. "afaec963...")
-  file.SiteID,           // 2. URL (e.g. "https://officeindia...")
+      file.FileUID,
+  finalSiteUrl,          
   file.DocumentLibraryName, 
   file.SiteName, 
   constructedPath
       );
+
+
+// ritik 19/5/26 end
+
+
+
       setMenuOpenIdx(null);
     }}
   >
@@ -8894,14 +9019,34 @@ const handleSaveRename = async () => {
     onClick={() => {
       // Extract the required fields from your file object
       // Note: Ensure your 'file' object has these properties (adjust names if necessary)
-       const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
+
+      // ritik 19/05/26  start 
+  //      const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
+  //     window.rework(
+  //     file.FileUID,          // 1. GUID (e.g. "afaec963...")
+  // file.SiteID,           // 2. URL (e.g. "https://officeindia...")
+  // file.DocumentLibraryName, 
+  // file.SiteName, 
+  // constructedPath
+  //     );
+
+
+const origin = window.location.origin;
+const pathRef = file.CurrentFolderPath || file.ServerRelativeUrl || "";
+const pathUntilSite = pathRef.split(file.SiteName)[0];
+const finalSiteUrl = `${origin}${pathUntilSite}${file.SiteName}`;
+ 
+const constructedPath = `${file.CurrentFolderPath || file.ServerRelativeUrl}/${file.FileName || file.Name}`;
       window.rework(
-      file.FileUID,          // 1. GUID (e.g. "afaec963...")
-  file.SiteID,           // 2. URL (e.g. "https://officeindia...")
+      file.FileUID,
+  finalSiteUrl,          // ← file.SiteID ki jagah yeh lagao
   file.DocumentLibraryName, 
   file.SiteName, 
   constructedPath
       );
+
+
+// ritik 19/05/26  end 
       setMenuOpenIdx(null);
     }}
   >
