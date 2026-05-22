@@ -2093,20 +2093,42 @@ useEffect(()=>{
   }
 },[isChecked,uploadedFiles]);
 const breadcrumbParts = useMemo(() => {
+  // try{
+  //   const parts: string[] = [];
+  //   if (currentfolderpath?.Entity) parts.push(currentfolderpath.Entity);
+  //   if (currentfolderpath?.DocumentLibrary) parts.push(currentfolderpath.DocumentLibrary);
+  //   // prefer explicit Folder prop if present
+  //   if (currentfolderpath?.Folder) {
+  //     const f = currentfolderpath.Folder;
+  //     if (f) parts.push(f);
+  //   } else if (currentfolderpath?.folderpath) {
+  //     const segs = String(currentfolderpath.folderpath).split('/').filter(s => s && s.trim() !== '');
+  //     // try to remove any site segments and the document library itself
+  //     const docIdx = segs.findIndex(s => s === currentfolderpath.DocumentLibrary);
+  //     const rest = docIdx >= 0 ? segs.slice(docIdx + 1) : segs;
+  //     parts.push(...rest);
+  //   }
+  //   return parts;
   try{
     const parts: string[] = [];
     if (currentfolderpath?.Entity) parts.push(currentfolderpath.Entity);
-    if (currentfolderpath?.DocumentLibrary) parts.push(currentfolderpath.DocumentLibrary);
-    // prefer explicit Folder prop if present
+    //ritik 21/5/26 start breadcrumb parts duplication fix
     if (currentfolderpath?.Folder) {
       const f = currentfolderpath.Folder;
-      if (f) parts.push(f);
-    } else if (currentfolderpath?.folderpath) {
-      const segs = String(currentfolderpath.folderpath).split('/').filter(s => s && s.trim() !== '');
-      // try to remove any site segments and the document library itself
-      const docIdx = segs.findIndex(s => s === currentfolderpath.DocumentLibrary);
-      const rest = docIdx >= 0 ? segs.slice(docIdx + 1) : segs;
-      parts.push(...rest);
+      const subParts = f.split('/').filter((s: string) => s && s.trim() !== '');
+      subParts.forEach((seg: string) => {
+        if (!parts.includes(seg)) {
+          parts.push(seg);
+        }
+      });
+    } else {
+      if (currentfolderpath?.DocumentLibrary) parts.push(currentfolderpath.DocumentLibrary);
+      if (currentfolderpath?.folderpath) {
+        const segs = String(currentfolderpath.folderpath).split('/').filter(s => s && s.trim() !== '');
+        const docIdx = segs.findIndex(s => s === currentfolderpath.DocumentLibrary);
+        const rest = docIdx >= 0 ? segs.slice(docIdx + 1) : segs;
+        parts.push(...rest);
+      }
     }
     return parts;
   }catch(e){
@@ -2129,7 +2151,7 @@ const breadcrumbParts = useMemo(() => {
           <div className="mt-0 pt-1 UploadFileCont">
               <div className='row'>
               <div className='col-lg-6'>
-              <nav className="dms-breadcrumb" aria-label="Breadcrumb" style={{marginBottom:12}}>
+             <nav className="dms-breadcrumb" aria-label="Breadcrumb" style={{marginBottom:12, flexWrap:'wrap', display:'flex', alignItems:'center', whiteSpace:'normal', wordBreak:'break-word', overflowWrap:'anywhere'}}>
               <img  className="me-1" src={info}></img> 
             {breadcrumbParts && breadcrumbParts.length > 0 ? (
               breadcrumbParts.map((seg, idx) => (

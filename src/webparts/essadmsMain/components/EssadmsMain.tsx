@@ -176,6 +176,8 @@ const ArgPoc = ({ context }: { context: WebPartContext }) => {
   const [sp] = useState(() => spfi().using(SPFx(context)));
   const [filesLoadedfromnode, setFilesLoadedloadedfromnode] = useState(false);
 
+   const activeLoadingKeyRef = useRef<string>(""); // srs 22/5/26
+
   // Aman 13/4/26
    const [breadcrumbShare, setBreadcrumbShare] = useState({
   show: false,
@@ -1285,14 +1287,16 @@ setShowShareModal(false);
     }
   };
   /** ------------------------------------ load files (same) ----------------------------------- */
+
+  // srs 22/5/26  start 
   const loadFilesForNode = async (node: TreeNode) => {
     try {
       setFilesLoadedloadedfromnode(true);
-
+ 
       console.log("[loadFilesForNode] Start:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
       const siteSP = spfi(node.siteUrl).using(SPFx(context));
       let folderPath = "";
-
+ 
       if (node.type === "library") {
         folderPath = `${node.libraryTitle}`;
         setCurrentFolderPath(node.libraryTitle || "");
@@ -1300,257 +1304,148 @@ setShowShareModal(false);
         folderPath = `${node.folderPath}`;
         setCurrentFolderPath(node.folderPath || "");
       }
-
+ 
       setCurrentSiteUrl(node.siteUrl);
-
+ 
       if (folderPath) {
         const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${folderPath}`;
         console.log("[loadFilesForNode] Fetching files from:", serverRel);
-        // const files = await siteSP.web.getFolderByServerRelativePath(serverRel).files();  srs 19/05/26
-          //srs 19/5/26
-        // --- LOOP TO FETCH ALL 50,000+ FILES VIA CHUNKED PAGES ---
-        let allRows: any[] = [];
+ 
+        // ── TRACKING GUARD START ──
+        // Save the current node key as the globally active one.
+        const currentExecutionKey = node.key;
+        activeLoadingKeyRef.current = currentExecutionKey;
+        // ── TRACKING GUARD END ──
+ 
+        const baseSiteUrl = node.siteUrl.split("/sites/")[0] + "/sites/";
+        const siteCollection = node.siteUrl.split("/sites/")[1].split("/")[0];
+        const entityName = node.siteUrl.split("/").pop();
+ 
+        const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
+        const currentFolder = node.type === "folder" ? node.libraryTitle : node.title;
+         
+        const fmItems = await spRoot.web.lists
+          .getByTitle(`DMS${entityName}FileMaster`)
+          .items.select("ID", "FileName", "IsDeleted", "Status", "IsFavourite", "CurrentUser")
+          .filter(`DocumentLibraryName eq '${currentFolder}'`)
+          .top(5000)();
+ 
+        const masterDataMap = new Map();
+ 
+        fmItems.forEach(i => {
+          const hasValidStatus = i.Status === "Approved" ||
+                                 i.Status === "Auto Approved" ||
+                                 i.Status === "Draft/Unregistered" ||  
+                                 i.Status === null ||
+                                 i.Status === "";
+                                 
+          const isNotDeleted = !i.IsDeleted;
+ 
+          if (hasValidStatus && isNotDeleted) {
+            const existingData = masterDataMap.get(i.FileName);
+            masterDataMap.set(i.FileName, {
+              id: i.ID,
+              status: i.Status,
+              isFavourite: existingData?.isFavourite || (i.IsFavourite === true && (i.CurrentUser || "").toLowerCase() === ((context.pageContext as any)?.user?.email || (context.pageContext as any)?.user?.loginName || "").toLowerCase())
+            });
+          }
+        });
+ 
         let pagingToken = "";
         let hasNextPage = true;
+        let isFirstBatch = true;
+       
+        // Wipe old files out instantly so UI clears immediately
+        setSelectedFiles([]);
        
         while (hasNextPage) {
+          // ── TRACKING GUARD CHECK ──
+          // If the ref changed, it means the user clicked another library. Kill this background loop instantly!
+          if (activeLoadingKeyRef.current !== currentExecutionKey) {
+            console.log("[loadFilesForNode] Stale background loop detected and terminated for:", currentFolder);
+            return;
+          }
+ 
           const listData = await siteSP.web.lists.getByTitle(node.libraryTitle).renderListDataAsStream({
             FolderServerRelativeUrl: serverRel,
             ViewXml: `<View><RowLimit Paged="TRUE">5000</RowLimit></View>`,
-            Paging: pagingToken || undefined // Passes the pagination pointer back on subsequent runs
+            Paging: pagingToken || undefined
           });
  
-          if (listData && listData.Row) {
-            allRows = [...allRows, ...listData.Row];
+          // Check tracking guard again immediately after an async await API call completes
+          if (activeLoadingKeyRef.current !== currentExecutionKey) {
+            return;
           }
  
-          // Check if another page exists
+          if (listData && listData.Row && listData.Row.length > 0) {
+            const currentBatchFiles = listData.Row
+              .filter((row: any) => row.FSObjType === "0")
+              .map((f: any) => {
+                const extraData = masterDataMap.get(f.FileLeafRef);
+                const uniqueId = f.UniqueId ? f.UniqueId.replace(/[{}]/g, "") : f.GUID;
+                const serverRelUrl = f.FileRef || "";
+               
+                return {
+                  Name: f.FileLeafRef,
+                  UniqueId: uniqueId,
+                  ServerRelativeUrl: serverRelUrl,
+                  TimeCreated: f.Created,
+                  TimeLastModified: f.Modified,
+                  ID: extraData?.id || null,
+                  Status: extraData?.status || "Draft/Unregistered",
+                  IsFavourite: extraData?.isFavourite || false,
+                  FileUID: uniqueId,
+                  SiteID: node.siteUrl,
+                  SiteID2: context.pageContext.site.id.toString(),
+                  __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
+                  CurrentFolderPath: serverRel.replace(`/${f.FileLeafRef}`, ""),
+                  DocumentLibraryName: node.libraryTitle,
+                  SiteName: entityName,
+                  FileName: f.FileLeafRef,
+                  FilePreviewURL: (() => {
+                    const parentFolder = serverRelUrl.substring(0, serverRelUrl.lastIndexOf("/"));
+                    const ext = (f.FileLeafRef || "").split('.').pop().toLowerCase();
+                    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
+                    if (isImage) {
+                      return `${window.location.origin}${serverRelUrl}`;
+                    }
+                    return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRelUrl)}&parent=${encodeURIComponent(parentFolder)}`;
+                  })(),
+                };
+              });
+ 
+            // Safely append batch to active layout view
+            setSelectedFiles((prevFiles: any[]) => {
+              // Double check guard inside state setter to prevent race condition leaks
+              if (activeLoadingKeyRef.current !== currentExecutionKey) return prevFiles;
+ 
+              const updatedList = [...prevFiles, ...currentBatchFiles];
+              return updatedList.sort((a: any, b: any) => {
+                const dateA = new Date(a.TimeCreated || a.TimeLastModified || 0).getTime();
+                const dateB = new Date(b.TimeCreated || b.TimeLastModified || 0).getTime();
+                return dateB - dateA;
+              });
+            });
+ 
+            if (isFirstBatch) {
+              const nodePath = getNodePath(node.key);
+              if (nodePath && nodePath.length > 0) {
+                setBreadcrumbs(nodePath);
+              }
+              isFirstBatch = false;
+            }
+          }
+ 
           if (listData && listData.NextHref) {
-            // NextHref looks like "?Paged=TRUE&p_ID=5000&..."
-            // Strip out the leading "?" to properly convert it into an API-acceptable query parameter string
             pagingToken = listData.NextHref.startsWith("?")
               ? listData.NextHref.substring(1)
               : listData.NextHref;
           } else {
-            hasNextPage = false; // No more files left to pull
+            hasNextPage = false;
           }
         }
- 
-        // Map the comprehensive multi-page collection to your expected file structure
-        const files = allRows
-          .filter((row: any) => row.FSObjType === "0") // Retain files only (Excludes subfolders)
-          .map((row: any) => ({
-            Name: row.FileLeafRef,
-            UniqueId: row.UniqueId ? row.UniqueId.replace(/[{}]/g, "") : row.GUID,
-            ServerRelativeUrl: row.FileRef,
-            TimeCreated: row.Created,
-            TimeLastModified: row.Modified
-          }));
-        // ---------------------------------------------------------
-        // srs 19/5/26 end
- 
-        console.log("[loadFilesForNode] Files fetched:", files);
-        console.log("[loadFilesForNode] Files loaded:", files?.length || 0);
-        // setSelectedFiles(files);
-
-        const baseSiteUrl = node.siteUrl.split("/sites/")[0] + "/sites/";
-        const siteCollection = node.siteUrl.split("/sites/")[1].split("/")[0];
-        const entityName = node.siteUrl.split("/").pop();
-
-        const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
-
-      //  const fmItems  = await spRoot.web.lists
-      //     .getByTitle(`DMS${entityName}FileMaster`)
-      //     .items.select("FileName", "IsDeleted")
-      //     .top(5000)();
-
-      //   const deletedSet = new Set(
-      //     fmItems
-      //       .filter(i => i.IsDeleted !== null && i.IsDeleted !== undefined)
-      //       .map(i => i.FileName)
-      //   );
-
-      //   const visibleFiles = (files || []).filter(
-      //     (f: any) => !deletedSet.has(f.Name)
-      //   );
-
-      //   setSelectedFiles(visibleFiles);
-
-//       const fmItems = await spRoot.web.lists
-//   .getByTitle(`DMS${entityName}FileMaster`)
-//   .items.select("FileName", "IsDeleted", "Status")
-//   .top(5000)();
- 
-// // 2. Build the "Allowed" Set
-// const allowedSet = new Set(
-//   fmItems
-//     .filter(i => {
-//       // Must NOT be deleted
-//       const isNotDeleted = !i.IsDeleted;
-//       // Must be Approved, Auto Approved, or Null/Empty
-//       const hasValidStatus = i.Status === "Approved" ||
-//                              i.Status === "Auto Approved" ||
-//                              i.Status === null ||
-//                              i.Status === "";
- 
-//       return isNotDeleted && hasValidStatus;
-//     })
-//     .map(i => i.FileName)
-// );
- 
-// // 3. Filter your folder files based on the allowedSet
-// const visibleFiles = (files || []).filter(
-//   (f: any) => allowedSet.has(f.Name)
-// );
- 
-// setSelectedFiles(visibleFiles);
- 
- // 1. Fetch the Master List data
-// const currentFolder = node.title;
-const currentFolder = node.type === "folder" ? node.libraryTitle : node.title;
- 
-const fmItems = await spRoot.web.lists
-  .getByTitle(`DMS${entityName}FileMaster`)
-  .items.select("ID", "FileName", "IsDeleted", "Status", "IsFavourite", "CurrentUser") //rohit 04/05/2026
-  .filter(`DocumentLibraryName eq '${currentFolder}'`)
-  .top(5000)();
-
-// 2. Create a Map for quick lookup (Key: FileName, Value: {ID, Status})
-const masterDataMap = new Map();
-
-fmItems.forEach(i => {
-  // Logic: Only add to the map if it meets your requirements
-  const hasValidStatus = i.Status === "Approved" || 
-                         i.Status === "Auto Approved" || 
-                         i.Status === null || 
-                         i.Status === "";
-                         
-  const isNotDeleted = !i.IsDeleted; // Adjust if IsDeleted is "Yes"/1
-
-  if (hasValidStatus && isNotDeleted) {
-    const existingData = masterDataMap.get(i.FileName); //rohit 04/05/2026
-    masterDataMap.set(i.FileName, {
-      id: i.ID,
-      status: i.Status,
-      isFavourite: existingData?.isFavourite || (i.IsFavourite === true && (i.CurrentUser || "").toLowerCase() === ((context.pageContext as any)?.user?.email || (context.pageContext as any)?.user?.loginName || "").toLowerCase()) //rohit 04/05/2026
-    });
-  }
-});
-
-//srs 19/5/26 star comment 
-// 3. Filter and Enrich the files array
-// const visibleFiles = (files || [])
-//   .filter((f: any) => masterDataMap.has(f.Name)) // Only keep if in the "allowed" map
-//   .map((f: any) => {
-//     const extraData = masterDataMap.get(f.Name);
-//     return {
-
-//           // ritik chnage - 29/04/26 start
-
-//     //   ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
-//     //   ID: extraData.id, // Inject the List ID
-//     //   Status: extraData.status, // Inject the Status
-//     //   // srs 10/4/26
-//     //   // --- ADD THESE LINES TO FIX PERMISSIONS ---
-//     //   FileUID: f.UniqueId,             // Maps library GUID to the expected property
-//     //   SiteID: node.siteUrl,            // Passes the current subsite URL
-//     //   DocumentLibraryName: node.libraryTitle,
-//     //   SiteName: entityName             // Used for Admin Group naming logic
-//     // };
-
-
-
-//     ...f,
-//       ID: extraData.id,
-//       Status: extraData.status,
-//       IsFavourite: extraData.isFavourite,
-//       FileUID: f.UniqueId,
-//       SiteID: node.siteUrl,
-//       __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
-//       CurrentFolderPath: serverRel.replace(`/${f.Name}`, ""),
-//       DocumentLibraryName: node.libraryTitle,
-//       SiteName: entityName,
-//       FileName: f.Name,
-//       // FilePreviewURL: `${window.location.origin}${f.ServerRelativeUrl}`,
-//       FilePreviewURL: (() => {
-//         const serverRel = f.ServerRelativeUrl || "";
-//         const parentFolder = serverRel.substring(0, serverRel.lastIndexOf("/"));
-//          const fileName = f.Name || "";
-//         const ext = fileName.split('.').pop().toLowerCase();
-//         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
-//         if (isImage) {
-//     return `${window.location.origin}${serverRel}`;
-//   }
-//         return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRel)}&parent=${encodeURIComponent(parentFolder)}`;
-//       })(),
-//       // ritik chnage - 29/04/26 end 
-//     };
-//   });
-// srs starts
-// 3. Filter and Enrich the files array (Modified to show ALL files)
-const visibleFiles = (files || [])
-  // REMOVED: .filter((f: any) => masterDataMap.has(f.Name)) -> This allows bulk-uploaded files to render!
-  .map((f: any) => {
-    const extraData = masterDataMap.get(f.Name); // Will be undefined for bulk-uploaded files
-   
-    return {
-      ...f,
-      // Use optional chaining (?.) and fallbacks so unregistered files don't crash the app
-      ID: extraData?.id || null,
-      Status: extraData?.status || "Draft/Unregistered", // Mark them clearly if they have no status yet
-      IsFavourite: extraData?.isFavourite || false,
-      FileUID: f.UniqueId,
-      SiteID: node.siteUrl,
-       SiteID2: context.pageContext.site.id.toString(), // srs 20/5/26
-      __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
-      CurrentFolderPath: serverRel.replace(`/${f.Name}`, ""),
-      DocumentLibraryName: node.libraryTitle,
-      SiteName: entityName,
-      FileName: f.Name,
-      FilePreviewURL: (() => {
-        const serverRelUrl = f.ServerRelativeUrl || "";
-        const parentFolder = serverRelUrl.substring(0, serverRelUrl.lastIndexOf("/"));
-        const fileName = f.Name || "";
-        const ext = fileName.split('.').pop().toLowerCase();
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
-        if (isImage) {
-          return `${window.location.origin}${serverRelUrl}`;
-        }
-        return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRelUrl)}&parent=${encodeURIComponent(parentFolder)}`;
-      })(),
-    };
-  });
-// srs end 19/5/26
-
- 
-
-  // ritik 10/04/26 start
-
-  // setSelectedFiles(visibleFiles); Ritik added 10/04/26 when someone upload the file it will apairing on first page
-const sortedFiles = [...visibleFiles].sort((a: any, b: any) => {
-  const dateA = new Date(a.TimeCreated || a.TimeLastModified || 0).getTime();
-  const dateB = new Date(b.TimeCreated || b.TimeLastModified || 0).getTime();
-  return dateB - dateA; // latest first
-});
-setSelectedFiles(sortedFiles);
-console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
-
-// setBreadcrumbs(getNodePath(node.key)); ritik 09/04/26
-        const nodePath = getNodePath(node.key);
-if (nodePath && nodePath.length > 0) {
-  setBreadcrumbs(nodePath);
-}
-
-// ritik 10/04/26 end 
-
-setSelectedFiles(visibleFiles);
-console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
-
-        console.log("[loadFilesForNode] Selected files set:", selectedFiles);
-        setBreadcrumbs(getNodePath(node.key));
-
-        console.log("Breadcrumbs updated:", breadcrumbs);
-        console.log("Breadcrumbs updated 2:" + JSON.stringify(getNodePath(node.key)))
+       
+        console.log("[loadFilesForNode] Background background load completed entirely.");
       } else {
         console.log("[loadFilesForNode] No folderPath computed for node; skipping files fetch.");
       }
@@ -1559,7 +1454,281 @@ console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles
       setSelectedFiles([]);
     }
   };
+//   const loadFilesForNode = async (node: TreeNode) => {
+//     try {
+//       setFilesLoadedloadedfromnode(true);
 
+//       console.log("[loadFilesForNode] Start:", { key: node.key, title: node.title, type: node.type, siteUrl: node.siteUrl });
+//       const siteSP = spfi(node.siteUrl).using(SPFx(context));
+//       let folderPath = "";
+
+//       if (node.type === "library") {
+//         folderPath = `${node.libraryTitle}`;
+//         setCurrentFolderPath(node.libraryTitle || "");
+//       } else if (node.type === "folder") {
+//         folderPath = `${node.folderPath}`;
+//         setCurrentFolderPath(node.folderPath || "");
+//       }
+
+//       setCurrentSiteUrl(node.siteUrl);
+
+//       if (folderPath) {
+//         const serverRel = `/sites/${node.siteUrl.split("/sites/")[1]}/${folderPath}`;
+//         console.log("[loadFilesForNode] Fetching files from:", serverRel);
+//         // const files = await siteSP.web.getFolderByServerRelativePath(serverRel).files();  srs 19/05/26
+//           //srs 19/5/26
+//         // --- LOOP TO FETCH ALL 50,000+ FILES VIA CHUNKED PAGES ---
+//         let allRows: any[] = [];
+//         let pagingToken = "";
+//         let hasNextPage = true;
+       
+//         while (hasNextPage) {
+//           const listData = await siteSP.web.lists.getByTitle(node.libraryTitle).renderListDataAsStream({
+//             FolderServerRelativeUrl: serverRel,
+//             ViewXml: `<View><RowLimit Paged="TRUE">5000</RowLimit></View>`,
+//             Paging: pagingToken || undefined // Passes the pagination pointer back on subsequent runs
+//           });
+ 
+//           if (listData && listData.Row) {
+//             allRows = [...allRows, ...listData.Row];
+//           }
+ 
+//           // Check if another page exists
+//           if (listData && listData.NextHref) {
+//             // NextHref looks like "?Paged=TRUE&p_ID=5000&..."
+//             // Strip out the leading "?" to properly convert it into an API-acceptable query parameter string
+//             pagingToken = listData.NextHref.startsWith("?")
+//               ? listData.NextHref.substring(1)
+//               : listData.NextHref;
+//           } else {
+//             hasNextPage = false; // No more files left to pull
+//           }
+//         }
+ 
+//         // Map the comprehensive multi-page collection to your expected file structure
+//         const files = allRows
+//           .filter((row: any) => row.FSObjType === "0") // Retain files only (Excludes subfolders)
+//           .map((row: any) => ({
+//             Name: row.FileLeafRef,
+//             UniqueId: row.UniqueId ? row.UniqueId.replace(/[{}]/g, "") : row.GUID,
+//             ServerRelativeUrl: row.FileRef,
+//             TimeCreated: row.Created,
+//             TimeLastModified: row.Modified
+//           }));
+//         // ---------------------------------------------------------
+//         // srs 19/5/26 end
+ 
+//         console.log("[loadFilesForNode] Files fetched:", files);
+//         console.log("[loadFilesForNode] Files loaded:", files?.length || 0);
+//         // setSelectedFiles(files);
+
+//         const baseSiteUrl = node.siteUrl.split("/sites/")[0] + "/sites/";
+//         const siteCollection = node.siteUrl.split("/sites/")[1].split("/")[0];
+//         const entityName = node.siteUrl.split("/").pop();
+
+//         const spRoot = spfi(`${baseSiteUrl}${siteCollection}`).using(SPFx(context));
+
+//       //  const fmItems  = await spRoot.web.lists
+//       //     .getByTitle(`DMS${entityName}FileMaster`)
+//       //     .items.select("FileName", "IsDeleted")
+//       //     .top(5000)();
+
+//       //   const deletedSet = new Set(
+//       //     fmItems
+//       //       .filter(i => i.IsDeleted !== null && i.IsDeleted !== undefined)
+//       //       .map(i => i.FileName)
+//       //   );
+
+//       //   const visibleFiles = (files || []).filter(
+//       //     (f: any) => !deletedSet.has(f.Name)
+//       //   );
+
+//       //   setSelectedFiles(visibleFiles);
+
+// //       const fmItems = await spRoot.web.lists
+// //   .getByTitle(`DMS${entityName}FileMaster`)
+// //   .items.select("FileName", "IsDeleted", "Status")
+// //   .top(5000)();
+ 
+// // // 2. Build the "Allowed" Set
+// // const allowedSet = new Set(
+// //   fmItems
+// //     .filter(i => {
+// //       // Must NOT be deleted
+// //       const isNotDeleted = !i.IsDeleted;
+// //       // Must be Approved, Auto Approved, or Null/Empty
+// //       const hasValidStatus = i.Status === "Approved" ||
+// //                              i.Status === "Auto Approved" ||
+// //                              i.Status === null ||
+// //                              i.Status === "";
+ 
+// //       return isNotDeleted && hasValidStatus;
+// //     })
+// //     .map(i => i.FileName)
+// // );
+ 
+// // // 3. Filter your folder files based on the allowedSet
+// // const visibleFiles = (files || []).filter(
+// //   (f: any) => allowedSet.has(f.Name)
+// // );
+ 
+// // setSelectedFiles(visibleFiles);
+ 
+//  // 1. Fetch the Master List data
+// // const currentFolder = node.title;
+// const currentFolder = node.type === "folder" ? node.libraryTitle : node.title;
+ 
+// const fmItems = await spRoot.web.lists
+//   .getByTitle(`DMS${entityName}FileMaster`)
+//   .items.select("ID", "FileName", "IsDeleted", "Status", "IsFavourite", "CurrentUser") //rohit 04/05/2026
+//   .filter(`DocumentLibraryName eq '${currentFolder}'`)
+//   .top(5000)();
+
+// // 2. Create a Map for quick lookup (Key: FileName, Value: {ID, Status})
+// const masterDataMap = new Map();
+
+// fmItems.forEach(i => {
+//   // Logic: Only add to the map if it meets your requirements
+//   const hasValidStatus = i.Status === "Approved" || 
+//                          i.Status === "Auto Approved" || 
+//                          i.Status === null || 
+//                          i.Status === "";
+                         
+//   const isNotDeleted = !i.IsDeleted; // Adjust if IsDeleted is "Yes"/1
+
+//   if (hasValidStatus && isNotDeleted) {
+//     const existingData = masterDataMap.get(i.FileName); //rohit 04/05/2026
+//     masterDataMap.set(i.FileName, {
+//       id: i.ID,
+//       status: i.Status,
+//       isFavourite: existingData?.isFavourite || (i.IsFavourite === true && (i.CurrentUser || "").toLowerCase() === ((context.pageContext as any)?.user?.email || (context.pageContext as any)?.user?.loginName || "").toLowerCase()) //rohit 04/05/2026
+//     });
+//   }
+// });
+
+// //srs 19/5/26 star comment 
+// // 3. Filter and Enrich the files array
+// // const visibleFiles = (files || [])
+// //   .filter((f: any) => masterDataMap.has(f.Name)) // Only keep if in the "allowed" map
+// //   .map((f: any) => {
+// //     const extraData = masterDataMap.get(f.Name);
+// //     return {
+
+// //           // ritik chnage - 29/04/26 start
+
+// //     //   ...f,             // Keep all original file properties (ServerRelativeUrl, etc.)
+// //     //   ID: extraData.id, // Inject the List ID
+// //     //   Status: extraData.status, // Inject the Status
+// //     //   // srs 10/4/26
+// //     //   // --- ADD THESE LINES TO FIX PERMISSIONS ---
+// //     //   FileUID: f.UniqueId,             // Maps library GUID to the expected property
+// //     //   SiteID: node.siteUrl,            // Passes the current subsite URL
+// //     //   DocumentLibraryName: node.libraryTitle,
+// //     //   SiteName: entityName             // Used for Admin Group naming logic
+// //     // };
+
+
+
+// //     ...f,
+// //       ID: extraData.id,
+// //       Status: extraData.status,
+// //       IsFavourite: extraData.isFavourite,
+// //       FileUID: f.UniqueId,
+// //       SiteID: node.siteUrl,
+// //       __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
+// //       CurrentFolderPath: serverRel.replace(`/${f.Name}`, ""),
+// //       DocumentLibraryName: node.libraryTitle,
+// //       SiteName: entityName,
+// //       FileName: f.Name,
+// //       // FilePreviewURL: `${window.location.origin}${f.ServerRelativeUrl}`,
+// //       FilePreviewURL: (() => {
+// //         const serverRel = f.ServerRelativeUrl || "";
+// //         const parentFolder = serverRel.substring(0, serverRel.lastIndexOf("/"));
+// //          const fileName = f.Name || "";
+// //         const ext = fileName.split('.').pop().toLowerCase();
+// //         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
+// //         if (isImage) {
+// //     return `${window.location.origin}${serverRel}`;
+// //   }
+// //         return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRel)}&parent=${encodeURIComponent(parentFolder)}`;
+// //       })(),
+// //       // ritik chnage - 29/04/26 end 
+// //     };
+// //   });
+// // srs starts
+// // 3. Filter and Enrich the files array (Modified to show ALL files)
+// const visibleFiles = (files || [])
+//   // REMOVED: .filter((f: any) => masterDataMap.has(f.Name)) -> This allows bulk-uploaded files to render!
+//   .map((f: any) => {
+//     const extraData = masterDataMap.get(f.Name); // Will be undefined for bulk-uploaded files
+   
+//     return {
+//       ...f,
+//       // Use optional chaining (?.) and fallbacks so unregistered files don't crash the app
+//       ID: extraData?.id || null,
+//       Status: extraData?.status || "Draft/Unregistered", // Mark them clearly if they have no status yet
+//       IsFavourite: extraData?.isFavourite || false,
+//       FileUID: f.UniqueId,
+//       SiteID: node.siteUrl,
+//        SiteID2: context.pageContext.site.id.toString(), // srs 20/5/26
+//       __siteUrl: node.siteUrl.split("/sites/")[0] + "/sites/" + node.siteUrl.split("/sites/")[1]?.split("/")[0],
+//       CurrentFolderPath: serverRel.replace(`/${f.Name}`, ""),
+//       DocumentLibraryName: node.libraryTitle,
+//       SiteName: entityName,
+//       FileName: f.Name,
+//       FilePreviewURL: (() => {
+//         const serverRelUrl = f.ServerRelativeUrl || "";
+//         const parentFolder = serverRelUrl.substring(0, serverRelUrl.lastIndexOf("/"));
+//         const fileName = f.Name || "";
+//         const ext = fileName.split('.').pop().toLowerCase();
+//         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) > -1;
+//         if (isImage) {
+//           return `${window.location.origin}${serverRelUrl}`;
+//         }
+//         return `${window.location.origin}${parentFolder}/Forms/AllItems.aspx?id=${encodeURIComponent(serverRelUrl)}&parent=${encodeURIComponent(parentFolder)}`;
+//       })(),
+//     };
+//   });
+// // srs end 19/5/26
+
+ 
+
+//   // ritik 10/04/26 start
+
+//   // setSelectedFiles(visibleFiles); Ritik added 10/04/26 when someone upload the file it will apairing on first page
+// const sortedFiles = [...visibleFiles].sort((a: any, b: any) => {
+//   const dateA = new Date(a.TimeCreated || a.TimeLastModified || 0).getTime();
+//   const dateB = new Date(b.TimeCreated || b.TimeLastModified || 0).getTime();
+//   return dateB - dateA; // latest first
+// });
+// setSelectedFiles(sortedFiles);
+// console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
+
+// // setBreadcrumbs(getNodePath(node.key)); ritik 09/04/26
+//         const nodePath = getNodePath(node.key);
+// if (nodePath && nodePath.length > 0) {
+//   setBreadcrumbs(nodePath);
+// }
+
+// // ritik 10/04/26 end 
+
+// setSelectedFiles(visibleFiles);
+// console.log("[loadFilesForNode] Visible Files with ID and Status:", visibleFiles);
+
+//         console.log("[loadFilesForNode] Selected files set:", selectedFiles);
+//         setBreadcrumbs(getNodePath(node.key));
+
+//         console.log("Breadcrumbs updated:", breadcrumbs);
+//         console.log("Breadcrumbs updated 2:" + JSON.stringify(getNodePath(node.key)))
+//       } else {
+//         console.log("[loadFilesForNode] No folderPath computed for node; skipping files fetch.");
+//       }
+//     } catch (error) {
+//       console.error("[loadFilesForNode] Error:", error);
+//       setSelectedFiles([]);
+//     }
+//   };
+// srs 22/5/26  end
   const toggleNode = async (node: TreeNode) => {
     if (node.type === "function") {
       console.log("[toggleNode] Expanding function:", node.title);

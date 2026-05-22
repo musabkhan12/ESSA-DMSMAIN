@@ -278,8 +278,9 @@ const forbiddenFound = formFields.filter(f =>
 );
 if (forbiddenFound.length > 0) {
   forbiddenFound.forEach(f => {
-    newErrors[f.id] = { ...newErrors[f.id], fieldName: " " };
+    newErrors[f.id] = { ...newErrors[f.id], fieldName: "invalid" };
   });
+  setErrors1(newErrors);
   Swal.fire({
     title: "Not Allowed!",
     text: "Some column names are not allowed. Please choose different names.",
@@ -287,7 +288,39 @@ if (forbiddenFound.length > 0) {
     confirmButtonText: "OK",
   });
   isValid = false;
+  return isValid;
 }
+// if (forbiddenFound.length > 0) {
+//   forbiddenFound.forEach(f => {
+//     newErrors[f.id] = { ...newErrors[f.id], fieldName: " " };
+//   });
+//   Swal.fire({
+//     title: "Not Allowed!",
+//     text: "Some column names are not allowed. Please choose different names.",
+//     icon: "error",
+//     confirmButtonText: "OK",
+//   });
+//   isValid = false;
+// }
+// ritik - number included validation
+const invalidFields = formFields.filter(f =>
+  f.fieldName.trim() !== "" && /[\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(f.fieldName.trim())
+);
+if (invalidFields.length > 0) {
+  invalidFields.forEach(f => {
+    newErrors[f.id] = { ...newErrors[f.id], fieldName: "invalid" };
+  });
+  setErrors1(newErrors);
+  Swal.fire({
+    title: "Invalid Field Name!",
+    text: "Field name cannot contain numbers or special characters. Please use letters only.",
+    icon: "warning",
+    confirmButtonText: "OK",
+  });
+  isValid = false;
+  return isValid;
+}
+ 
     formFields.forEach((field) => {
       if (!field.fieldName.trim()) {
         newErrors[field.id] = { ...newErrors[field.id], fieldName: 'Field Name is required' };
@@ -500,7 +533,7 @@ const startProgressLoader = (totalSeconds: number) => {
       // --- Success Popup Logic ---
       Swal.fire({
         title: "Success!",
-        text: "Folder created successfully and everything is set up.",
+        text: "Folder created successfully ",
         icon: "success",
         confirmButtonText: "OK",
         allowOutsideClick: false, // Prevents closing by clicking outside
@@ -557,10 +590,10 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
         console.log("User errors checks called");
         validateUser = true;
       }
-      // if(!validateFields()){
-      //     // console.log("select the fiels or type");
-      //     validateColumns=true
-      // }
+      if(!validateFields()){
+          // console.log("select the fiels or type");
+          validateColumns=true
+      }
     }
 
     // Validation for forbidden column names
@@ -573,8 +606,8 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
     // If errors exist, set them to the state and prevent submission
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-    } else if (validateColumns) {
-      // alert("Add Columns Fields and Type");
+   } else if (validateColumns) {
+      return;
     } else if (validateUser) {
       // alert("Please select at least one user");
     }
@@ -1387,15 +1420,15 @@ if (OthProps.DocumentLibrary !== "") {
                 <td>
                 <input
   type="text"
-  className={`create-folder-form-control ${forbiddenIds.includes(formField.id) ? "input-forbidden" : ""}`}
+  className={`create-folder-form-control ${forbiddenIds.includes(formField.id) || errors1[formField.id]?.fieldName === "invalid" ? "input-forbidden" : ""}`}
   placeholder="Enter field name"
   value={formField.fieldName}
   onChange={(e) => handleInputChange(formField.id, e)}
 />
-                  {errors1[formField.id]?.fieldName && errors1[formField.id].fieldName !== "red" && (
-                    <span className="create-folder-error-message">
-                      {errors1[formField.id].fieldName}
-                    </span>
+{errors1[formField.id]?.fieldName && errors1[formField.id].fieldName !== "red" && errors1[formField.id].fieldName !== "invalid" && (
+  <span className="create-folder-error-message">
+    {errors1[formField.id].fieldName}
+  </span>
                   )}
                 </td>
 
@@ -1671,6 +1704,13 @@ if (OthProps.DocumentLibrary !== "") {
                   }
                   placeholder="Enter names or email addresses..."
                   noOptionsMessage={() => "No User Found..."}
+                menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (provided: any) => ({
+                      ...provided,
+                      zIndex: 9999
+                    })
+                  }}
                 />
               </td>
 

@@ -632,7 +632,29 @@ const handleSave = async () => {
                     )
                   )
                 }
+
+             // Rohit 21/05/2026 -----start
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                menuShouldScrollIntoView={false}
+                styles={{
+                  menuPortal: (provided: any) => ({
+                    ...provided,
+                    zIndex: 9999
+                  }),
+                  menu: (provided: any) => ({
+                    ...provided,
+                    marginTop: "4px"
+                  }),
+                  menuList: (provided: any) => ({
+                    ...provided,
+                    maxHeight: "180px",
+                    overflowY: "auto"
+                  })
+                }}
               />
+              {/* Rohit 21/05/2026 -----end */}
+
             </td>
  
             {/* Type */}

@@ -269,6 +269,18 @@ allUsers = [...allUsers, ...filteredUsers];
     onChange={(selected: any) => setSelectedUsers(Array.isArray(selected) ? selected : [])}
     placeholder="Select users..."
     isSearchable={true}
+        // Rohit 21/05/2026 -----start
+ styles={{
+      input: (base: any) => ({
+        ...base,
+        "& input": {
+          border: "0 !important",
+          boxShadow: "none !important",
+          outline: "none !important"
+        }
+      })
+    }}
+      //  Rohit 21/05/2026 -----end 
   />
 </Form.Group>
 
