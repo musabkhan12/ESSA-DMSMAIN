@@ -1445,8 +1445,30 @@ const handleSubmit = async (event: any) => {
   }
 
   const formSelector = document.getElementById("formSelector") as HTMLFormElement;
-  if (!formSelector.checkValidity()) {
-    formSelector.reportValidity();
+  // Custom validation for dynamic inputs: highlight empty required fields
+  const dynamicInputs = Array.from(document.querySelectorAll('.dynamic-input')) as HTMLInputElement[];
+  const missingFields: HTMLInputElement[] = [];
+  dynamicInputs.forEach((input) => {
+    // remove previous error state
+    input.classList.remove('input-error');
+    // only validate non-file controls that are required
+    if (input.type !== 'file' && input.required) {
+      const val = input.value;
+      if (!val || String(val).trim() === '') {
+        missingFields.push(input);
+        input.classList.add('input-error');
+      }
+    }
+  });
+
+  if (missingFields.length > 0) {
+    // focus first missing field and show warning
+    missingFields[0].focus();
+    Swal.fire({
+      icon: 'warning',
+      title: 'Please fill out the fields!',
+      text: 'All fields are required.',
+    });
     return;
   }
 

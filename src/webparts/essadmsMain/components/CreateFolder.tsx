@@ -170,12 +170,23 @@ const [progress, setProgress] = useState(0);
     // event.preventDefault();
     setApprovalOption(event.target.value);
     setToggleApproval(true);
+    // Clear error for approval
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.approvalOption;
+      return updated;
+    });
   };
 
   const handleToggleRemove = (event: any) => {
     setApprovalOption(event.target.value);
     setToggleApproval(false);
-
+    // Clear error for approval
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.approvalOption;
+      return updated;
+    });
   };
   const [rows, setRows] = React.useState<
     { id: number; selectionType: "All" | "One"; approvedUserList: string[] }[]
@@ -226,6 +237,19 @@ const [progress, setProgress] = useState(0);
     if (!forbiddenColumnNames.includes(typedValue)) {
       setForbiddenIds(prev => prev.filter(i => i !== id));
     }
+    // Clear error when user types in field name
+    if (event.target.value.trim() !== '') {
+      setErrors1((prevErrors) => {
+        const updated = { ...prevErrors };
+        if (updated[id]) {
+          delete updated[id].fieldName;
+          if (Object.keys(updated[id]).length === 0) {
+            delete updated[id];
+          }
+        }
+        return updated;
+      });
+    }
   };
 
   //   add type in the formField array
@@ -240,10 +264,16 @@ const [progress, setProgress] = useState(0);
 
     // Reset error when user selects a value
     if (event.target.value !== '') {
-      setErrors1((prevErrors) => ({
-        ...prevErrors,
-        [id]: { ...prevErrors[id], selectField: '' }
-      }));
+      setErrors1((prevErrors) => {
+        const updated = { ...prevErrors };
+        if (updated[id]) {
+          delete updated[id].selectField;
+          if (Object.keys(updated[id]).length === 0) {
+            delete updated[id];
+          }
+        }
+        return updated;
+      });
     }
     setEmptyFieldTypeIds(prev => prev.filter(i => i !== id));//ritik 15/05/26
   }
@@ -272,9 +302,9 @@ const [progress, setProgress] = useState(0);
 
     let isValid = true;
     const newErrors: { [key: number]: { fieldName?: string; selectField?: string } } = {};
-// Forbidden name check
+// Forbidden name check - only validate filled fields
 const forbiddenFound = formFields.filter(f => 
-  forbiddenColumnNames.includes(f.fieldName.trim().toLowerCase())
+  f.fieldName.trim() !== "" && forbiddenColumnNames.includes(f.fieldName.trim().toLowerCase())
 );
 if (forbiddenFound.length > 0) {
   forbiddenFound.forEach(f => {
@@ -321,16 +351,24 @@ if (invalidFields.length > 0) {
   return isValid;
 }
  
-    formFields.forEach((field) => {
-      if (!field.fieldName.trim()) {
-        newErrors[field.id] = { ...newErrors[field.id], fieldName: 'Field Name is required' };
-        isValid = false;
-      }
-      if (!field.selectField) {
-        newErrors[field.id] = { ...newErrors[field.id], selectField: 'Field Type is required' };
-        isValid = false;
-      }
+    // Check if any field is partially filled (has name but no type, or vice versa)
+    const partiallyFilled = formFields.filter(field => {
+      const hasName = field.fieldName.trim() !== "";
+      const hasType = field.selectField !== "";
+      // Only error if one is filled but not the other
+      return (hasName && !hasType) || (!hasName && hasType);
     });
+
+    if (partiallyFilled.length > 0) {
+      partiallyFilled.forEach(field => {
+        if (field.fieldName.trim() !== "" && !field.selectField) {
+          newErrors[field.id] = { ...newErrors[field.id], selectField: 'Field Type is required' };
+        } else if (!field.fieldName.trim() && field.selectField) {
+          newErrors[field.id] = { ...newErrors[field.id], fieldName: 'Field Name is required' };
+        }
+      });
+      isValid = false;
+    }
 
     setErrors1(newErrors);
     return isValid;
@@ -557,7 +595,7 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
 
     let validateColumns = false;
     let validateUser = false;
-    let formFieldValidation = false;
+    let errorMessages: string[] = [];
     // console.log("Handcreate called");
 
     // Validate the form
@@ -566,29 +604,36 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
     if (OthProps.DocumentLibrary !== "") {
       console.log("create Folder");
       if (!folderName.trim()) {
-        validationErrors.folderName = "Folder Name is required.";
+        validationErrors.folderName = "error";
+        errorMessages.push("Folder Name is required");
       }
       if (!folderOverview.trim()) {
-        validationErrors.folderOverview = "Folder Overview is required.";
+        validationErrors.folderOverview = "error";
+        errorMessages.push("Folder Overview is required");
       }
 
     } else {
       console.log("create document library");
       if (!folderName.trim()) {
-        validationErrors.folderName = "Folder Name is required.";
+        validationErrors.folderName = "error";
+        errorMessages.push("Folder Name is required");
       }
       if (!approvalOption.trim()) {
-        validationErrors.approvalOption = "Approval Option is required.";
+        validationErrors.approvalOption = "error";
+        errorMessages.push("Approval Option is required");
       }
       if (!folderPrivacy) {
-        validationErrors.folderPrivacy = "Please select folder privacy.";
+        validationErrors.folderPrivacy = "error";
+        errorMessages.push("Folder Privacy is required");
       }
       if (!folderOverview.trim()) {
-        validationErrors.folderOverview = "Folder Overview is required.";
+        validationErrors.folderOverview = "error";
+        errorMessages.push("Folder Overview is required");
       }
       if (!validateUsersSelect() && toggleApproval) {
         console.log("User errors checks called");
         validateUser = true;
+        errorMessages.push("Please select at least one user for approval");
       }
       if(!validateFields()){
           // console.log("select the fiels or type");
@@ -604,8 +649,16 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
     //       // return;
     // }
     // If errors exist, set them to the state and prevent submission
-    if (Object.keys(validationErrors).length > 0) {
+    if (Object.keys(validationErrors).length > 0 || errorMessages.length > 0) {
       setErrors(validationErrors);
+      Swal.fire({
+        title: "Please fill out the fields!",
+        // html: errorMessages.map(msg => `<div>• ${msg}</div>`).join(''),
+        html: "All fields are required.",
+        icon: "warning",
+        confirmButtonText: "OK",
+      });
+      return;
    } else if (validateColumns) {
       return;
     } else if (validateUser) {
@@ -1186,6 +1239,12 @@ if (OthProps.DocumentLibrary !== "") {
 
     setFolderPrivacy(e.target.value);
     setShowDiv(e.target.value === "private")
+    // Clear error for privacy
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.folderPrivacy;
+      return updated;
+    });
   };
 
   const getRoleDefinitionId = (permission: String): number => {
@@ -1256,22 +1315,28 @@ if (OthProps.DocumentLibrary !== "") {
                 </label>
                 <input
                   type="text"
-                  className="create-folder-form-control"
+                  className={`create-folder-form-control ${errors.folderName ? 'input-error' : ''}`}
                   id="folderName"
                   placeholder="Enter project name"
                   value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
+                  onChange={(e) => {
+                    setFolderName(e.target.value);
+                    if (e.target.value.trim()) {
+                      setErrors((prev) => {
+                        const updated = { ...prev };
+                        delete updated.folderName;
+                        return updated;
+                      });
+                    }
+                  }}
                 />
-                {errors.folderName && (
-                  <span className="create-folder-error-message">{errors.folderName}</span>
-                )}
               </div>
               
-              <div className="create-folder-form-group-narrow">
+              <div className={`create-folder-form-group-narrow `}>
                 <label className="create-folder-form-label">
                   Folder Privacy
                 </label>
-                <div className="create-folder-radio-group">
+                <div className={`create-folder-radio-group ${errors.folderPrivacy ? 'radio-error' : ''}`}>
                   <div className="create-folder-radio-option">
                     <input
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1305,17 +1370,14 @@ if (OthProps.DocumentLibrary !== "") {
                     </label>
                   </div>
                 </div>
-                {errors.folderPrivacy && (
-                  <span className="create-folder-error-message">{errors.folderPrivacy}</span>
-                )}
               </div>
 
               {togglefolderPrivacy && (
-                <div className="create-folder-form-group-narrow">
+                <div className={`create-folder-form-group-narrow `}>
                   <label className="create-folder-form-label">
                     Approval
                   </label>
-                  <div className="create-folder-radio-group">
+                  <div className={`create-folder-radio-group ${errors.approvalOption ? 'radio-error' : ''}`}>
                     <div className="create-folder-radio-option">
                       <input
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1349,9 +1411,6 @@ if (OthProps.DocumentLibrary !== "") {
                       </label>
                     </div>
                   </div>
-                  {errors.approvalOption && (
-                    <span className="create-folder-error-message">{errors.approvalOption}</span>
-                  )}
                 </div>
               )}
             </div>
@@ -1361,15 +1420,21 @@ if (OthProps.DocumentLibrary !== "") {
                 Folder Overview
               </label>
               <textarea
-                className="create-folder-form-control create-folder-textarea"
+                className={`create-folder-form-control create-folder-textarea ${errors.folderOverview ? 'input-error' : ''}`}
                 id="folderOverview"
                 placeholder="Enter some brief about project"
                 value={folderOverview}
-                onChange={(e) => setFolderOverview(e.target.value)}
+                onChange={(e) => {
+                  setFolderOverview(e.target.value);
+                  if (e.target.value.trim()) {
+                    setErrors((prev) => {
+                      const updated = { ...prev };
+                      delete updated.folderOverview;
+                      return updated;
+                    });
+                  }
+                }}
               />
-              {errors.folderOverview && (
-                <span className="create-folder-error-message">{errors.folderOverview}</span>
-              )}
             </div>
           </form>
         </div>
@@ -1435,7 +1500,7 @@ if (OthProps.DocumentLibrary !== "") {
                 {/* Field Type */}
                 <td>
                 <select
-  className={`create-folder-form-control ${emptyFieldTypeIds.includes(formField.id) ? "input-forbidden" : ""}`} //Ritik 15
+  className={`create-folder-form-control ${emptyFieldTypeIds.includes(formField.id) || errors1[formField.id]?.selectField ? "input-forbidden" : ""}`}
   value={formField.selectField}
   onChange={(e) => handleSelectedType(formField.id, e)}
 >
@@ -1446,11 +1511,6 @@ if (OthProps.DocumentLibrary !== "") {
                     <option value="Date & Time">Date & Time</option>
                     <option value="Number">Number</option>
                   </select>
-                  {errors1[formField.id]?.selectField && (
-                    <span className="create-folder-error-message">
-                      {errors1[formField.id].selectField}
-                    </span>
-                  )}
                 </td>
 
                      {/* Ritik 10/04/2026 added Table data  */}

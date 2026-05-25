@@ -350,3 +350,18 @@
   border: 2px solid red !important;
   outline: none !important;
 }
+
+/* Error state for input and textarea */
+.input-error {
+  border: 2px solid #e74c3c !important;
+  outline: none !important;
+  background-color: #ffecec !important;
+}
+
+/* Error state for radio groups */
+.radio-error {
+  border: 2px solid #e74c3c;
+  border-radius: 4px;
+  padding: 8px;
+  background-color: #ffecec;
+}
