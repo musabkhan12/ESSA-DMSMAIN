@@ -371,7 +371,7 @@ const HorizontalNavbar = ({ _context, siteUrl }: any) => {
     className="searchcss desktoView"
     onChange={(e) => searchKeyPress(e)}
     onClick={toggleSearchDropdown}
-    placeholder="Search..." // Retains your placeholder
+    // placeholder="Search..." // Retains your placeholder
     id="searchInput"
   />
   
