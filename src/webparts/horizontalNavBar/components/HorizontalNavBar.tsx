@@ -81,6 +81,8 @@ const HorizontalNavbar = ({ _context, siteUrl }: any) => {
   const [NotificationArray, setNotificationArray] = useState([]);
   const menuRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+     const dmssiteUrl = window.location.origin;
+  let locationPath=window.location.pathname.match(/\/sites\/[^\/]+/)[0];
   function groupByFn(array: any, keyGetter: any) {
     return array.reduce((result: any, currentItem: any) => {
       const key = keyGetter(currentItem);
@@ -352,7 +354,7 @@ const HorizontalNavbar = ({ _context, siteUrl }: any) => {
           </div>
         </div>
         <div className={`navbar_content ${useHide ? 'searchcssmobile sidebar-closedBar' : 'searchcssmobile sidebar-openBa'}`} >
-          <div className="search_bar">
+          {/* <div className="search_bar">
 
             <input
               type="text"
@@ -361,7 +363,43 @@ const HorizontalNavbar = ({ _context, siteUrl }: any) => {
               onClick={toggleSearchDropdown}
               placeholder="Search..."
             />
-          </div>
+          </div> */}
+               <div className="search_bar" style={{ position: 'relative' }}>
+  <input
+    type="text"
+    value={query}
+    className="searchcss desktoView"
+    onChange={(e) => searchKeyPress(e)}
+    onClick={toggleSearchDropdown}
+    placeholder="Search..." // Retains your placeholder
+    id="searchInput"
+  />
+  
+  {/* Conditionally render the advance search overlay when query is empty */}
+  {query === "" && (
+    <span
+      onClick={(e) => {
+        e.stopPropagation(); // Prevents triggering the input's onClick handler
+        window.open(
+          `${dmssiteUrl}${locationPath}/SitePages/DMSAdvanceSearch.aspx`,
+          "_blank"
+        );
+      }}
+      style={{
+        position: 'absolute',
+        top: '50%',
+        right: '15px', // Aligns it to the right side inside the search input box
+        transform: 'translateY(-50%)',
+        zIndex: 3,
+        color: '#0078d4', // A distinct color makes it obvious it is a clickable link
+        cursor: 'pointer',
+        fontSize: '13px',
+      }}
+    >
+      Click here for advance search
+    </span>
+  )}
+</div>
           <div className="dropdown">
             <Search className='searchcssmobile' size='80' onClick={toggleSearchDropdown} />
 

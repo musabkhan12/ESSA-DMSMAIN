@@ -56,6 +56,7 @@ import { startOfDay } from "date-fns";
 // let loadfilefromnode = ''
 declare global {
   interface Window {
+    managePermissionSearch:(DocumentLibraryName:string,SiteTilte:string , SiteID:string, folderName:any ,folderPath:any,externalFolder:any,FolderID:any) => void;
     managePermission?: (folder: any) => void;
      // srs 10/4/26
     ManageFilePermission: (fileId: string, siteId: string, documentLibraryName: string, siteTitle: string) => Promise<void>;

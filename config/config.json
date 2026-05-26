@@ -25,12 +25,21 @@
           "manifest": "./src/webparts/horizontalNavBar/HorizontalNavBarWebPart.manifest.json"
         }
       ]
+    },
+    "advanced-search-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/advancedSearch/AdvancedSearchWebPart.js",
+          "manifest": "./src/webparts/advancedSearch/AdvancedSearchWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
   "localizedResources": {
     "EssadmsMainWebPartStrings": "lib/webparts/essadmsMain/loc/{locale}.js",
     "VerticalSideBarWebPartStrings": "lib/webparts/verticalSideBar/loc/{locale}.js",
-    "HorizontalNavBarWebPartStrings": "lib/webparts/horizontalNavBar/loc/{locale}.js"
+    "HorizontalNavBarWebPartStrings": "lib/webparts/horizontalNavBar/loc/{locale}.js",
+    "AdvancedSearchWebPartStrings": "lib/webparts/advancedSearch/loc/{locale}.js"
   }
 }

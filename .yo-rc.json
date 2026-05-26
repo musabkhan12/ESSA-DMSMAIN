@@ -3,7 +3,10 @@
     "plusBeta": false,
     "isCreatingSolution": false,
     "nodeVersion": "18.20.4",
-    "sdksVersions": {},
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.12.0"
+    },
     "version": "1.19.0",
     "libraryName": "essadms",
     "libraryId": "3089b1be-297f-4b93-b05b-8bcb73e575ad",
