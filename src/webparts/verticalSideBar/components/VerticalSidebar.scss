@@ -16,8 +16,36 @@
   font-weight: 500;
   padding: 10px 20px;
 }
+// #folderhierarchycontainer ul{
+//       max-height: 380px;
+//     overflow-y: auto;
+// }
+ .flex-dr{flex-direction: row-reverse;    padding: .8rem !important;}
+ .flex-dr h1{
+  font-size: 16px !important; font-weight: 700;
+ }
+ .flex-dr #replaceButton{position: absolute;
+    right: 7px;
+    top: -8px;
+    margin-top: 0px;}
+     .flex-dr #submitBtn{float: right;}
 .buttonaligntext{
   padding: 8px 10px;margin-bottom:3px;    margin-top:0px; text-align: left;    font-size:16px;
+}
+ .flex-dr  .btn-close{
+      POSITION: ABSOLUTE;
+    TOP: 12PX;
+    RIGHT: 12PX;
+}
+ .flex-dr #filePreview{
+      border: 10px solid #d9d9d9;
+    border-radius: 0;
+    height: 100vh !important;
+    margin-top: 0 !important;
+    overflow: hidden;
+    padding: 0;
+       position: relative;
+    margin-top: 14px !important;
 }
 .activenew{background: #fff !important;}
 .newalign svg{vertical-align: text-top !important;}

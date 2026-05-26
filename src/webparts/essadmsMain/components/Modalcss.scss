@@ -14,13 +14,13 @@
   
   /* Center alignment */
   display: flex !important;
-  align-items: center !important;
+  align-items: start !important;
   justify-content: center !important;
   
   position: fixed !important;
   padding: 0 !important;
   overflow: hidden !important;
-  z-index: 1060 !important;
+  z-index: 1060 !important;padding-top: 30px !important;
 }
  .modal-title {
      
@@ -184,9 +184,9 @@ body.modal-open {
     margin: 0 !important;
     padding: 0 !important;
     display: flex !important;
-    align-items: center !important;
+    align-items: start !important;
     justify-content: center !important;
-    z-index: 1060 !important;
+    z-index: 1060 !important; padding-top: 30px !important;
   }
 
   /* Modal backdrop */

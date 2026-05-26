@@ -4132,11 +4132,19 @@ window.rework=async(fileId:any,siteId:any,documentLibrary:any,siteName:any,fileP
 
   // Create the main container
   const mainContainer = document.createElement('div');
-  mainContainer.className = 'main-containeruploadfile';
+  mainContainer.className = 'row flex-dr';
   const librarydiv= document.getElementById('filelistcontainer')
   const backButton = document.createElement('button')
-  backButton.textContent = 'Close File Preview';
-  backButton.className = 'btn btn-secondary me-2 mt-2'; 
+  const backButtonTooltip = document.createElement('span');
+  backButtonTooltip.className = 'mb-1 mt-2 close-preview-tooltip';
+  backButtonTooltip.setAttribute('data-tooltip', 'Close File Preview');
+  backButton.className = 'btn-close';
+  backButton.setAttribute('aria-label', 'Close File Preview');
+  // backButton.textContent = 'Close File Preview';
+  // backButton.className = 'btn btn-secondary me-2 mt-2'; 
+  // backButton.className = 'btn-close';
+  // backButton.setAttribute('aria-label', 'Close File Preview');
+  // backButton.title = 'Close File Preview';
   
   backButton.addEventListener('click', () => {
     // Since you used innerHTML = "" to wipe the container, 
@@ -4314,7 +4322,7 @@ window.rework=async(fileId:any,siteId:any,documentLibrary:any,siteName:any,fileP
   
   // Div for columns input
   const column1 = document.createElement('div');
-  column1.className = 'column column1 p-3';
+  column1.className = 'col-lg-5';
 
   // Add form to the first column
   const form = document.createElement('form');
@@ -4395,7 +4403,7 @@ if (input) {
 
   // Create the second column
   const column2 = document.createElement('div');
-  column2.className = 'column column2 p-3';
+  column2.className = 'col-lg-7 position-relative';
 
   // Create the spinner div
   const spinner = document.createElement('div');
@@ -4421,7 +4429,16 @@ if (input) {
     }
     // myRequest(null,null,null);
    })
-   replaceButton.textContent="Replace"
+replaceButton.style.background = "transparent";
+   replaceButton.style.padding = "0";
+   const replaceTooltip = document.createElement("span");
+   replaceTooltip.className = "mb-1 mt-2";
+   replaceTooltip.setAttribute("data-tooltip", "Replace");
+   const replaceIcon = document.createElement("img");
+   replaceIcon.src = require("../assets/Replace.png");
+   replaceIcon.alt = "Replace";
+   replaceTooltip.appendChild(replaceIcon);
+   replaceButton.appendChild(replaceTooltip);
   
 
   // Add heading to the second column
@@ -4901,8 +4918,18 @@ if (input) {
    })
 
 
- submitButton.textContent="Submit"
- form.appendChild(submitButton);
+//  submitButton.textContent="Submit"
+submitButton.id = "submitBtn";
+const submitTooltip = document.createElement("span");
+submitTooltip.className = "mb-1 mt-2";
+submitTooltip.setAttribute("data-tooltip", "Submit");
+const submitIcon = document.createElement("img");
+submitIcon.src = require("../assets/submit-new1.png");
+submitIcon.alt = "Submit";
+submitIcon.style.height = "32px";
+submitTooltip.appendChild(submitIcon);
+submitButton.appendChild(submitTooltip);
+form.appendChild(submitButton);
 
 librarydiv.innerHTML = "";
 mainContainer.appendChild(backButton)
@@ -7277,6 +7304,10 @@ const handleSaveRename = async () => {
                   flexGrow: 1,
                   padding: "0px 0px",
                   overflow: "auto",
+                  overflowX: "hidden",
+                  overflowY: "auto",
+                  maxHeight: "calc(100vh - 200px)",
+                  scrollBehavior: "smooth",
 
                 }}
               >
