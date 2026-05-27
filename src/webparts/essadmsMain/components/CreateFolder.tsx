@@ -652,9 +652,9 @@ const sitePath = urlObj.pathname.endsWith('/') ? urlObj.pathname.slice(0, -1) : 
     if (Object.keys(validationErrors).length > 0 || errorMessages.length > 0) {
       setErrors(validationErrors);
       Swal.fire({
-        title: "Please fill out the fields!",
+        title: "Please fill the mandatory fields.",
         // html: errorMessages.map(msg => `<div>• ${msg}</div>`).join(''),
-        html: "All fields are required.",
+        // html: "All fields are required.",
         icon: "warning",
         confirmButtonText: "OK",
       });

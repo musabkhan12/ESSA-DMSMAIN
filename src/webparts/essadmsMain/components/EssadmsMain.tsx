@@ -4991,11 +4991,11 @@ librarydiv.appendChild(mainContainer)
       return;
     }
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "want to delete this folder?",
+      title: "Do you want to delete this Folder?",
+      // text: "Do you want to delete this Folder ?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonText: "Yes",
       cancelButtonText: "Cancel",
     });
  
@@ -5401,7 +5401,7 @@ const finalFolderName =
  
             Swal.fire({
               icon: 'success',
-              title: 'Success!',
+              title: 'Archive Successful!',
               text: `File '${file.Name}' has been archived successfully.`,
               timer: 2000
             });
@@ -5862,7 +5862,13 @@ const fpHandleCreate = async () => {
     setRowsForPermission([{ id: 0, selectedUserForPermission: [], selectedPermission: "" }]);
     setFpErrors({});
  
-    Swal.fire("Success", "Permissions added successfully.", "success");
+    // Swal.fire("Success", "Permissions added successfully.", "success");
+     Swal.fire({
+                    title: "Permissions added successfully.",
+                    // text: "Metadata successfully added",
+                    icon: "success",
+                    confirmButtonText: "OK",
+                  });
  
   } catch (e) {
     Swal.fire("Error", "An error occurred.", "error");
@@ -5871,7 +5877,7 @@ const fpHandleCreate = async () => {
  
 const fpHandleDeleteUser = async (userId: number, itemId: number, permission: string) => {
   const result = await Swal.fire({
-    title: "Are you sure?",
+    title: "Do you want to remove this permission?",
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#3085d6",
@@ -5970,6 +5976,12 @@ const fpHandleDeleteUser = async (userId: number, itemId: number, permission: st
       );
 
       console.log("File soft deleted and FileMaster updated");
+        Swal.fire({
+        title: "Deleted successfully",
+        // text: "File deleted successfully.",
+        icon: "success",
+        timer: 2000
+      });
     } catch (err) {
       console.error("Delete failed:", err);
     }
@@ -6411,7 +6423,7 @@ const existingItems = await siteSP.web.lists
     // addhyan
   // window.location.reload(); // Refresh the page to reflect changes  
   Swal.fire({
-        title: 'Added to Favourites!',
+        title: 'Added to Favorites successfully!',
         text: 'The file has been successfully added to your favourites.',
         icon: 'success',
         confirmButtonText: 'ok'
@@ -6987,7 +6999,7 @@ const handleSaveRename = async () => {
 
     await Promise.all(updatePromises);
     
-    Swal.fire('Success', 'Columns updated successfully', 'success');
+    Swal.fire('Metadata Updated Successfully', '', 'success');
     setShowRenameMetadataModal(false);
     // aman 25/3/26
     setExistingColumns([]);

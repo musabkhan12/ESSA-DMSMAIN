@@ -446,7 +446,7 @@ const pathParts = folderPath.split('/');
       // Ritik 29/4/26  start 
       // Swal.fire('Success', `File shared successfully with ${selectedUsers.length} user(s)`, 'success');
       Swal.fire(
-        'Success',
+        'File Shared Successfully',
         `File shared successfully with ${selectedUsers.length} ${selectedUsers.length > 1 ? 'Users' : 'User'}`,
         'success'
       );

@@ -1552,8 +1552,9 @@ const handleSubmit = async (event: any) => {
     missingFields[0].focus();
     Swal.fire({
       icon: 'warning',
-      title: 'Please fill out the fields!',
-      text: 'All fields are required.',
+      title: 'Please fill the mandatory fields.',
+      // text: 'All fields are required.',
+      confirmButtonText: "OK",
     });
     return;
   }

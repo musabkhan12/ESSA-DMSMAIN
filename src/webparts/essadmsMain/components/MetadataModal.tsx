@@ -415,8 +415,8 @@ const MetadataModal: React.FC<{
             console.log("✅ All columns saved!");
             // alert(`✅ Successfully added ${valid.length} field(s) to ${siteInfo.subsiteName}/${siteInfo.documentLibraryName}!`);
             Swal.fire({
-                title: "Success!",
-                text: "Successfully added",
+                title: "Metadata added successfully!",
+                // text: "Metadata successfully added",
                 icon: "success",
                 confirmButtonText: "OK",
               });

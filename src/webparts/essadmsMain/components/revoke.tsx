@@ -413,8 +413,8 @@ const Revoke: React.FC<RevokeProps> = ({ show, selectedFolder, context, onClose,
   const revokeAccess = async (userId: string) => {
     // if (!window.confirm("Are you sure you want to revoke access for this user?")) return;
     const confirmResult = await Swal.fire({
-      title: "Are you sure?",
-      text: "Do you want to revoke access for this user?",
+      title: "Do you want to revoke access for this user?",
+      // text: "Are you sure?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, revoke it!",

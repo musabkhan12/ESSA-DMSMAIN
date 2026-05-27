@@ -542,7 +542,7 @@ const handleSave = async () => {
       }
     }
 
-    Swal.fire("Success", "Approval saved", "success");
+    Swal.fire("Saved successfully.", "Approval saved", "success");
     onClose();
   } catch (error) {
     console.error(error);
