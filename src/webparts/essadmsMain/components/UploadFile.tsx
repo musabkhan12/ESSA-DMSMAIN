@@ -39,18 +39,24 @@ submitButton.appendChild(img);
 submitButton.id="submitBtn";
 submitButton.type="submit";
 // submitButton.style.display='none';
-submitButton.disabled=true
+// submitButton.disabled=true
+const renderSubmitButtonContent = (btn: HTMLButtonElement, text = "") => {
+  btn.innerHTML = "";
+  const icon = document.createElement("img");
+  icon.src = require("../assets/submit-new1.png");
+  icon.alt = "Create";
+  icon.style.marginRight = "6px";
+  btn.appendChild(icon);
+  if (text) {
+    btn.appendChild(document.createTextNode(text));
+  }
+};
+
 const resetSubmitButton = () => {
   const btn = document.getElementById("submitBtn") as HTMLButtonElement;
   if (btn) {
-    btn.disabled = true;
-    btn.innerText = "";
-    const img2 = document.createElement("img");
-    img2.src = require("../assets/submit-new1.png");
-    img2.alt = "Create";
-    img2.style.marginRight = "6px";
-    btn.innerHTML = "";
-    btn.appendChild(img2);
+    // btn.disabled = true;
+    renderSubmitButtonContent(btn);
   }
 };
 
@@ -320,8 +326,12 @@ console.log("documentLibraryName" , documentLibraryName)
   // Aman 9/04/26  strat
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  setIsUploading(true);
-  const file = event.target.files![0];
+    // remove any previous error highlight when user interacts with the file input
+    const fileInputEl = event.target as HTMLInputElement;
+    fileInputEl.classList.remove('input-error');
+
+    setIsUploading(true);
+    const file = event.target.files![0];
 
   if (file) {
     const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
@@ -374,7 +384,7 @@ console.log("documentLibraryName" , documentLibraryName)
     console.log("no file selected")
     const submitButton = document.getElementById("submitBtn") as HTMLButtonElement;
     if(submitButton){
-      submitButton.disabled=true;
+      // submitButton.disabled=true;
     }
     setIsUploading(false);
   }
@@ -1562,8 +1572,8 @@ const handleSubmit = async (event: any) => {
   const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
   if (submitBtn.disabled) return; // Guard against multiple clicks
 
-  submitBtn.disabled = true;
-  submitBtn.innerText = "Submitting...";
+  // submitBtn.disabled = true;
+  renderSubmitButtonContent(submitBtn, "");
   setIsFinalUploading(true);
 
   // 1. Prepare dynamic payload
@@ -1584,9 +1594,21 @@ const handleSubmit = async (event: any) => {
   const selectedFile = fileInput?.files?.[0];
 
   if (!selectedFile) {
+    // highlight file input and notify user
+    const fileInputEl = document.getElementById('fileInput') as HTMLInputElement;
+    if (fileInputEl) {
+      fileInputEl.classList.add('input-error');
+      fileInputEl.focus();
+    }
     setIsFinalUploading(false);
     submitBtn.disabled = false;
-    submitBtn.innerText = "Submit";
+    renderSubmitButtonContent(submitBtn, "");
+    Swal.fire({
+      icon: 'warning',
+      title: 'No File Selected',
+      text: 'Please select a file to upload.',
+      confirmButtonText: 'OK'
+    });
     return;
   }
 
@@ -1617,7 +1639,7 @@ const handleSubmit = async (event: any) => {
       });
       setIsFinalUploading(false);
       submitBtn.disabled = false;
-      submitBtn.innerText = "Submit";
+      renderSubmitButtonContent(submitBtn, "");
       return;
     }
     // --- NEW VALIDATION END aman 13/03/26---
@@ -1977,11 +1999,11 @@ const handleSubmitBulk = async (event: any) => {
 
   console.log("Bulk upload button clicked");
   const submitBtn = document.getElementById("submitBtn2") as HTMLButtonElement;
-  submitBtn.disabled = true;
+  // submitBtn.disabled = true;
   // submitBtn.innerText = "Submitting...";
-  submitBtn.disabled = true;
+  submitBtn.disabled = false;
 submitBtn.style.opacity = "0.6";
-submitBtn.style.cursor = "not-allowed";
+// submitBtn.style.cursor = "not-allowed";
  
   const iframe = document.getElementById("filePreview") as HTMLIFrameElement;
   const spinner = document.getElementById("spinner") as HTMLElement;
@@ -2134,12 +2156,13 @@ rootWeb.using(AssignFrom(sp.web as any));
     //   onReturnToMain();
     // }, 3000);
     // ritik 10/04/26 end
+    
  
   } catch (error) {
     console.error("Error in bulk upload:", error);
     setIsFinalUploading(false);
     submitBtn.disabled = false;
-    submitBtn.innerText = "Submit";
+    renderSubmitButtonContent(submitBtn, "");
   }
 };
  

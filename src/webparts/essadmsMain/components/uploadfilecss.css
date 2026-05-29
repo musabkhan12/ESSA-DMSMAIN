@@ -197,6 +197,14 @@ display: none !important;
     border-radius: 4px;
     width: 100%; /* Adjust width as needed */
   }
+
+  /* Error highlight for inputs (including file inputs) */
+  .dynamic-input.input-error,
+  input.input-error {
+    border: 2px solid #d33 !important;
+    box-shadow: 2px solid #e74c3c!important;
+    outline: none !important;
+  }
   
   button {
     margin-top: 20px;

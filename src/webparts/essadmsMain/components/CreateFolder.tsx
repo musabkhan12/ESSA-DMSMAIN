@@ -196,17 +196,17 @@ const [progress, setProgress] = useState(0);
   //   Errors for field selection
   const [errors1, setErrors1] = useState<{ [key: number]: { fieldName?: string; selectField?: string } }>({});
 
-  // erroe for user selection
-  const [errorsForUserSelection, setErrorsForUserSelection] = useState<{ [key: number]: { userSelect?: string } }>({});
+  // error state for user selection
+  const [errorsForUserSelection, setErrorsForUserSelection] = useState<{ [key: number]: { hasError?: boolean } }>({});
 
 
   const validateUsersSelect = () => {
     let isValid = true;
-    const newErrors: { [key: number]: { userSelect?: string } } = {};
+    const newErrors: { [key: number]: { hasError?: boolean } } = {};
 
     rows.forEach((row) => {
       if (row.approvedUserList.length === 0) {
-        newErrors[row.id] = { userSelect: 'Please select at least one user.' };
+        newErrors[row.id] = { hasError: true };
         isValid = false;
       }
     });
@@ -476,16 +476,39 @@ if (invalidFields.length > 0) {
 
   const handleUserSelect = (selected: any, id: any) => {
     console.log(selectedUsers, "selectedUsers");
-    console.log(selectedUsers, "selectedUsers");
     setSelectedUsers(selected || []);
     console.log(selected, "selected ");
     const newRows = rows.map((row) =>
       row.id === id ? { ...row, approvedUserList: selected } : row
     );
     console.log("Selected items", selected, id);
-    // console.log(rows.length);
     setRows(newRows);
+
+    setErrorsForUserSelection((prev) => {
+      const updated = { ...prev };
+      if (updated[id]) {
+        delete updated[id].hasError;
+        if (Object.keys(updated[id]).length === 0) {
+          delete updated[id];
+        }
+      }
+      return updated;
+    });
   };
+
+  const approvalSelectStyles = (hasError: boolean) => ({
+    control: (provided: any) => ({
+      ...provided,
+      minHeight: '38px',
+      borderColor: hasError ? '#dc3545' : provided.borderColor,
+      boxShadow: hasError ? '0 0 0 1px #dc3545' : provided.boxShadow,
+      backgroundColor: '#ffecec !important',
+    }),
+    menuPortal: (provided: any) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+  });
 
   const handleAddRow = (
     event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>
@@ -1628,19 +1651,8 @@ if (OthProps.DocumentLibrary !== "") {
     placeholder="Enter names or email addresses..."
     noOptionsMessage={() => "No User Found..."}
     menuPortalTarget={document.body}
-    styles={{
-      menuPortal: (provided: any) => ({
-        ...provided,
-        zIndex: 9999
-      })
-    }}
+    styles={approvalSelectStyles(!!errorsForUserSelection[row.id]?.hasError)}
   />
-
-  {errorsForUserSelection[row.id]?.userSelect && (
-    <span className="create-folder-error-message">
-      {errorsForUserSelection[row.id].userSelect}
-    </span>
-  )}
 </td>
 
 

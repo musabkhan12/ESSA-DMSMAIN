@@ -4105,6 +4105,138 @@ window.rework=async(fileId:any,siteId:any,documentLibrary:any,siteName:any,fileP
   let clickedReplace=false;
 
   
+ //rohit 28/05/2026 ------start
+  const hideReworkPreviewFileControls = (iframe: HTMLIFrameElement): boolean => {
+    try {
+      const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDocument || !iframeDocument.body) return false;
+ 
+      const styleId = "dmsReworkPreviewHideCloseDelete";
+      if (!iframeDocument.getElementById(styleId)) {
+        const style = iframeDocument.createElement("style");
+        style.id = styleId;
+        //rohit 29/05/2026 -----start
+        style.textContent = `
+          #closeCommand,
+          [id='closeCommand'],
+          button[aria-label*='Close' i],
+          button[title*='Close' i],
+          button[aria-label*='Delete' i],
+          button[title*='Delete' i],
+          button[data-automationid*='close' i],
+          button[data-automationid*='delete' i],
+          button[data-automation-id*='close' i],
+          button[data-automation-id*='delete' i],
+          button[id*='close' i],
+          button[id*='delete' i],
+          [role='button'][aria-label*='Close' i],
+          [role='button'][title*='Close' i],
+          [role='button'][aria-label*='Delete' i],
+          [role='button'][title*='Delete' i],
+          [role='button'][data-automationid*='close' i],
+          [role='button'][data-automationid*='delete' i],
+          [role='button'][data-automation-id*='close' i],
+          [role='button'][data-automation-id*='delete' i],
+          [role='button'][id*='close' i],
+          [role='button'][id*='delete' i],
+          [role='menuitem'][aria-label*='Close' i],
+          [role='menuitem'][title*='Close' i],
+          [role='menuitem'][aria-label*='Delete' i],
+          [role='menuitem'][title*='Delete' i],
+          [role='menuitem'][data-automationid*='close' i],
+          [role='menuitem'][data-automationid*='delete' i],
+          [role='menuitem'][data-automation-id*='close' i],
+          [role='menuitem'][data-automation-id*='delete' i],
+          [role='menuitem'][id*='close' i],
+          [role='menuitem'][id*='delete' i],
+          a[aria-label*='Close' i],
+          a[title*='Close' i],
+          a[aria-label*='Delete' i],
+          a[title*='Delete' i],
+          a[id*='close' i],
+          a[id*='delete' i] {
+            display: none !important;
+          }
+        `;
+        //rohit 29/05/2026 -----end
+        const styleParent = iframeDocument.head || iframeDocument.getElementsByTagName("head")[0] || iframeDocument.body;
+        styleParent.appendChild(style);
+      }
+ 
+      const hideElement = (element: Element | null) => {
+        if (!element) return;
+        const target = element.closest("button, [role='button'], [role='menuitem'], li, a") || element;
+        (target as HTMLElement).style.display = "none";
+      };
+ 
+      hideElement(iframeDocument.getElementById("closeCommand"));
+ 
+      const controlCandidates = iframeDocument.querySelectorAll("button, [role='button'], [role='menuitem'], a, li");
+      Array.prototype.forEach.call(controlCandidates, (element: Element) => {
+        //rohit 29/05/2026 -----start
+        const elementText = (element.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+        const ariaLabel = ((element.getAttribute("aria-label") || element.getAttribute("title") || "") as string).trim().toLowerCase();
+        const automationId = ((element.getAttribute("data-automationid") || element.getAttribute("data-automation-id") || "") as string).toLowerCase();
+        const elementId = (element.id || "").toLowerCase();
+        const className = ((element.getAttribute("class") || "") as string).toLowerCase();
+        const controlText = `${elementText} ${ariaLabel} ${automationId} ${elementId} ${className}`;
+ 
+        if (
+          controlText.indexOf("delete") !== -1 ||
+          controlText.indexOf("close") !== -1 ||
+          elementId === "closecommand" ||
+          elementText === "close file" ||
+          elementText === "close file preview"
+        ) {
+          hideElement(element);
+        }
+        //rohit 29/05/2026 -----end
+      });
+ 
+      const iframeWindow = iframe.contentWindow as any;
+      if (iframeWindow && iframeWindow.MutationObserver && !iframeWindow.__dmsReworkPreviewCloseDeleteObserver) {
+        iframeWindow.__dmsReworkPreviewCloseDeleteObserver = new iframeWindow.MutationObserver(() => {
+          hideReworkPreviewFileControls(iframe);
+        });
+        iframeWindow.__dmsReworkPreviewCloseDeleteObserver.observe(iframeDocument.body, {
+          childList: true,
+          subtree: true
+        });
+      }
+ 
+      return true;
+    } catch (error) {
+      console.error("Error hiding Rework file preview controls:", error);
+      return false;
+    }
+  };
+ 
+  const startReworkPreviewFileControlHide = (iframe: HTMLIFrameElement) => {
+    let attempts = 0;
+    const hideControls = () => {
+      //rohit 29/05/2026 -----start
+      const controlsHidden = hideReworkPreviewFileControls(iframe);
+      if (controlsHidden) {
+        iframe.style.visibility = "visible";
+      }
+ 
+      attempts += 1;
+      if (attempts < 40) {
+        setTimeout(hideControls, 250);
+ 
+      } else {
+        iframe.style.visibility = "visible";
+      //rohit 29/05/2026 -----end
+      }
+    };
+ 
+    hideControls();
+  };
+  //rohit 28/05/2026 ------end
+
+  //rohit 28/05/2026 ------end
+
+  
   // Get the list item  corresponding to the file
   const fileItem:any = await web.getFileById(fileId).expand("ListItemAllFields")();
   console.log("fileItem",fileItem.ListItemAllFields.Status);
@@ -4141,6 +4273,10 @@ window.rework=async(fileId:any,siteId:any,documentLibrary:any,siteName:any,fileP
   backButtonTooltip.setAttribute('data-tooltip', 'Close File Preview');
   backButton.className = 'btn-close';
   backButton.setAttribute('aria-label', 'Close File Preview');
+  backButton.setAttribute('data-tooltip', 'Close File Preview');
+  backButton.appendChild(backButtonTooltip);
+
+ 
   // backButton.textContent = 'Close File Preview';
   // backButton.className = 'btn btn-secondary me-2 mt-2'; 
   // backButton.className = 'btn-close';
@@ -4260,39 +4396,60 @@ window.rework=async(fileId:any,siteId:any,documentLibrary:any,siteName:any,fileP
       // Show the spinner and hide the iframe initially
       spinner.style.display = "block";
       iframe.style.display = "none";
+      iframe.style.visibility = "hidden"; //rohit 29/05/2026
+ 
       iframe.src = previewUrl;
   
       // Add an onload event listener to the iframe
       iframe.onload = () => {
         console.log("Iframe has loaded");
   
+        // const checkAndHideButton = () => {
+        //   try {
+        //     const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
+        //     if (iframeDocument) {
+        //       const button = iframeDocument.getElementById("OneUpCommandBar") as HTMLElement;
+        //       const excelToolbar = iframeDocument.getElementById("m_excelEmbedRenderer_m_ewaEmbedViewerBar") as HTMLElement;
+        //       if(excelToolbar){
+        //         excelToolbar.style.display= "none"
+        //       }
+        //       if (button) {
+        //         console.log("Hiding the OneUpCommandBar element");
+        //         button.style.display = "none";
+  
+        //         // Hide the spinner and show the iframe after the button is hidden
+        //         spinner.style.display = "none";
+        //         iframe.style.display = "block"; 
+
+        //        // Exit the loop once the button is found and hidden
+        //       } else {
+        //         console.log("OneUpCommandBar not found, rechecking...");
+        //       }
+              
+        //       const helpbutton = iframeDocument.getElementById("m_excelEmbedRenderer_m_ewaEmbedViewerBar") as HTMLElement; 
+        //       if(helpbutton){
+        //         helpbutton.style.display = "none"
+        //       }
+        //     }
         const checkAndHideButton = () => {
           try {
             const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
             if (iframeDocument) {
               const button = iframeDocument.getElementById("OneUpCommandBar") as HTMLElement;
-              const excelToolbar = iframeDocument.getElementById("m_excelEmbedRenderer_m_ewaEmbedViewerBar") as HTMLElement;
-              if(excelToolbar){
-                excelToolbar.style.display= "none"
-              }
-              if (button) {
-                console.log("Hiding the OneUpCommandBar element");
-                button.style.display = "none";
-  
-                // Hide the spinner and show the iframe after the button is hidden
+            //rohit 29/05/2026 -----start
+              const controlsHidden = hideReworkPreviewFileControls(iframe);
+              if (controlsHidden) {
                 spinner.style.display = "none";
-                iframe.style.display = "block"; 
-
-               // Exit the loop once the button is found and hidden
-              } else {
+                iframe.style.display = "block";
+                iframe.style.visibility = "visible";
+              }
+              //rohit 29/05/2026 -----end
+ 
+              if (!button) {
                 console.log("OneUpCommandBar not found, rechecking...");
               }
-              
-              const helpbutton = iframeDocument.getElementById("m_excelEmbedRenderer_m_ewaEmbedViewerBar") as HTMLElement; 
-              if(helpbutton){
-                helpbutton.style.display = "none"
-              }
             }
+ 
           } catch (error) {
             console.error("Error accessing iframe content:", error);
           }
@@ -4456,6 +4613,11 @@ replaceButton.style.background = "transparent";
   previewfileframe.id = 'filePreview'
   previewfileframe.style.width = '930px'
   previewfileframe.style.height = '500px'
+  //rohit 28/05/2026 ------start
+  previewfileframe.onload = () => {
+    startReworkPreviewFileControlHide(previewfileframe);
+  };
+  //rohit 28/05/2026 ------end
 
   const segments = filePath.split('/');
   // extarct the current entity start

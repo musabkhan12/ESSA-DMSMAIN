@@ -528,7 +528,7 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
     //addhyan - 13/03/2026
     <>
  
-    <div className="col-md-6 mb-3">
+    {/* <div className="col-md-6 mb-3">
       <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
         Select Location
       </label>
@@ -548,9 +548,9 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
         <option value="edcspfx">edcspfx</option>
         <option value="Intranetdemos">intranetdemos</option>
       </select>
-    </div>
+    </div> */}
 
-    {selectedSite && (
+    {/* {selectedSite && (
       <div className="col-md-6 mb-3">
         <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
           Select Department 
@@ -568,10 +568,10 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
           ))}
         </select>
       </div>
-    )}
+    )} */}
 
     {/* {selectedSubSite && ( */}
-      {selectedSite && (
+      {/* {selectedSite && ( */}
       <div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", padding: '20px' }}>
       <h3 className="font-16 m-0 mb-3">
         New from template: {selectedTemplate?.DocumentCategory}
@@ -752,6 +752,47 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
                 placeholder="Enter description"
               />
             </div>
+            <div className="col-md-6 mb-3">
+  <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+    Select Location
+  </label>
+  <select
+    className="form-control"
+    value={selectedSite}
+    onChange={(e) => {
+      setSelectedSite(e.target.value);
+      setSelectedSubSite("");
+      resetForm();
+      setIsEditorOpen(false);
+      setDocumentUrl("");
+    }}
+  >
+    <option value="">Select Location</option>
+    <option value="AlRostmaniSpfx2">AlRostmaniSpfx2</option>
+    <option value="edcspfx">edcspfx</option>
+    <option value="Intranetdemos">intranetdemos</option>
+  </select>
+</div>
+
+<div className="col-md-6 mb-3">
+  <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+    Select Department
+  </label>
+  <select
+    className="form-control"
+    value={selectedSubSite}
+    disabled={!selectedSite}
+    onChange={(e) => setSelectedSubSite(e.target.value)}
+  >
+    <option value="">Select Department</option>
+
+    {(siteSubsiteMap[selectedSite] || []).map((subsite) => (
+      <option key={subsite} value={subsite}>
+        {subsite}
+      </option>
+    ))}
+  </select>
+</div>
           </div>
         </div>
       </div>
@@ -901,9 +942,6 @@ console.log("Grouped Hierarchy:", Object.values(groupedHierarchy));
         </button>
       </div>
     </div>
-    )
- 
-    }
   
  
  
