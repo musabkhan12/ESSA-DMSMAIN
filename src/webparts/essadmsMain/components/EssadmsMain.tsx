@@ -4613,6 +4613,7 @@ replaceButton.style.background = "transparent";
   previewfileframe.id = 'filePreview'
   previewfileframe.style.width = '930px'
   previewfileframe.style.height = '500px'
+    previewfileframe.style.visibility = 'hidden' //rohit 29/05/2026
   //rohit 28/05/2026 ------start
   previewfileframe.onload = () => {
     startReworkPreviewFileControlHide(previewfileframe);
